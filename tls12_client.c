@@ -120,6 +120,8 @@ int tls12_client()
         goto err_handler;
     }
 
+    fd = SSL_get_fd(ssl);
+
     ret = SSL_connect(ssl); 
     if (ret != 1) {
         printf("SSL connect failed%d\n", ret);
@@ -129,6 +131,7 @@ int tls12_client()
     printf("SSL connect succeeded\n");
     SSL_free(ssl);
     SSL_CTX_free(ctx);
+    close(fd);
 
     return 0;
 err_handler:
@@ -136,6 +139,7 @@ err_handler:
         SSL_free(ssl);
     }
     SSL_CTX_free(ctx);
+    close(fd);
     return -1;
 }
 

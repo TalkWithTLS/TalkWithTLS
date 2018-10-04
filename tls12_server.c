@@ -156,6 +156,8 @@ int tls12_server()
         goto err_handler;
     }
 
+    fd = SSL_get_fd(ssl);
+
     ret = SSL_accept(ssl); 
     if (ret != 1) {
         printf("SSL accept failed%d\n", ret);
@@ -165,6 +167,7 @@ int tls12_server()
     printf("SSL accept succeeded\n");
     SSL_free(ssl);
     SSL_CTX_free(ctx);
+    close(fd);
 
     return 0;
 err_handler:
@@ -172,6 +175,7 @@ err_handler:
         SSL_free(ssl);
     }
     SSL_CTX_free(ctx);
+    close(fd);
     return -1;
 }
 
