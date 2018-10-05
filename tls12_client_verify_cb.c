@@ -51,7 +51,7 @@ err_handler:
 int verify_cb(int ok, X509_STORE_CTX *ctx)
 {
     printf("Verify Callback\n");
-    return 1;
+    return ok;
 }
 
 SSL_CTX *create_context()
