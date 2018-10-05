@@ -37,5 +37,5 @@ $(TLS12_SERVER_VERF_CB):$(TLS12_SERVER_VERF_CB).o
 	$(CC) $^ $(LDFLAGS) -o $@
 
 clean:
-	@$(RM) -rf *.o
+	@$(RM) -rf *.o *.a
 	@$(RM) -rf $(TARGET)
