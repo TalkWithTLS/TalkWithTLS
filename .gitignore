@@ -3,5 +3,5 @@ libssl.a
 *.o
 tls12_server
 tls12_client
-tls12_client_verify_cb
-tls12_server_verify_cb
+tls12_verify_cb_client
+tls12_verify_cb_server
