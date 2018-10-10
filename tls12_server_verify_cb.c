@@ -11,8 +11,8 @@
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
 
-#define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
-#define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
+#define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs2/server_cert.pem"
+#define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs2/server_key.der"
 #define EC_CURVE_NAME NID_X9_62_prime256v1
 
 #define SERVER_IP "127.0.0.1"
@@ -25,11 +25,18 @@ int do_tcp_accept(const char *server_ip, uint16_t port)
     socklen_t peerlen = sizeof(peeraddr);
     int lfd, cfd;
     int ret;
+    int optval = 1;
 
     lfd = socket(AF_INET, SOCK_STREAM, 0);
     if (lfd < 0) {
         printf("Socket creation failed\n");
         return -1;
+    }
+
+    ret = setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &optval, (socklen_t)sizeof(optval));
+    if (ret) {
+        printf("setsockopt SO_RESUSEADDR failed\n");
+        goto err_handler;
     }
 
     addr.sin_family = AF_INET;

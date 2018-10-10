@@ -25,11 +25,18 @@ int do_tcp_accept(const char *server_ip, uint16_t port)
     socklen_t peerlen = sizeof(peeraddr);
     int lfd, cfd;
     int ret;
+    int optval = 1;
 
     lfd = socket(AF_INET, SOCK_STREAM, 0);
     if (lfd < 0) {
         printf("Socket creation failed\n");
         return -1;
+    }
+
+    ret = setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &optval, (socklen_t)sizeof(optval));
+    if (ret) {
+        printf("setsockopt SO_RESUSEADDR failed\n");
+        goto err_handler;
     }
 
     addr.sin_family = AF_INET;

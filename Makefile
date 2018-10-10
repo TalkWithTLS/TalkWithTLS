@@ -4,7 +4,11 @@ TLS12_CLIENT_VERF_CB = tls12_client_verify_cb
 TLS12_SERVER_VERF_CB = tls12_server_verify_cb
 TARGET=$(TLS12_CLIENT) $(TLS12_SERVER) $(TLS12_CLIENT_VERF_CB) $(TLS12_SERVER_VERF_CB)
 
+ifeq ($(OSSL_PATH),)
 OPENSSL_PATH=../openssl-1.1.1
+else
+OPENSSL_PATH=$(OSSL_PATH)
+endif
 
 CFLAGS = -g -ggdb -Wall -Werror -I $(OPENSSL_PATH)/include
 LDFLAGS = -L ./ -lssl -lcrypto -lpthread -ldl
