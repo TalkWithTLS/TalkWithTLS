@@ -11,8 +11,8 @@
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
 
-#define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs2/server_cert.pem"
-#define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs2/server_key.der"
+#define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
+#define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 #define EC_CURVE_NAME NID_X9_62_prime256v1
 
 #define SERVER_IP "127.0.0.1"
