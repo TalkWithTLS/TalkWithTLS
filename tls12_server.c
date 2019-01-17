@@ -11,6 +11,8 @@
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
 
+#include "test_common.h"
+
 #define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 #define EC_CURVE_NAME NID_X9_62_prime256v1
@@ -146,6 +148,26 @@ err_handler:
     return NULL;
 }
 
+int do_data_transfer(SSL *ssl)
+{
+    char buf[MAX_BUF_SIZE] = {0};
+    int ret;
+    ret = SSL_read(ssl, buf, sizeof(buf) - 1);
+    if (ret <= 0) {
+        printf("SSL_read failed ret=%d\n", ret);
+        return -1;
+    }
+    printf("SSL_read[%d] %s\n", ret, buf);
+
+    ret = SSL_write(ssl, MSG_FOR_CLNT, sizeof(MSG_FOR_CLNT));
+    if (ret <= 0) {
+        printf("SSL_write failed ret=%d\n", ret);
+        return -1;
+    }
+    printf("SSL_write[%d] sent %s\n", ret, MSG_FOR_CLNT);
+    return 0;
+}
+
 int tls12_server()
 {
     SSL_CTX *ctx;
@@ -172,6 +194,12 @@ int tls12_server()
     }
 
     printf("SSL accept succeeded\n");
+
+    if (do_data_transfer(ssl)) {
+        printf("Data transfer over TLS failed\n");
+        goto err_handler;
+    }
+    printf("Data transfer over TLS succeeded\n");
     SSL_free(ssl);
     SSL_CTX_free(ctx);
     close(fd);
