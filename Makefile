@@ -2,7 +2,9 @@ TLS12_CLIENT = tls12_client
 TLS12_SERVER = tls12_server
 TLS12_VERF_CB_CLIENT = tls12_verify_cb_client
 TLS12_VERF_CB_SERVER = tls12_verify_cb_server
-TARGET=$(TLS12_CLIENT) $(TLS12_SERVER) $(TLS12_VERF_CB_CLIENT) $(TLS12_VERF_CB_SERVER)
+TLS13_CLIENT = tls13_client
+TLS13_SERVER = tls13_server
+TARGET=$(TLS12_CLIENT) $(TLS12_SERVER) $(TLS12_VERF_CB_CLIENT) $(TLS12_VERF_CB_SERVER) $(TLS13_CLIENT) $(TLS13_SERVER)
 
 ifeq ($(OSSL_PATH),)
 OPENSSL_PATH=../openssl-1.1.1
@@ -28,7 +30,13 @@ init_task:
 	@$(CP) $(OPENSSL_PATH)/libcrypto.a .
 	@$(CP) $(OPENSSL_PATH)/libssl.a .
 
+$(TLS13_CLIENT):$(TLS13_CLIENT).o
+	$(CC) $^ $(LDFLAGS) -o $@
+
 $(TLS12_CLIENT):$(TLS12_CLIENT).o
+	$(CC) $^ $(LDFLAGS) -o $@
+
+$(TLS13_SERVER):$(TLS13_SERVER).o
 	$(CC) $^ $(LDFLAGS) -o $@
 
 $(TLS12_SERVER):$(TLS12_SERVER).o
