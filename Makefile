@@ -1,3 +1,4 @@
+BIN_DIR=bin
 TLS12_CLIENT = tls12_client
 TLS12_SERVER = tls12_server
 TLS12_VERF_CB_CLIENT = tls12_verify_cb_client
@@ -6,14 +7,14 @@ TLS13_CLIENT = tls13_client
 TLS13_SERVER = tls13_server
 TARGET=$(TLS12_CLIENT) $(TLS12_SERVER) $(TLS12_VERF_CB_CLIENT) $(TLS12_VERF_CB_SERVER) $(TLS13_CLIENT) $(TLS13_SERVER)
 
-ifeq ($(OSSL_PATH),)
-OPENSSL_PATH=../openssl-1.1.1
-else
-OPENSSL_PATH=$(OSSL_PATH)
-endif
+DEPENDENCY_DIR=dependency
+OPENSSL_1_1_1=openssl-1.1.1a
+OPENSSL_1_1_1_DIR=$(DEPENDENCY_DIR)/$(OPENSSL_1_1_1)
+OPENSSL_1_1_1_LIBS=$(OPENSSL_1_1_1_DIR)/libssl.a
+DEPENDENCY = $(OPENSSL_1_1_1_LIBS)
 
-CFLAGS = -g -ggdb -Wall -Werror -I $(OPENSSL_PATH)/include
-LDFLAGS = -L ./ -lssl -lcrypto -lpthread -ldl
+CFLAGS = -g -ggdb -Wall -Werror -I $(OPENSSL_1_1_1_DIR)/include
+LDFLAGS = $(OPENSSL_1_1_1_DIR)/libssl.a $(OPENSSL_1_1_1_DIR)/libcrypto.a -lpthread -ldl
 
 CC = gcc
 CP = cp
@@ -21,14 +22,20 @@ RM = rm
 
 #.PHONY all init_task clean
 
-all : init_task $(TARGET)
+all : init_task build_dependency $(TARGET)
 
 %.o:%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+build_dependency:$(DEPENDENCY)
+
+$(OPENSSL_1_1_1_LIBS): $(OPENSSL_1_1_1_DIR).tar.gz
+	cd $(DEPENDENCY_DIR) && tar -zxvf $(OPENSSL_1_1_1).tar.gz
+	cd $(OPENSSL_1_1_1_DIR) && ./config -d
+	cd $(OPENSSL_1_1_1_DIR) && make
+
 init_task:
-	@$(CP) $(OPENSSL_PATH)/libcrypto.a .
-	@$(CP) $(OPENSSL_PATH)/libssl.a .
+	@mkdir -p $(BIN_DIR)
 
 $(TLS13_CLIENT):$(TLS13_CLIENT).o
 	$(CC) $^ $(LDFLAGS) -o $@
