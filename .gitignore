@@ -2,9 +2,13 @@ openssl-1.1.1a
 libcrypto.a
 libssl.a
 *.o
-tls13_server
-tls13_client
 tls12_server
 tls12_client
 tls12_verify_cb_client
 tls12_verify_cb_server
+tls13_server
+tls13_client
+tls13_server_dhe
+tls13_client_dhe
+tls13_resumption_server
+tls13_resumption_client
