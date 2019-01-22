@@ -24,64 +24,6 @@ int g_kexch_groups[] = {
     NID_X448                /* x448 */
 };
 
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 7788
-
-int do_tcp_listen(const char *server_ip, uint16_t port)
-{
-    struct sockaddr_in addr;
-    int lfd;
-    int ret;
-
-    lfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (lfd < 0) {
-        printf("Socket creation failed\n");
-        return -1;
-    }
-
-    addr.sin_family = AF_INET;
-    if (inet_aton(server_ip, &addr.sin_addr) == 0) {
-        printf("inet_aton failed\n");
-        goto err_handler;
-    }
-    addr.sin_port = htons(port);
-
-    ret = bind(lfd, (struct sockaddr *)&addr, sizeof(addr));
-    if (ret) {
-        printf("bind failed\n");
-        goto err_handler;
-    }
-
-    ret = listen(lfd, 5);
-    if (ret) {
-        printf("listen failed\n");
-        goto err_handler;
-    }
-    printf("Listening on %s:%d\n", server_ip, port);
-    printf("TCP listen fd=%d\n", lfd);
-    return lfd;
-err_handler:
-    close(lfd);
-    return -1;
-}
-
-int do_tcp_accept(int lfd)
-{
-    struct sockaddr_in peeraddr;
-    socklen_t peerlen = sizeof(peeraddr);
-    int cfd;
-
-    printf("Waiting for TCP connection from client...\n");
-    cfd = accept(lfd, (struct sockaddr *)&peeraddr, &peerlen);
-    if (cfd < 0) {
-        printf("accept failed, errno=%d\n", errno);
-        return -1;
-    }
-
-    printf("TCP connection accepted fd=%d\n", cfd);
-    return cfd;
-}
-
 SSL_CTX *create_context()
 {
     SSL_CTX *ctx;

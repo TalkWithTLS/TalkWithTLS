@@ -11,67 +11,11 @@
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
 
+#include "test_common.h"
+
 #define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 #define EC_CURVE_NAME NID_X9_62_prime256v1
-
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 7788
-
-int do_tcp_accept(const char *server_ip, uint16_t port)
-{
-    struct sockaddr_in addr;
-    struct sockaddr_in peeraddr;
-    socklen_t peerlen = sizeof(peeraddr);
-    int lfd, cfd;
-    int ret;
-    int optval = 1;
-
-    lfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (lfd < 0) {
-        printf("Socket creation failed\n");
-        return -1;
-    }
-
-    ret = setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &optval, (socklen_t)sizeof(optval));
-    if (ret) {
-        printf("setsockopt SO_RESUSEADDR failed\n");
-        goto err_handler;
-    }
-
-    addr.sin_family = AF_INET;
-    if (inet_aton(server_ip, &addr.sin_addr) == 0) {
-        printf("inet_aton failed\n");
-        goto err_handler;
-    }
-    addr.sin_port = htons(port);
-
-    ret = bind(lfd, (struct sockaddr *)&addr, sizeof(addr));
-    if (ret) {
-        printf("bind failed\n");
-        goto err_handler;
-    }
-
-    ret = listen(lfd, 5);
-    if (ret) {
-        printf("listen failed\n");
-        goto err_handler;
-    }
-
-    printf("Waiting for TCP connection from client...\n");
-    cfd = accept(lfd, (struct sockaddr *)&peeraddr, &peerlen);
-    if (cfd < 0) {
-        printf("accept failed, errno=%d\n", errno);
-        goto err_handler;
-    }
-
-    printf("TCP connection accepted fd=%d\n", cfd);
-    close(lfd);
-    return cfd;
-err_handler:
-    close(lfd);
-    return -1;
-}
 
 SSL_CTX *create_context()
 {
@@ -108,13 +52,13 @@ err_handler:
     return NULL;
 }
 
-SSL *create_ssl_object(SSL_CTX *ctx)
+SSL *create_ssl_object(SSL_CTX *ctx, int lfd)
 {
     SSL *ssl;
     EC_KEY *ecdh;
     int fd;
 
-    fd = do_tcp_accept(SERVER_IP, SERVER_PORT);
+    fd = do_tcp_accept(lfd);
     if (fd < 0) {
         printf("TCP connection establishment failed\n");
         return NULL;
@@ -150,7 +94,9 @@ int tls12_server()
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
-    int fd;
+    int ret_val = -1;
+    int lfd = -1;
+    int fd = -1;
     int ret;
 
     ctx = create_context();
@@ -158,7 +104,12 @@ int tls12_server()
         return -1;
     }
 
-    ssl = create_ssl_object(ctx);
+    lfd = do_tcp_listen(SERVER_IP, SERVER_PORT);
+    if (lfd < 0) {
+        goto err_handler;
+    }
+
+    ssl = create_ssl_object(ctx, lfd);
     if (!ssl) {
         goto err_handler;
     }
@@ -172,18 +123,16 @@ int tls12_server()
     }
 
     printf("SSL accept succeeded\n");
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
-    close(fd);
 
-    return 0;
+    ret_val = 0;
 err_handler:
     if (ssl) {
         SSL_free(ssl);
     }
     SSL_CTX_free(ctx);
     close(fd);
-    return -1;
+    close(lfd);
+    return ret_val;
 }
 
 int main()
