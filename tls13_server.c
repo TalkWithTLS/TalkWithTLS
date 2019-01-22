@@ -15,7 +15,14 @@
 
 #define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
-#define EC_CURVE_NAME NID_X9_62_prime256v1
+
+int g_kexch_groups[] = {
+    NID_X9_62_prime256v1,   /* secp256r1 */
+    NID_secp384r1,          /* secp384r1 */
+    NID_secp521r1,          /* secp521r1 */
+    NID_X25519,             /* x25519 */
+    NID_X448                /* x448 */
+};
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 7788
@@ -112,7 +119,6 @@ err_handler:
 SSL *create_ssl_object(SSL_CTX *ctx)
 {
     SSL *ssl;
-    EC_KEY *ecdh;
     int fd;
 
     fd = do_tcp_accept(SERVER_IP, SERVER_PORT);
@@ -129,15 +135,10 @@ SSL *create_ssl_object(SSL_CTX *ctx)
 
     SSL_set_fd(ssl, fd);
 
-    ecdh = EC_KEY_new_by_curve_name(EC_CURVE_NAME);
-    if (!ecdh) {
-        printf("ECDH generation failed\n");
+    if (SSL_set1_groups(ssl, g_kexch_groups, sizeof(g_kexch_groups)/sizeof(g_kexch_groups[0])) != 1) {
+        printf("Set Groups failed");
         goto err_handler;
     }
-
-    SSL_set_tmp_ecdh(ssl, ecdh);
-    EC_KEY_free(ecdh);
-    ecdh = NULL;
 
     printf("SSL object creation finished\n");
 

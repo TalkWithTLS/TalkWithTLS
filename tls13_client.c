@@ -17,6 +17,14 @@
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 7788
 
+int g_kexch_groups[] = {
+    NID_X9_62_prime256v1,   /* secp256r1 */
+    NID_secp384r1,          /* secp384r1 */
+    NID_secp521r1,          /* secp521r1 */
+    NID_X25519,             /* x25519 */
+    NID_X448                /* x448 */
+};
+
 int do_tcp_connection(const char *server_ip, uint16_t port)
 {
     struct sockaddr_in serv_addr;
@@ -99,9 +107,17 @@ SSL *create_ssl_object(SSL_CTX *ctx)
 
     SSL_set_fd(ssl, fd);
 
+    if (SSL_set1_groups(ssl, g_kexch_groups, sizeof(g_kexch_groups)/sizeof(g_kexch_groups[0])) != 1) {
+        printf("Set Groups failed");
+        goto err_handler;
+    }
+
     printf("SSL object creation finished\n");
 
     return ssl;
+err_handler:
+    SSL_free(ssl);
+    return NULL;
 }
 
 int do_data_transfer(SSL *ssl)
