@@ -14,8 +14,6 @@
 #include "test_common.h"
 
 #define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 7788
 
 int g_kexch_groups[] = {
     NID_ffdhe2048,
@@ -24,39 +22,6 @@ int g_kexch_groups[] = {
     NID_ffdhe6144,
     NID_ffdhe8192
 };
-
-int do_tcp_connection(const char *server_ip, uint16_t port)
-{
-    struct sockaddr_in serv_addr;
-    int fd;
-    int ret;
-
-    fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) {
-        printf("Socket creation failed\n");
-        return -1;
-    }
-    printf("Client fd=%d created\n", fd);
-
-    serv_addr.sin_family = AF_INET;
-    if (inet_aton(server_ip, &serv_addr.sin_addr) == 0) {
-        printf("inet_aton failed\n");
-        goto err_handler;
-    }
-    serv_addr.sin_port = htons(port);
-
-    ret = connect(fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-    if (ret) {
-        printf("Connect failed, errno=%d\n", errno);
-        goto err_handler;
-    }
-    
-    printf("TLS connection succeeded, fd=%d\n", fd);
-    return fd;
-err_handler:
-    close(fd);
-    return -1;
-}
 
 SSL_CTX *create_context()
 {
