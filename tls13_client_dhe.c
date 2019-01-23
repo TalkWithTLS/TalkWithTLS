@@ -73,7 +73,7 @@ SSL *create_ssl_object(SSL_CTX *ctx)
     SSL_set_fd(ssl, fd);
 
     if (SSL_set1_groups(ssl, g_kexch_groups, sizeof(g_kexch_groups)/sizeof(g_kexch_groups[0])) != 1) {
-        printf("Set Groups failed");
+        printf("Set Groups failed\n");
         goto err_handler;
     }
 
