@@ -17,6 +17,9 @@ extern "C" {
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 7788
 
+#define TCP_CON_RETRY_COUNT 20
+#define TCP_CON_RETRY_WAIT_TIME_MS 200
+
 int do_tcp_connection(const char *server_ip, uint16_t port);
 
 int do_tcp_listen(const char *server_ip, uint16_t port);
