@@ -57,8 +57,12 @@ def log_file_fini():
     global g_log_file_f
     g_log_file_f.close()
 
-g_t13_testcases = [ ['tls13_server', 'tls13_client'],
-                    ['tls13_server_dhe', 'tls13_client_dhe'] ]
+g_t13_testcases = [
+                    ['tls12_server', 'tls12_client'],
+                    ['tls12_verify_cb_server', 'tls12_verify_cb_client'],
+                    ['tls13_server', 'tls13_client'],
+                    ['tls13_server_dhe', 'tls13_client_dhe']
+                  ]
 
 if __name__ == "__main__":
     log_file_init()
