@@ -117,14 +117,15 @@ err_handler:
 
 int do_data_transfer(SSL *ssl)
 {
+    const char *msg = MSG_FOR_OPENSSL_CLNT;
     char buf[MAX_BUF_SIZE] = {0};
     int ret;
-    ret = SSL_write(ssl, MSG_FOR_SERV, sizeof(MSG_FOR_SERV));
+    ret = SSL_write(ssl, msg, strlen(msg));
     if (ret <= 0) {
         printf("SSL_write failed ret=%d\n", ret);
         return -1;
     }
-    printf("SSL_write[%d] sent %s\n", ret, MSG_FOR_SERV);
+    printf("SSL_write[%d] sent %s\n", ret, msg);
 
     ret = SSL_read(ssl, buf, sizeof(buf) - 1);
     if (ret <= 0) {

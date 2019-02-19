@@ -7,11 +7,14 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #define MAX_BUF_SIZE    1024
 
-#define MSG_FOR_SERV    "Hi TLS server"
-#define MSG_FOR_CLNT    "Hello TLS client"
+#define MSG_FOR_OPENSSL_CLNT    "Hi, This is wolfSSL client"
+#define MSG_FOR_OPENSSL_SERV    "Hello, This is wolfSSL server"
+#define MSG_FOR_WOLFSSL_CLNT    "Hi, This is wolfSSL client"
+#define MSG_FOR_WOLFSSL_SERV    "Hello, This is wolfSSL server"
 
 #define EC256_CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
 #define SERVER_IP "127.0.0.1"
