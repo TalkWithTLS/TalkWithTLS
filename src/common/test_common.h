@@ -11,8 +11,8 @@ extern "C" {
 
 #define MAX_BUF_SIZE    1024
 
-#define MSG_FOR_OPENSSL_CLNT    "Hi, This is wolfSSL client"
-#define MSG_FOR_OPENSSL_SERV    "Hello, This is wolfSSL server"
+#define MSG_FOR_OPENSSL_CLNT    "Hi, This is OpenSSL client"
+#define MSG_FOR_OPENSSL_SERV    "Hello, This is OpenSSL server"
 #define MSG_FOR_WOLFSSL_CLNT    "Hi, This is wolfSSL client"
 #define MSG_FOR_WOLFSSL_SERV    "Hello, This is wolfSSL server"
 

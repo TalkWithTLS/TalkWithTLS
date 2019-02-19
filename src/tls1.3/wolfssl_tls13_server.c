@@ -91,11 +91,11 @@ void *create_ssl_object(void *ctx_in, int lfd)
             printf("Set supported group %d failed\n", g_kexch_groups[i]);
             goto err_handler;
         }
+        if (wolfSSL_UseKeyShare(ssl, g_kexch_groups[i]) != 1) {
+            printf("Use key share for group %d failed\n", g_kexch_groups[i]);
+            goto err_handler;
+        }
     }
-    /*if (SSL_set1_groups(ssl, g_kexch_groups, sizeof(g_kexch_groups)/sizeof(g_kexch_groups[0])) != 1) {
-        printf("Set Groups failed\n");
-        goto err_handler;
-    }*/
 
     printf("SSL object creation finished\n");
 
