@@ -61,7 +61,8 @@ g_t13_testcases = [
                     ['tls12_server', 'tls12_client'],
                     ['tls12_verify_cb_server', 'tls12_verify_cb_client'],
                     ['tls13_server', 'tls13_client'],
-                    ['tls13_server_dhe', 'tls13_client_dhe']
+                    ['tls13_server_dhe', 'tls13_client_dhe'],
+                    ['wolfssl_tls13_server_sample', 'wolfssl_tls13_client_sample']
                   ]
 
 if __name__ == "__main__":
