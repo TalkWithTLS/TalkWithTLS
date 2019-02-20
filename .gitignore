@@ -1,6 +1,11 @@
-openssl-1.1.1*
 obj
 bin
+log
+
+openssl-1.1.1*
+
 tags
 cscope*
-log.txt
+
+*.pyc
+__pycache__

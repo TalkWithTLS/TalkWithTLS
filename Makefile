@@ -94,7 +94,7 @@ OPENSSL_CFLAGS = -Werror $(CFLAGS) -I $(OPENSSL_1_1_1_DIR)/include
 #TODO(wolfSSL) Need to remove this macro definition it should come from config.h file
 WOLFSSL_CFLAGS = $(CFLAGS) -DWOLFSSL_TLS13 -DHAVE_SUPPORTED_CURVES -I $(WOLFSSL_DIR)
 LDFLAGS = $(OPENSSL_1_1_1_DIR)/libssl.a $(OPENSSL_1_1_1_DIR)/libcrypto.a -lpthread -ldl
-WOLFSSL_LDFLAGS = -L $(WOLFSSL_DIR)/src/.libs -lwolfssl
+WOLFSSL_LDFLAGS = -L $(BIN_DIR) -lwolfssl
 
 CC = gcc
 CP = cp
@@ -130,6 +130,7 @@ init_task:
 	@mkdir -p $(OBJ_DIR)/$(COMMON_SRC)
 	@mkdir -p $(OBJ_DIR)/$(SAMPLE_SRC)
 	@mkdir -p $(OBJ_DIR)/$(TEST_TLS13_SRC)
+	@cp $(WOLFSSL_LIBS)* $(BIN_DIR)
 
 $(BIN_DIR)/$(TLS13_RESUMPTION_SERVER):$(TLS13_RESUMPTION_SERVER_OBJ)
 	$(CC) $^ $(LDFLAGS) -o $@
