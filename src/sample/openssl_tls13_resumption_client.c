@@ -26,7 +26,7 @@ int g_kexch_groups[] = {
     NID_X448                /* x448 */
 };
 
-SSL_SESSION *g_ssl_sess = NULL;
+SSL_SESSION *g_prev_sess = NULL;
 uint8_t g_ssl_sess_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
 
 int g_conf_tlsver;
@@ -37,8 +37,8 @@ int tls13_use_sess_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id, size
     const unsigned char *sess_id;
     uint32_t sess_id_len = 0;
     printf("Use Sess CB called\n");
-    if (g_ssl_sess) {
-        sess_id = SSL_SESSION_get_id(g_ssl_sess, &sess_id_len);
+    if (g_prev_sess) {
+        sess_id = SSL_SESSION_get_id(g_prev_sess, &sess_id_len);
         if ((!sess_id) || (!sess_id_len)
             || (sess_id_len > SSL_MAX_SSL_SESSION_ID_LENGTH)) {
             printf("Invalid Sess ID=%p, len=%d\n", sess_id, sess_id_len);
@@ -47,8 +47,8 @@ int tls13_use_sess_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id, size
         memcpy(g_ssl_sess_id, sess_id, sess_id_len);
         *id = g_ssl_sess_id;
         *idlen = sess_id_len;
-        SSL_SESSION_up_ref(g_ssl_sess);
-        *sess = g_ssl_sess;
+        SSL_SESSION_up_ref(g_prev_sess);
+        *sess = g_prev_sess;
         printf("Providing PSK statless ticket for resumption\n");
         return 1;
     }
@@ -154,11 +154,45 @@ int do_data_transfer(SSL *ssl)
     return 0;
 }
 
+int update_for_sess_resumption(SSL *ssl, SSL_SESSION *prev_sess)
+{
+    if (SSL_SESSION_get_protocol_version(prev_sess) < TLS1_3_VERSION) {
+        if (SSL_set_session(ssl, prev_sess)) {
+            printf("SSL session set succeeded\n");
+            SSL_SESSION_free(prev_sess);
+        } else {
+            printf("SSL session set failed\n");
+            SSL_SESSION_free(prev_sess);
+            return -1;
+        }
+    } else {
+        if (g_prev_sess) {
+            SSL_SESSION_free(g_prev_sess);
+        }
+        g_prev_sess = prev_sess;
+        SSL_set_psk_use_session_callback(ssl, tls13_use_sess_cb);
+    }
+    return 0;
+}
+
+int validate_sess_resumption(SSL *ssl, int *check_sess_reused)
+{
+    if (*check_sess_reused) {
+        if (SSL_session_reused(ssl) != 1) {
+            printf("SSL session not reused\n");
+            return -1;
+        }
+        *check_sess_reused = 0;
+    }
+    return 0;
+}
+
 int tls13_client(int con_count)
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
-    SSL_SESSION *ssl_sess = NULL;
+    SSL_SESSION *prev_sess = NULL;
+    int check_sess_reused = 0;
     int ret_val = -1;
     int fd;
     int ret;
@@ -177,24 +211,12 @@ int tls13_client(int con_count)
 
         fd = SSL_get_fd(ssl);
 
-        if (ssl_sess) {
-            if (SSL_SESSION_get_protocol_version(ssl_sess) < TLS1_3_VERSION) {
-                if (SSL_set_session(ssl, ssl_sess)) {
-                    printf("SSL session set succeeded\n");
-                    SSL_SESSION_free(ssl_sess);
-                } else {
-                    printf("SSL session set failed\n");
-                    SSL_SESSION_free(ssl_sess);
-                    goto err_handler;
-                }
-            } else {
-                if (g_ssl_sess) {
-                    SSL_SESSION_free(g_ssl_sess);
-                }
-                g_ssl_sess = ssl_sess;
-                SSL_set_psk_use_session_callback(ssl, tls13_use_sess_cb);
+        if (prev_sess) {
+            if (update_for_sess_resumption(ssl, prev_sess)) {
+                goto err_handler;
             }
-            ssl_sess = NULL;
+            prev_sess = NULL;
+            check_sess_reused = 1;
         }
 
         ret = SSL_connect(ssl);
@@ -204,14 +226,18 @@ int tls13_client(int con_count)
         }
         printf("SSL connect succeeded\n");
 
+        if (validate_sess_resumption(ssl, &check_sess_reused)) {
+            goto err_handler;
+        }
+
         if (do_data_transfer(ssl)) {
             printf("Data transfer over TLS failed\n");
             goto err_handler;
         }
         printf("Data transfer over TLS succeeded\n\n");
 
-        ssl_sess = SSL_get1_session(ssl);
-        if (!ssl_sess) {
+        prev_sess = SSL_get1_session(ssl);
+        if (!prev_sess) {
             printf("SSL session is NULL\n");
             goto err_handler;
         }
@@ -229,11 +255,11 @@ err_handler:
     if (ssl) {
         SSL_free(ssl);
     }
-    if (g_ssl_sess) {
-        SSL_SESSION_free(g_ssl_sess);
+    if (g_prev_sess) {
+        SSL_SESSION_free(g_prev_sess);
     }
-    if (ssl_sess) {
-        SSL_SESSION_free(ssl_sess);
+    if (prev_sess) {
+        SSL_SESSION_free(prev_sess);
     }
     SSL_CTX_free(ctx);
     close(fd);
