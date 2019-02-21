@@ -81,8 +81,7 @@ t12_testcases = [
 def test_tls12_sample_code():
     tc_setup()
     for apps in t12_testcases:
-        result = run_serv_clnt_app(apps)
-        assert result == 0
+        assert run_serv_clnt_app(apps) == 0
     tc_teardown()
 
 t13_testcases = [
@@ -94,6 +93,5 @@ t13_testcases = [
 def test_tls13_sample_code():
     tc_setup()
     for apps in t13_testcases:
-        result = run_serv_clnt_app(apps)
-        assert result == 0
+        assert run_serv_clnt_app(apps) == 0
     tc_teardown()
