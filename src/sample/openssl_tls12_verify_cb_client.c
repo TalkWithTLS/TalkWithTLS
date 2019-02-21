@@ -101,6 +101,7 @@ int tls12_client()
     }
 
     printf("SSL connect succeeded\n");
+    SSL_shutdown(ssl);
     SSL_free(ssl);
     SSL_CTX_free(ctx);
     close(fd);

@@ -168,6 +168,7 @@ int tls13_client()
         goto err_handler;
     }
     printf("Data transfer over TLS succeeded\n");
+    wolfSSL_shutdown(ssl);
     ret_val = 0;
 err_handler:
     do_cleanup(ctx, ssl);

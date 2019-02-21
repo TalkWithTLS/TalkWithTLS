@@ -123,7 +123,7 @@ int tls12_server()
     }
 
     printf("SSL accept succeeded\n");
-
+    SSL_shutdown(ssl);
     ret_val = 0;
 err_handler:
     if (ssl) {

@@ -150,7 +150,7 @@ int tls13_server()
         goto err_handler;
     }
     printf("Data transfer over TLS succeeded\n");
-
+    SSL_shutdown(ssl);
     ret_val = 0;
 err_handler:
     if (ssl) {

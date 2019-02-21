@@ -139,6 +139,7 @@ int tls13_client()
         goto err_handler;
     }
     printf("Data transfer over TLS succeeded\n");
+    SSL_shutdown(ssl);
     SSL_free(ssl);
     SSL_CTX_free(ctx);
     close(fd);
