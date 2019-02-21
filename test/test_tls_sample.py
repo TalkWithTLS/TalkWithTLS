@@ -39,8 +39,24 @@ def validate_tc_result(ret1, ret2):
     log_fd.write('===============================================\n')
     return result
 
-def run_serv_clnt_app(apps):
+def TWT_LOG(str):
+    log_fd.write(str)
+
+def validate_app(app):
+    if not os.path.isfile(bin_dir + '/' + app):
+        TWT_LOG('Test Apps [' + bin_dir + '/' + app + '] not found !!!\n')
+        return -1
+    return 0
+
+def validate_apps(apps):
     log_tc(apps)
+    if len(apps) != 2:
+        TWT_LOG('Count [' + str(len(apps)) + 'of Apps passed is invalid !!!\n');
+    assert validate_app(apps[0]) == 0
+    assert validate_app(apps[1]) == 0
+
+def run_serv_clnt_app(apps):
+    validate_apps(apps)
     proc1 = subprocess.Popen([bin_dir + "/" + apps[0]], stdout=subprocess.PIPE)
     proc2 = subprocess.Popen([bin_dir + "/" + apps[1]], stdout=subprocess.PIPE)
     ret1 = proc1.wait()
@@ -58,8 +74,8 @@ def tc_teardown():
 
 # Test Sample Code
 t12_testcases = [
-                    ['tls12_server', 'tls12_client'],
-                    ['tls12_verify_cb_server', 'tls12_verify_cb_client'],
+                    ['openssl_tls12_server', 'openssl_tls12_client'],
+                    ['openssl_tls12_verify_cb_server', 'openssl_tls12_verify_cb_client'],
                 ]
 
 def test_tls12_sample_code():
@@ -70,9 +86,9 @@ def test_tls12_sample_code():
     tc_teardown()
 
 t13_testcases = [
-                    ['tls13_server', 'tls13_client'],
-                    ['tls13_server_dhe', 'tls13_client_dhe'],
-                    ['wolfssl_tls13_server_sample', 'wolfssl_tls13_client_sample']
+                    ['openssl_tls13_server', 'openssl_tls13_client'],
+                    ['openssl_tls13_dhe_server', 'openssl_tls13_dhe_client'],
+                    ['wolfssl_tls13_server', 'wolfssl_tls13_client']
                 ]
 
 def test_tls13_sample_code():
