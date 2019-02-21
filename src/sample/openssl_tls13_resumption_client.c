@@ -29,6 +29,8 @@ int g_kexch_groups[] = {
 SSL_SESSION *g_ssl_sess = NULL;
 uint8_t g_ssl_sess_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
 
+int g_conf_tlsver;
+
 int tls13_use_sess_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id, size_t *idlen,
                                                                         SSL_SESSION **sess)
 {
@@ -53,6 +55,20 @@ int tls13_use_sess_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id, size
     return 0;
 }
 
+void update_ver(SSL_CTX *ctx)
+{
+    switch(g_conf_tlsver) {
+        case 13:
+            printf("Enabled TLS1.3\n");
+            /* By default TLS1.3 is enabled */
+            break;
+        case 12:
+            printf("Enabled TLS1.2\n");
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            break;
+    }
+}
+
 SSL_CTX *create_context()
 {
     SSL_CTX *ctx;
@@ -64,6 +80,8 @@ SSL_CTX *create_context()
     }
 
     printf("SSL context created\n");
+
+    update_ver(ctx);
 
     if (SSL_CTX_load_verify_locations(ctx, CAFILE1, NULL) != 1) {
         printf("Load CA cert failed\n");
@@ -174,9 +192,9 @@ int tls13_client(int con_count)
                     SSL_SESSION_free(g_ssl_sess);
                 }
                 g_ssl_sess = ssl_sess;
-                ssl_sess = NULL;
                 SSL_set_psk_use_session_callback(ssl, tls13_use_sess_cb);
             }
+            ssl_sess = NULL;
         }
 
         ret = SSL_connect(ssl);
@@ -199,6 +217,7 @@ int tls13_client(int con_count)
         }
         printf("SSL session backed up\n");
 
+        SSL_shutdown(ssl);
         SSL_free(ssl);
         ssl = NULL;
         close(fd);
@@ -213,13 +232,19 @@ err_handler:
     if (g_ssl_sess) {
         SSL_SESSION_free(g_ssl_sess);
     }
+    if (ssl_sess) {
+        SSL_SESSION_free(ssl_sess);
+    }
     SSL_CTX_free(ctx);
     close(fd);
     return ret_val;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc > 1) {
+        g_conf_tlsver = atoi(argv[1]);
+    }
     printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION), OpenSSL_version(OPENSSL_BUILT_ON));
     if (tls13_client(2)) {
         printf("TLS12 client connection failed\n");

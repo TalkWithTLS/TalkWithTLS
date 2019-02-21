@@ -16,6 +16,8 @@
 #define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 
+int g_conf_tlsver;
+
 int g_kexch_groups[] = {
     //NID_X9_62_prime256v1,   /* secp256r1 */
     //NID_secp384r1,          /* secp384r1 */
@@ -23,6 +25,20 @@ int g_kexch_groups[] = {
     //NID_X25519,             /* x25519 */
     NID_X448                /* x448 */
 };
+
+void update_ver(SSL_CTX *ctx)
+{
+    switch(g_conf_tlsver) {
+        case 13:
+            printf("Enabled TLS1.3\n");
+            /* By default TLS1.3 is enabled */
+            break;
+        case 12:
+            printf("Enabled TLS1.2\n");
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
+            break;
+    }
+}
 
 SSL_CTX *create_context()
 {
@@ -35,6 +51,8 @@ SSL_CTX *create_context()
     }
 
     printf("SSL context created\n");
+
+    update_ver(ctx);
 
     if (SSL_CTX_use_certificate_file(ctx, SERVER_CERT_FILE, SSL_FILETYPE_PEM) != 1) {
         printf("Load Server cert %s failed\n", SERVER_CERT_FILE);
@@ -150,6 +168,7 @@ int tls13_server(int con_count)
             goto err_handler;
         }
         printf("Data transfer over TLS succeeded\n\n");
+        SSL_shutdown(ssl);
         SSL_free(ssl);
         ssl = NULL;
         close(fd);
@@ -169,8 +188,11 @@ err_handler:
     return -1;
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc > 1) {
+        g_conf_tlsver = atoi(argv[1]);
+    }
     printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION), OpenSSL_version(OPENSSL_BUILT_ON));
     if (tls13_server(2)) {
         printf("TLS12 server connection failed\n");
