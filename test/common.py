@@ -3,20 +3,9 @@
 import subprocess
 import os
 
+from log import *
+
 bin_dir='./bin'
-log_dir='./log'
-
-default_log_filename = log_dir + '/log.txt'
-log_filename = default_log_filename
-
-def TWT_set_log_filename(filename):
-    global log_filename
-    log_filename = log_dir + '/' + filename + '.txt'
-
-def TWT_LOG(log_filename, str):
-    fd = open(log_filename, 'a')
-    fd.write(str)
-    fd.close()
 
 def log_std_out_and_err(exe, out, err):
     TWT_LOG(log_filename, exe + '\n')
