@@ -95,7 +95,7 @@ OPENSSL_1_1_1_LIBS=$(OPENSSL_1_1_1_DIR)/libssl.a
 WOLFSSL_MASTER=wolfssl-master
 WOLFSSL_DIR=$(DEPENDENCY_DIR)/$(WOLFSSL_MASTER)
 WOLFSSL_LIBS=$(WOLFSSL_DIR)/src/.libs/libwolfssl.so
-DEPENDENCY = $(OPENSSL_1_1_1_LIBS)
+DEPENDENCY = $(OPENSSL_1_1_1_LIBS) $(WOLFSSL_LIBS)
 
 CFLAGS = -g -ggdb -Wall -I $(COMMON_SRC)
 OPENSSL_CFLAGS = -Werror $(CFLAGS) -I $(OPENSSL_1_1_1_DIR)/include
@@ -137,6 +137,13 @@ $(OPENSSL_1_1_1_LIBS): $(OPENSSL_1_1_1_DIR).tar.gz
 	cd $(DEPENDENCY_DIR) && tar -zxvf $(OPENSSL_1_1_1).tar.gz
 	cd $(OPENSSL_1_1_1_DIR) && ./config -d
 	cd $(OPENSSL_1_1_1_DIR) && make
+
+WOLFSSL_CONF_ARGS=--enable-tls13 --enable-harden --enable-debug
+
+$(WOLFSSL_LIBS): $(WOLFSSL_DIR)
+	cd $(WOLFSSL_DIR) && autoreconf -i
+	cd $(WOLFSSL_DIR) && ./configure $(WOLFSSL_CONF_ARGS)
+	cd $(WOLFSSL_DIR) && make
 
 init_task:
 	@mkdir -p $(BIN_DIR)
