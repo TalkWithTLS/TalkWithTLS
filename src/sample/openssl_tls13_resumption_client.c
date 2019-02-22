@@ -274,5 +274,7 @@ int main(int argc, char *argv[])
     printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION), OpenSSL_version(OPENSSL_BUILT_ON));
     if (tls13_client(2)) {
         printf("TLS12 client connection failed\n");
+        return -1;
     }
+    return 0;
 }
