@@ -111,7 +111,7 @@ RM = rm
 #.PHONY all init_task clean
 
 #TODO Add build for wolfssl
-all : init_task build_dependency $(TARGET)
+all : init_task $(TARGET)
 
 $(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -145,7 +145,7 @@ $(WOLFSSL_LIBS): $(WOLFSSL_DIR)
 	cd $(WOLFSSL_DIR) && ./configure $(WOLFSSL_CONF_ARGS)
 	cd $(WOLFSSL_DIR) && make
 
-init_task:
+init_task: build_dependency
 	@mkdir -p $(BIN_DIR)
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(OBJ_DIR)/$(COMMON_SRC)
