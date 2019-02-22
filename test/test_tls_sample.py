@@ -76,7 +76,7 @@ def test_tls12_sample_code():
 
 t13_testcases = [
                     ['openssl_tls13_server', 'openssl_tls13_client'],
-                    ['openssl_tls13_dhe_server', 'openssl_tls13_dhe_client'],
+                    #['openssl_tls13_dhe_server', 'openssl_tls13_dhe_client'],
                     ['wolfssl_tls13_server', 'wolfssl_tls13_client']
                 ]
 
