@@ -100,7 +100,7 @@ DEPENDENCY = $(OPENSSL_1_1_1_LIBS)
 CFLAGS = -g -ggdb -Wall -I $(COMMON_SRC)
 OPENSSL_CFLAGS = -Werror $(CFLAGS) -I $(OPENSSL_1_1_1_DIR)/include
 #TODO(wolfSSL) Need to remove this macro definition it should come from config.h file
-WOLFSSL_CFLAGS = $(CFLAGS) -DWOLFSSL_TLS13 -DHAVE_SUPPORTED_CURVES -I $(WOLFSSL_DIR)
+WOLFSSL_CFLAGS = $(CFLAGS) -I $(WOLFSSL_DIR)
 LDFLAGS = $(OPENSSL_1_1_1_DIR)/libssl.a $(OPENSSL_1_1_1_DIR)/libcrypto.a -lpthread -ldl
 WOLFSSL_LDFLAGS = -L $(BIN_DIR) -lwolfssl
 

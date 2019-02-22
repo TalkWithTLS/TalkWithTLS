@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "wolfssl/options.h"
+#include "wolfssl/wolfcrypt/settings.h"
 #include "wolfssl/ssl.h"
 
 #include "test_common.h"
