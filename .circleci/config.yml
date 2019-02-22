@@ -12,8 +12,12 @@ jobs:
                 name: Build_All
                 command: make
             - run:
+                command: |
+                    sudo pip install pipenv
+                    pipenv install pytest
+            - run:
                 name: Run_Test
-                command: ./run_test.sh
+                command: pipenv run ./run_test.sh
 workflows:
     version: 2
     Run_TalkWithTLS:
