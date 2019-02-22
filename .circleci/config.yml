@@ -1,6 +1,6 @@
 version: 2
 jobs:
-    git_clone_all:
+    build_and_test:
         machine:
             enabled: true
         steps:
@@ -8,27 +8,15 @@ jobs:
             - run:
                 name: Get_Submodules
                 command: git submodule init && git submodule update
-    build:
-        machine:
-            enabled: true
-        steps:
             - run:
                 name: Build_All
                 command: make
-    test:
-        machine:
-            enabled: true
-        steps:
             - run:
                 name: Run_Test
                 command: ./run_test.sh
 workflows:
     version: 2
-    git_clone:
+    Run_TalkWithTLS:
         jobs:
-            - git_clone_all
-    build_and_test:
-        jobs:
-            - build
-            - test
+            - build_and_test
 
