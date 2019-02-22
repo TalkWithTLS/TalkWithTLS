@@ -97,9 +97,8 @@ WOLFSSL_DIR=$(DEPENDENCY_DIR)/$(WOLFSSL_MASTER)
 WOLFSSL_LIBS=$(WOLFSSL_DIR)/src/.libs/libwolfssl.so
 DEPENDENCY = $(OPENSSL_1_1_1_LIBS) $(WOLFSSL_LIBS)
 
-CFLAGS = -g -ggdb -Wall -I $(COMMON_SRC)
-OPENSSL_CFLAGS = -Werror $(CFLAGS) -I $(OPENSSL_1_1_1_DIR)/include
-#TODO(wolfSSL) Need to remove this macro definition it should come from config.h file
+CFLAGS = -g -ggdb -Wall -Werror -I $(COMMON_SRC)
+OPENSSL_CFLAGS = $(CFLAGS) -I $(OPENSSL_1_1_1_DIR)/include
 WOLFSSL_CFLAGS = $(CFLAGS) -I $(WOLFSSL_DIR)
 LDFLAGS = $(OPENSSL_1_1_1_DIR)/libssl.a $(OPENSSL_1_1_1_DIR)/libcrypto.a -lpthread -ldl
 WOLFSSL_LDFLAGS = -L $(BIN_DIR) -lwolfssl
@@ -110,7 +109,6 @@ RM = rm
 
 #.PHONY all init_task clean
 
-#TODO Add build for wolfssl
 all : init_task $(TARGET)
 
 $(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c
@@ -128,22 +126,24 @@ $(OBJ_DIR)/$(TEST_TLS13_SRC)/$(OPENSSL)%.o:$(TEST_TLS13_SRC)/$(OPENSSL)%.c
 $(OBJ_DIR)/$(TEST_TLS13_SRC)/$(WOLFSSL)%.o:$(TEST_TLS13_SRC)/$(WOLFSSL)%.c
 	$(CC) $(WOLFSSL_CFLAGS) -c $< -o $@
 
-#$(OBJ_DIR)/%.o:%.c
-#	$(CC) $(OPENSSL_CFLAGS) -c $< -o $@
-
 build_dependency:$(DEPENDENCY)
 
+#TODO Add build for OpenSSL-master
+#TODO Generate exes from different openssl version
+
 $(OPENSSL_1_1_1_LIBS): $(OPENSSL_1_1_1_DIR).tar.gz
-	cd $(DEPENDENCY_DIR) && tar -zxvf $(OPENSSL_1_1_1).tar.gz
-	cd $(OPENSSL_1_1_1_DIR) && ./config -d
-	cd $(OPENSSL_1_1_1_DIR) && make
+	@echo "Building $(OPENSSL_1_1_1_DIR)..."
+	@cd $(DEPENDENCY_DIR) && tar -zxvf $(OPENSSL_1_1_1).tar.gz > /dev/null
+	@cd $(OPENSSL_1_1_1_DIR) && ./config -d > /dev/null
+	@cd $(OPENSSL_1_1_1_DIR) && make > /dev/null
 
 WOLFSSL_CONF_ARGS=--enable-tls13 --enable-harden --enable-debug
 
 $(WOLFSSL_LIBS): $(WOLFSSL_DIR)
-	cd $(WOLFSSL_DIR) && autoreconf -i
-	cd $(WOLFSSL_DIR) && ./configure $(WOLFSSL_CONF_ARGS)
-	cd $(WOLFSSL_DIR) && make
+	@echo "Building $(WOLFSSL_DIR)..."
+	@cd $(WOLFSSL_DIR) && autoreconf -i > /dev/null
+	@cd $(WOLFSSL_DIR) && ./configure $(WOLFSSL_CONF_ARGS) > /dev/null
+	@cd $(WOLFSSL_DIR) && make
 
 init_task: build_dependency
 	@mkdir -p $(BIN_DIR)
