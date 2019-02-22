@@ -167,6 +167,8 @@ int main()
     printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION), OpenSSL_version(OPENSSL_BUILT_ON));
     if (tls12_server()) {
         printf("TLS12 server connection failed\n");
+        return -1;
     }
+    return 0;
 }
 
