@@ -11,7 +11,8 @@ def TWT_set_log_filename(filename):
     global log_filename
     log_filename = log_dir + '/' + filename + '.txt'
 
-def TWT_LOG(log_filename, str):
+def TWT_LOG(str):
+    global log_filename
     fd = open(log_filename, 'a')
     fd.write(str)
     fd.close()

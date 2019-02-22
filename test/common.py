@@ -8,13 +8,13 @@ from log import *
 bin_dir='./bin'
 
 def log_std_out_and_err(exe, out, err):
-    TWT_LOG(log_filename, exe + '\n')
-    TWT_LOG(log_filename, '-----------------------------------------------\n')
+    TWT_LOG(exe + '\n')
+    TWT_LOG('-----------------------------------------------\n')
     if out != None:
-        TWT_LOG(log_filename, str(out) + '\n')
+        TWT_LOG(str(out) + '\n')
     if err != None:
-        TWT_LOG(log_filename, '-----------------------------------------------\n')
-        TWT_LOG(log_filename, str(err) + '\n')
+        TWT_LOG('-----------------------------------------------\n')
+        TWT_LOG(str(err) + '\n')
 
 def log_procs(proc1, proc2):
     (out, err) = proc1.communicate()
@@ -23,22 +23,22 @@ def log_procs(proc1, proc2):
     log_std_out_and_err('Client', out, err)
 
 def log_tc(apps):
-    TWT_LOG(log_filename, '===============================================\n')
-    TWT_LOG(log_filename, 'Running ' + apps[0]  + ' vs ' + apps[1] + ' ...\n')
-    TWT_LOG(log_filename, '===============================================\n')
+    TWT_LOG('===============================================\n')
+    TWT_LOG('Running ' + apps[0]  + ' vs ' + apps[1] + ' ...\n')
+    TWT_LOG('===============================================\n')
 
 def validate_tc_result(ret1, ret2):
     if ret1 != 0 or ret2 != 0:
-        TWT_LOG(log_filename, '###FAILED !!!!\n\n')
+        TWT_LOG('###FAILED !!!!\n\n')
         result = -1
     else:
-        TWT_LOG(log_filename, '###Succeeded\n\n')
+        TWT_LOG('###Succeeded\n\n')
         result = 0
     return result
 
 def validate_app(app):
     if not os.path.isfile(bin_dir + '/' + app):
-        TWT_LOG(log_filename, 'Test Apps [' + bin_dir + '/' + app + '] not found !!!\n')
+        TWT_LOG('Test Apps [' + bin_dir + '/' + app + '] not found !!!\n')
         return -1
     return 0
 
