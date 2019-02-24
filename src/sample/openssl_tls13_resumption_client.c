@@ -19,9 +19,9 @@
 #define SERVER_PORT 7788
 
 int g_kexch_groups[] = {
+    NID_secp521r1,          /* secp521r1 */
     NID_X9_62_prime256v1,   /* secp256r1 */
     NID_secp384r1,          /* secp384r1 */
-    NID_secp521r1,          /* secp521r1 */
     NID_X25519,             /* x25519 */
     NID_X448                /* x448 */
 };
@@ -182,6 +182,7 @@ int validate_sess_resumption(SSL *ssl, int *check_sess_reused)
             printf("SSL session not reused\n");
             return -1;
         }
+        printf("SSL session resumption succeeded\n");
         *check_sess_reused = 0;
     }
     return 0;

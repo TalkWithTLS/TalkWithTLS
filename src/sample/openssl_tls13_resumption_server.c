@@ -19,10 +19,10 @@
 int g_conf_tlsver;
 
 int g_kexch_groups[] = {
-    //NID_X9_62_prime256v1,   /* secp256r1 */
-    //NID_secp384r1,          /* secp384r1 */
     NID_secp521r1,          /* secp521r1 */
-    //NID_X25519,             /* x25519 */
+    NID_X9_62_prime256v1,   /* secp256r1 */
+    NID_secp384r1,          /* secp384r1 */
+    NID_X25519,             /* x25519 */
     NID_X448                /* x448 */
 };
 
