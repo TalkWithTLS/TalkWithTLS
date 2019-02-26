@@ -13,6 +13,7 @@ def tc_setup():
 
 @pytest.mark.parametrize("t12_apps", [
     (['openssl_tls12_server', 'openssl_tls12_client']),
+    (['openssl_tls12_server', 'openssl_nb_client']),
     (['openssl_tls12_verify_cb_server', 'openssl_tls12_verify_cb_client']),
 ])
 
