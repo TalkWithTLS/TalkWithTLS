@@ -10,6 +10,44 @@
 
 #include "test_common.h"
 
+int create_udp_sock()
+{
+    int fd;
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd < 0) {
+        printf("socket creation failed, errno%d\n", errno);
+        return -1;
+    }
+    return fd;
+}
+
+int create_udp_serv_sock(const char *server_ip, uint16_t port)
+{
+    struct sockaddr_in serv_addr;
+    int fd;
+    fd = create_udp_sock();
+    if (fd < 0) {
+        printf("socket creation failed\n");
+        return -1;
+    }
+
+    serv_addr.sin_family = AF_INET;
+    if (inet_aton(server_ip, &serv_addr.sin_addr) == 0) {
+        printf("inet_aton failed\n");
+        goto err_handler;
+    }
+    serv_addr.sin_port = htons(port);
+
+    if (bind(fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) {
+        printf("bind failed, errno=%d\n", errno);
+        goto err_handler;
+    }
+    return fd;
+err_handler:
+    close(fd);
+    return -1;
+}
+
 int do_tcp_connection(const char *server_ip, uint16_t port)
 {
     struct sockaddr_in serv_addr;

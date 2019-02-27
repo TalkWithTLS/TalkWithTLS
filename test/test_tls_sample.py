@@ -20,6 +20,13 @@ def tc_setup():
 def test_tls12_sample_code(tc_setup, t12_apps):
     run_serv_clnt_app(t12_apps) == 0
 
+@pytest.mark.parametrize("d12_apps", [
+    (['openssl_dtls12_server', 'openssl_dtls12_client']),
+])
+
+def test_dtls12_sample_code(tc_setup, d12_apps):
+    run_serv_clnt_app(d12_apps) == 0
+
 @pytest.mark.parametrize("t13_apps", [
     (['openssl_tls13_server', 'openssl_tls13_client']),
     #(['openssl_tls13_dhe_server', 'openssl_tls13_dhe_client']),

@@ -23,7 +23,11 @@ extern "C" {
 #define TCP_CON_RETRY_COUNT 20
 #define TCP_CON_RETRY_WAIT_TIME_MS 200
 
-#define TLS_SOCK_TIMEOUT_MS 2000
+#define TLS_SOCK_TIMEOUT_MS 8000
+
+int create_udp_sock();
+
+int create_udp_serv_sock(const char *server_ip, uint16_t port);
 
 int do_tcp_connection(const char *server_ip, uint16_t port);
 
