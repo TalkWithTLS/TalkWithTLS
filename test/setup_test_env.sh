@@ -1,11 +1,12 @@
 #!/bin/bash
 
 BIN_DIR=bin
-LOG_DIR=log
+REPORT_DIR=report
+LOG_DIR=report/log
 
 export LD_LIBRARY_PATH=${BIN_DIR}:$LD_LIBRARY_PATH
 
-if [ -d ${LOG_DIR} ]; then
-    rm -rf ${LOG_DIR}
+if [ -d ${REPORT_DIR} ]; then
+    rm -rf ${REPORT_DIR}
 fi
 mkdir -p ${LOG_DIR}

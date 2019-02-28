@@ -2,7 +2,8 @@
 
 import os
 
-log_dir='./log'
+report_dir='./report'
+log_dir=report_dir + '/log'
 
 default_log_filename = log_dir + '/log.txt'
 log_filename = default_log_filename

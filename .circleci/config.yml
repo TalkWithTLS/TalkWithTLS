@@ -15,6 +15,7 @@ jobs:
                 command: |
                     sudo pip install pipenv
                     pipenv install pytest
+                    pipenv install pytest-html
             - run:
                 name: Run_Test
                 command: pipenv run ./run_test.sh

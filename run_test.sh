@@ -13,5 +13,5 @@ test_suites=('test_tls_sample.py')
 for ts in "${test_suites[@]}"
 do
     echo "Testing ${ts}...."
-    python -m pytest ${TEST_DIR}/${ts} -v
+    python -m pytest ${TEST_DIR}/${ts} -v --html=${REPORT_DIR}/TalkWithTLS.html
 done
