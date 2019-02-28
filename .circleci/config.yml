@@ -19,6 +19,8 @@ jobs:
             - run:
                 name: Run_Test
                 command: pipenv run ./run_test.sh
+            - store_artifacts:
+                path: ./report
 workflows:
     version: 2
     Run_TalkWithTLS:
