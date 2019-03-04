@@ -15,8 +15,6 @@
 #include "test_common.h"
 
 #define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 7788
 
 int g_kexch_groups[] = {
     NID_secp521r1,          /* secp521r1 */
