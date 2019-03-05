@@ -13,6 +13,8 @@
 
 #include "test_common.h"
 
+BIO_METHOD *g_bio_meth = NULL;
+
 SSL_CTX *create_context()
 {
     SSL_CTX *ctx;
@@ -76,6 +78,7 @@ BIO *get_custom_bio(int fd)
 
     BIO_set_fd(bio, fd, BIO_NOCLOSE);
     printf("Created Custom BIO\n");
+    g_bio_meth = bmethod;
     return bio;
 err:
     if (bmethod) {
@@ -196,11 +199,27 @@ int do_data_transfer(SSL *ssl)
     return 0;
 }
 
+void do_cleanup(SSL_CTX *ctx, SSL *ssl)
+{
+    int fd;
+    if (ssl) {
+        fd = SSL_get_fd(ssl);
+        close(fd);
+        SSL_free(ssl);
+    }
+    if (ctx) {
+        SSL_CTX_free(ctx);
+    }
+    if (g_bio_meth) {
+        BIO_meth_free(g_bio_meth);
+    }
+}
+
 int dtls12_client()
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
-    int fd;
+    int ret_val = -1;
     int ret;
 
     ctx = create_context();
@@ -212,8 +231,6 @@ int dtls12_client()
     if (!ssl) {
         goto err_handler;
     }
-
-    fd = SSL_get_fd(ssl);
 
     ret = SSL_connect(ssl); 
     if (ret != 1) {
@@ -228,18 +245,10 @@ int dtls12_client()
     }
     printf("Data transfer over DTLS succeeded\n");
     SSL_shutdown(ssl);
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
-    close(fd);
-
-    return 0;
+    ret_val = 0;
 err_handler:
-    if (ssl) {
-        SSL_free(ssl);
-    }
-    SSL_CTX_free(ctx);
-    close(fd);
-    return -1;
+    do_cleanup(ctx, ssl);
+    return ret_val;
 }
 
 int main()
