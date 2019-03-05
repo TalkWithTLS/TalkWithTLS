@@ -8,10 +8,4 @@ if [ ! -f ${ENV_SETUP_SCRIPT} ]; then
 fi
 . "${ENV_SETUP_SCRIPT}"
 
-test_suites=('test_tls_sample.py')
-
-for ts in "${test_suites[@]}"
-do
-    echo "Testing ${ts}...."
-    python -m pytest ${TEST_DIR}/${ts} -v --html=${REPORT_DIR}/TalkWithTLS.html
-done
+python -m pytest ${TEST_DIR} -v --html=${REPORT_DIR}/TalkWithTLS.html
