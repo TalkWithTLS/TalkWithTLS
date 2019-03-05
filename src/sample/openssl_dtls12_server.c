@@ -17,6 +17,74 @@
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 #define EC_CURVE_NAME NID_X9_62_prime256v1
 
+/* 
+ * Cookie key is needed to generate strongly and regenerate periodically.
+ * For example regenerate every 8 hours
+ */
+char g_cookie_key[] = "1111222233334444";
+
+/*
+ * Generate cookie by below step
+ * 1) Generate hash of peer info (Here peer sock addr is used, any more 
+ * information also can be added).
+ * 2) Encrypt with a cookie key.
+ * 3) Need to periodically regenerate the cookie key
+ */
+int dtls_cookie_generate_cb(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
+{
+    BIO_ADDR *peer_addr = NULL;
+    int ret_val = 0;
+    BIO *bio;
+    uint8_t digest[SHA256_DIGEST_LENGTH] = {0};
+    uint32_t digest_len = sizeof(digest);
+
+    peer_addr = BIO_ADDR_new();
+    if (peer_addr == NULL) {
+        printf("BIO ADDR new failed\n");
+        goto err;
+    }
+    bio = SSL_get_rbio(ssl);
+    if (bio == NULL) {
+        printf("Get bio failed\n");
+        goto err;
+    }
+    if (BIO_ctrl(bio, BIO_CTRL_DGRAM_GET_PEER, sizeof(struct sockaddr_in), peer_addr)
+            != sizeof(struct sockaddr_in)) {
+        printf("BIO get peer failed\n");
+        goto err;
+    }
+    if (!EVP_Digest(peer_addr, sizeof(struct sockaddr_in), digest, &digest_len, EVP_sha256(), NULL)) {
+        printf("Digest gen failed\n");
+        goto err;
+    }
+    memcpy(cookie, "abcd", strlen("abcd"));
+    *cookie_len = strlen("abcd");
+    printf("Generated cookie\n");
+    ret_val = 1;
+err:
+    if (peer_addr) {
+        BIO_ADDR_free(peer_addr);
+    }
+    return ret_val;
+}
+
+int dtls_cookie_verify_cb(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len)
+{
+    if (memcmp(cookie, "abcd", strlen("abcd"))) {
+        printf("Cookie not valid\n");
+        return 0;
+    }
+    printf("Cookie is valid\n");
+    return 1;
+}
+
+void do_cookie_conf_in_context(SSL_CTX *ctx)
+{
+    SSL_CTX_set_options(ctx, SSL_OP_COOKIE_EXCHANGE);
+    SSL_CTX_set_cookie_generate_cb(ctx, dtls_cookie_generate_cb);
+    SSL_CTX_set_cookie_verify_cb(ctx, dtls_cookie_verify_cb);
+}
+
 SSL_CTX *create_context()
 {
     SSL_CTX *ctx;
@@ -43,9 +111,9 @@ SSL_CTX *create_context()
 
     printf("Loaded server key %s on context\n", SERVER_KEY_FILE);
 
-    SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
-    printf("SSL context configurations completed\n");
 
+    do_cookie_conf_in_context(ctx);
+    printf("SSL context configurations completed\n");
     return ctx;
 err_handler:
     SSL_CTX_free(ctx);

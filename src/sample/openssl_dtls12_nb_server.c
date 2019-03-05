@@ -43,7 +43,6 @@ SSL_CTX *create_context()
 
     printf("Loaded server key %s on context\n", SERVER_KEY_FILE);
 
-    SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_3);
     printf("SSL context configurations completed\n");
 
     return ctx;
