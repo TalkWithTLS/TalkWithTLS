@@ -147,12 +147,24 @@ int do_data_transfer(SSL *ssl)
     return 0;
 }
 
+void do_cleanup(SSL_CTX *ctx, SSL *ssl)
+{
+    int fd;
+    if (ssl) {
+        fd = SSL_get_fd(ssl);
+        close(fd);
+        SSL_free(ssl);
+    }
+    if (ctx) {
+        SSL_CTX_free(ctx);
+    }
+}
+
 int tls12_server()
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
-    int fd = -1;
     int ret;
 
     ctx = create_context();
@@ -164,8 +176,6 @@ int tls12_server()
     if (!ssl) {
         goto err_handler;
     }
-
-    fd = SSL_get_fd(ssl);
 
     ret = SSL_accept(ssl); 
     if (ret != 1) {
@@ -183,11 +193,7 @@ int tls12_server()
     SSL_shutdown(ssl);
     ret_val = 0;
 err_handler:
-    if (ssl) {
-        SSL_free(ssl);
-    }
-    SSL_CTX_free(ctx);
-    close(fd);
+    do_cleanup(ctx, ssl);
     return ret_val;
 }
 

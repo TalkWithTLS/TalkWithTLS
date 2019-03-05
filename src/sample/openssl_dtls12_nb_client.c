@@ -282,11 +282,24 @@ int do_data_transfer(SSL *ssl)
     return 0;
 }
 
+void do_cleanup(SSL_CTX *ctx, SSL *ssl)
+{
+    int fd;
+    if (ssl) {
+        fd = SSL_get_fd(ssl);
+        close(fd);
+        SSL_free(ssl);
+    }
+    if (ctx) {
+        SSL_CTX_free(ctx);
+    }
+}
+
 int dtls12_client()
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
-    int fd;
+    int ret_val = -1;
 
     ctx = create_context();
     if (!ctx) {
@@ -297,8 +310,6 @@ int dtls12_client()
     if (!ssl) {
         goto err_handler;
     }
-
-    fd = SSL_get_fd(ssl);
 
     if (do_dtls_connect(ssl)) {
         printf("DTLS connect failed\n");
@@ -311,18 +322,10 @@ int dtls12_client()
     }
     printf("Data transfer over DTLS succeeded\n");
     SSL_shutdown(ssl);
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
-    close(fd);
-
-    return 0;
+    ret_val = 0;
 err_handler:
-    if (ssl) {
-        SSL_free(ssl);
-    }
-    SSL_CTX_free(ctx);
-    close(fd);
-    return -1;
+    do_cleanup(ctx, ssl);
+    return ret_val;
 }
 
 int main()
