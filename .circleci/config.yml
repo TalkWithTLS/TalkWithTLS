@@ -10,7 +10,7 @@ jobs:
                 command: git submodule init && git submodule update
             - run:
                 name: Build_All
-                command: make
+                command: make LEAKSAN=1
             - run:
                 command: |
                     sudo pip install pipenv

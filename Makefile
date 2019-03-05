@@ -129,11 +129,15 @@ WOLFSSL_DIR=$(DEPENDENCY_DIR)/$(WOLFSSL_MASTER)
 WOLFSSL_LIBS=$(WOLFSSL_DIR)/src/.libs/libwolfssl.so
 DEPENDENCY = $(OPENSSL_1_1_1_LIBS) $(WOLFSSL_LIBS)
 
-CFLAGS = -g -ggdb -Wall -Werror -I $(COMMON_SRC)
+ifeq ($(LEAKSAN),1)
+	SANFLAGS = -fsanitize=leak
+endif
+
+CFLAGS = -g -ggdb -Wall -Werror $(SANFLAGS) -I $(COMMON_SRC)
 OPENSSL_CFLAGS = $(CFLAGS) -I $(OPENSSL_1_1_1_DIR)/include
 WOLFSSL_CFLAGS = $(CFLAGS) -I $(WOLFSSL_DIR)
-LDFLAGS = $(OPENSSL_1_1_1_DIR)/libssl.a $(OPENSSL_1_1_1_DIR)/libcrypto.a -lpthread -ldl
-WOLFSSL_LDFLAGS = -L $(BIN_DIR) -lwolfssl
+LDFLAGS = $(OPENSSL_1_1_1_DIR)/libssl.a $(OPENSSL_1_1_1_DIR)/libcrypto.a -lpthread -ldl $(SANFLAGS)
+WOLFSSL_LDFLAGS = -L $(BIN_DIR) -lwolfssl $(SANFLAGS)
 
 CC = gcc
 CP = cp
