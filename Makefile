@@ -129,6 +129,9 @@ WOLFSSL_DIR=$(DEPENDENCY_DIR)/$(WOLFSSL_MASTER)
 WOLFSSL_LIBS=$(WOLFSSL_DIR)/src/.libs/libwolfssl.so
 DEPENDENCY = $(OPENSSL_1_1_1_LIBS) $(WOLFSSL_LIBS)
 
+ifeq ($(ADDRSAN),1)
+	SANFLAGS = -fsanitize=address
+endif
 ifeq ($(LEAKSAN),1)
 	SANFLAGS = -fsanitize=leak
 endif
