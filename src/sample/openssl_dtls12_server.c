@@ -23,20 +23,19 @@
  */
 char g_cookie_key[] = "1111222233334444";
 
+#define MAX_DTLS_COOKIE_LEN 256
+
 /*
  * Generate cookie by below step
- * 1) Generate hash of peer info (Here peer sock addr is used, any more 
+ * 1) Generate hmac of peer info (Here peer sock addr is used, any more 
  * information also can be added).
- * 2) Encrypt with a cookie key.
- * 3) Need to periodically regenerate the cookie key
+ * 2) Need to periodically regenerate the cookie key
  */
-int dtls_cookie_generate_cb(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
+int dtls_cookie_generate(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
 {
     BIO_ADDR *peer_addr = NULL;
-    int ret_val = 0;
+    int ret_val = -1;
     BIO *bio;
-    uint8_t digest[SHA256_DIGEST_LENGTH] = {0};
-    uint32_t digest_len = sizeof(digest);
 
     peer_addr = BIO_ADDR_new();
     if (peer_addr == NULL) {
@@ -53,14 +52,15 @@ int dtls_cookie_generate_cb(SSL *ssl, unsigned char *cookie, unsigned int *cooki
         printf("BIO get peer failed\n");
         goto err;
     }
-    if (!EVP_Digest(peer_addr, sizeof(struct sockaddr_in), digest, &digest_len, EVP_sha256(), NULL)) {
-        printf("Digest gen failed\n");
+
+    if (!HMAC(EVP_sha256(), g_cookie_key, strlen(g_cookie_key),
+                (unsigned char *)peer_addr, sizeof(struct sockaddr_in),
+                cookie, cookie_len))
+    {
+        printf("HMAC for cookie gen failed\n");
         goto err;
     }
-    memcpy(cookie, "abcd", strlen("abcd"));
-    *cookie_len = strlen("abcd");
-    printf("Generated cookie\n");
-    ret_val = 1;
+    ret_val = 0;
 err:
     if (peer_addr) {
         BIO_ADDR_free(peer_addr);
@@ -68,9 +68,25 @@ err:
     return ret_val;
 }
 
+int dtls_cookie_generate_cb(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
+{
+    if (dtls_cookie_generate(ssl, cookie, cookie_len)) {
+        printf("Generate cookie failed\n");
+        return 0;
+    }
+    printf("Generated cookie\n");
+    return 1;
+}
+
 int dtls_cookie_verify_cb(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len)
 {
-    if (memcmp(cookie, "abcd", strlen("abcd"))) {
+    uint8_t out[MAX_DTLS_COOKIE_LEN] = {0};
+    uint32_t out_len = sizeof(out);
+    if (dtls_cookie_generate(ssl, out, &out_len)) {
+        printf("Generate cookie failed\n");
+        return 0;
+    }
+    if ((cookie_len != out_len) || (memcmp(cookie, out, out_len))) {
         printf("Cookie not valid\n");
         return 0;
     }
