@@ -25,6 +25,8 @@ extern "C" {
 
 #define TLS_SOCK_TIMEOUT_MS 8000
 
+#define DTLS_MTU 1400
+
 int create_udp_sock();
 
 int create_udp_serv_sock(const char *server_ip, uint16_t port);

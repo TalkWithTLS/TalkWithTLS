@@ -76,6 +76,11 @@ BIO *get_custom_bio(int fd)
         goto err;
     }
 
+    if (BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_MTU, DTLS_MTU, NULL) != DTLS_MTU) {
+        printf("BIO set mtu failed\n");
+        goto err;
+    }
+
     BIO_set_fd(bio, fd, BIO_NOCLOSE);
     printf("Created Custom BIO\n");
     g_bio_meth = bmethod;
@@ -170,6 +175,11 @@ SSL *create_ssl_object(SSL_CTX *ctx)
         goto err;
     }
 
+    if (SSL_set_mtu(ssl, DTLS_MTU) != DTLS_MTU) {
+        printf("Setting MTU failed\n");
+        goto err;
+    }
+    SSL_set_options(ssl, SSL_OP_NO_QUERY_MTU);
     printf("SSL object creation finished\n");
 
     return ssl;

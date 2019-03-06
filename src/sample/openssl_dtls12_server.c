@@ -163,6 +163,11 @@ int update_dtls_server_bio(SSL *ssl, const char *serv_ip, uint16_t serv_port)
         goto err;
     }
 
+    if (BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_MTU, DTLS_MTU, NULL) != DTLS_MTU) {
+        printf("BIO set mtu failed\n");
+        goto err;
+    }
+
     SSL_set_bio(ssl, bio, bio);
     bio = NULL;
 
@@ -202,6 +207,11 @@ SSL *create_ssl_object(SSL_CTX *ctx, const char *serv_ip, uint16_t serv_port)
     EC_KEY_free(ecdh);
     ecdh = NULL;
 
+    if (SSL_set_mtu(ssl, DTLS_MTU) != DTLS_MTU) {
+        printf("Setting MTU failed\n");
+        goto err_handler;
+    }
+    SSL_set_options(ssl, SSL_OP_NO_QUERY_MTU);
     printf("SSL object creation finished\n");
 
     return ssl;
@@ -244,7 +254,7 @@ void do_cleanup(SSL_CTX *ctx, SSL *ssl)
     }
 }
 
-int tls12_server()
+int dtls12_server()
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
@@ -284,8 +294,8 @@ err_handler:
 int main()
 {
     printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION), OpenSSL_version(OPENSSL_BUILT_ON));
-    if (tls12_server()) {
-        printf("TLS12 server connection failed\n");
+    if (dtls12_server()) {
+        printf("DTLS12 server connection failed\n");
         return -1;
     }
     return 0;
