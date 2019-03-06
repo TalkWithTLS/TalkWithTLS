@@ -162,30 +162,39 @@ err:
     return NULL;
 }
 
+int update_fds_for_ssl_failure(SSL *ssl, int ret, int fd, fd_set *readfds, fd_set *writefds)
+{
+    int err;
+    err = SSL_get_error(ssl, ret);
+    switch (err) {
+        case SSL_ERROR_WANT_READ:
+            printf("SSL want read occured\n");
+            FD_SET(fd, readfds);
+            break;
+        case SSL_ERROR_WANT_WRITE:
+            printf("SSL want write occured\n");
+            FD_SET(fd, writefds);
+            break;
+        default:
+            printf("SSL operation failed with err=%d\n", err);
+            return -1;
+    }
+    return 0;
+}
+
 int handle_handshake_failure(SSL *ssl, int ret)
 {
     fd_set readfds, writefds;
     struct timeval timeout = {0};
-    int err;
     int fd;
 
     fd = SSL_get_fd(ssl);
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
 
-    err = SSL_get_error(ssl, ret); 
-    switch (err) {
-        case SSL_ERROR_WANT_READ:
-            printf("SSL want read occured\n");
-            FD_SET(fd, &readfds);
-            break;
-        case SSL_ERROR_WANT_WRITE:
-            printf("SSL want write occured\n");
-            FD_SET(fd, &writefds);
-            break;
-        default:
-            printf("SSL connect failed with err%d\n", err);
-            return -1;
+    if (update_fds_for_ssl_failure(ssl, ret, fd, &readfds, &writefds)) {
+        printf("No need to wait on select for handshake failure\n");
+        return -1;
     }
     do {
         if (DTLSv1_get_timeout(ssl, &timeout) != 1) {
@@ -213,42 +222,31 @@ int do_dtls_connect(SSL *ssl)
         ret = SSL_connect(ssl); 
         if (ret == 1) {
             printf("DTLS connect succeeded\n");
-            return 0;
+            break;
         }
         printf("Check and going to wait for sock failure in DTLS connect\n");
         if (handle_handshake_failure(ssl, ret)) {
-            printf("SSL connect failed\n");
+            printf("DTLS connect failed\n");
             return -1;
         }
         printf("Continue DTLS connection\n");
     } while (1);
-    printf("DTLS connect succeeded\n");
+    return 0;
 }
 
 int handle_data_transfer_failure(SSL *ssl, int ret)
 {
     fd_set readfds, writefds;
     struct timeval timeout;
-    int err;
     int fd;
 
     fd = SSL_get_fd(ssl);
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
 
-    err = SSL_get_error(ssl, ret); 
-    switch (err) {
-        case SSL_ERROR_WANT_READ:
-            printf("SSL want read occured\n");
-            FD_SET(fd, &readfds);
-            break;
-        case SSL_ERROR_WANT_WRITE:
-            printf("SSL want write occured\n");
-            FD_SET(fd, &writefds);
-            break;
-        default:
-            printf("SSL connect failed with err%d\n", err);
-            return -1;
+    if (update_fds_for_ssl_failure(ssl, ret, fd, &readfds, &writefds)) {
+        printf("No need to wait on select for data transfer failure\n");
+        return -1;
     }
     timeout.tv_sec = TLS_SOCK_TIMEOUT_MS / 1000;
     timeout.tv_usec = (TLS_SOCK_TIMEOUT_MS % 1000) * 1000;

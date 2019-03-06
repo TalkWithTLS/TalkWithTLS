@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -16,6 +17,90 @@
 #define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 #define EC_CURVE_NAME NID_X9_62_prime256v1
+
+/*
+ * Cookie key is needed to generate strongly and regenerate periodically.
+ * For example regenerate every 8 hours
+ */
+char g_cookie_key[] = "1111222233334444";
+
+#define MAX_DTLS_COOKIE_LEN 256
+
+/*
+ * Generate cookie by below step
+ * 1) Generate hmac of peer info (Here peer sock addr is used, any more
+ * information also can be added).
+ * 2) Need to periodically regenerate the cookie key
+ */
+int dtls_cookie_generate(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
+{
+    BIO_ADDR *peer_addr = NULL;
+    int ret_val = -1;
+    BIO *bio;
+
+    peer_addr = BIO_ADDR_new();
+    if (peer_addr == NULL) {
+        printf("BIO ADDR new failed\n");
+        goto err;
+    }
+    bio = SSL_get_rbio(ssl);
+    if (bio == NULL) {
+        printf("Get bio failed\n");
+        goto err;
+    }
+    if (BIO_ctrl(bio, BIO_CTRL_DGRAM_GET_PEER, sizeof(struct sockaddr_in), peer_addr)
+            != sizeof(struct sockaddr_in)) {
+        printf("BIO get peer failed\n");
+        goto err;
+    }
+
+    if (!HMAC(EVP_sha256(), g_cookie_key, strlen(g_cookie_key),
+                (unsigned char *)peer_addr, sizeof(struct sockaddr_in),
+                cookie, cookie_len))
+    {
+        printf("HMAC for cookie gen failed\n");
+        goto err;
+    }
+    ret_val = 0;
+err:
+    if (peer_addr) {
+        BIO_ADDR_free(peer_addr);
+    }
+    return ret_val;
+}
+
+int dtls_cookie_generate_cb(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
+{
+    if (dtls_cookie_generate(ssl, cookie, cookie_len)) {
+        printf("Generate cookie failed\n");
+        return 0;
+    }
+    printf("Generated cookie\n");
+    return 1;
+}
+
+int dtls_cookie_verify_cb(SSL *ssl, const unsigned char *cookie, unsigned int cookie_len)
+{
+    uint8_t out[MAX_DTLS_COOKIE_LEN] = {0};
+    uint32_t out_len = sizeof(out);
+    if (dtls_cookie_generate(ssl, out, &out_len)) {
+        printf("Generate cookie failed\n");
+        return 0;
+    }
+    if ((cookie_len != out_len) || (memcmp(cookie, out, out_len))) {
+        printf("Cookie not valid\n");
+        return 0;
+    }
+    printf("Cookie is valid\n");
+    return 1;
+}
+
+void do_cookie_conf_in_context(SSL_CTX *ctx)
+{
+    SSL_CTX_set_options(ctx, SSL_OP_COOKIE_EXCHANGE);
+    SSL_CTX_set_cookie_generate_cb(ctx, dtls_cookie_generate_cb);
+    SSL_CTX_set_cookie_verify_cb(ctx, dtls_cookie_verify_cb);
+}
 
 SSL_CTX *create_context()
 {
@@ -43,12 +128,29 @@ SSL_CTX *create_context()
 
     printf("Loaded server key %s on context\n", SERVER_KEY_FILE);
 
-    printf("SSL context configurations completed\n");
 
+    do_cookie_conf_in_context(ctx);
+    printf("SSL context configurations completed\n");
     return ctx;
 err_handler:
     SSL_CTX_free(ctx);
     return NULL;
+}
+
+int enable_nonblock(int fd)
+{
+    int flags;
+    flags = fcntl(fd, F_GETFL, 0);
+    if (flags == -1) {
+        printf("Get flag failed for fcntl");
+        return -1;
+    }
+    flags |= O_NONBLOCK;
+    if (fcntl(fd, F_SETFL, flags) != 0) {
+        printf("Set nonblock flags on fcntl failed\n");
+        return -1;
+    }
+    return 0;
 }
 
 int update_dtls_server_bio(SSL *ssl, const char *serv_ip, uint16_t serv_port)
@@ -61,6 +163,12 @@ int update_dtls_server_bio(SSL *ssl, const char *serv_ip, uint16_t serv_port)
     fd = create_udp_serv_sock(serv_ip, serv_port);
     if (fd < 0) {
         printf("TCP connection establishment failed\n");
+        return -1;
+    }
+
+    if (enable_nonblock(fd)) {
+        printf("enable nb on sockfd failed\n");
+        close(fd);
         return -1;
     }
 
@@ -135,24 +243,177 @@ err_handler:
     return NULL;
 }
 
+int update_fds_for_ssl_failure(SSL *ssl, int ret, int fd, fd_set *readfds, fd_set *writefds)
+{
+    int err;
+    err = SSL_get_error(ssl, ret);
+    switch (err) {
+        case SSL_ERROR_WANT_READ:
+            printf("SSL want read occured\n");
+            FD_SET(fd, readfds);
+            break;
+        case SSL_ERROR_WANT_WRITE:
+            printf("SSL want write occured\n");
+            FD_SET(fd, writefds);
+            break;
+        default:
+            printf("SSL operation failed with err=%d\n", err);
+            return -1;
+    }
+    return 0;
+}
+
+int handle_data_transfer_failure(SSL *ssl, int ret)
+{
+    fd_set readfds, writefds;
+    struct timeval timeout;
+    int fd;
+
+    fd = SSL_get_fd(ssl);
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+
+    if (update_fds_for_ssl_failure(ssl, ret, fd, &readfds, &writefds)) {
+        printf("No need to wait on select for data transfer failure\n");
+        return -1;
+    }
+    timeout.tv_sec = TLS_SOCK_TIMEOUT_MS / 1000;
+    timeout.tv_usec = (TLS_SOCK_TIMEOUT_MS % 1000) * 1000;
+    if (select(fd + 1, &readfds, &writefds, NULL, &timeout) < 1) {
+        printf("select timed out, ret=%d\n", ret);
+        return -1;
+    }
+    return 0;
+}
+
 int do_data_transfer(SSL *ssl)
 {
     const char *msg = MSG_FOR_OPENSSL_SERV;
     char buf[MAX_BUF_SIZE] = {0};
     int ret;
-    ret = SSL_read(ssl, buf, sizeof(buf) - 1);
-    if (ret <= 0) {
-        printf("SSL_read failed ret=%d\n", ret);
-        return -1;
-    }
+    do {
+        ret = SSL_read(ssl, buf, sizeof(buf) - 1);
+        if (ret > 1) {
+            break;
+        }
+        printf("Check and going to wait for sock failure in DTLS read\n");
+        if (handle_data_transfer_failure(ssl, ret)) {
+            printf("DTLS read failed\n");
+            return -1;
+        }
+    } while(1);
     printf("SSL_read[%d] %s\n", ret, buf);
 
-    ret = SSL_write(ssl, msg, strlen(msg));
-    if (ret <= 0) {
-        printf("SSL_write failed ret=%d\n", ret);
+    do {
+        ret = SSL_write(ssl, msg, strlen(msg));
+        if (ret == strlen(msg)) {
+            break;
+        }
+        printf("Check and going to wait for sock failure in DTLS write\n");
+        if (handle_data_transfer_failure(ssl, ret)) {
+            printf("DTLS write failed\n");
+            return -1;
+        }
+    } while (1);
+    printf("SSL_write[%d] sent %s\n", ret, msg);
+    return 0;
+}
+
+int handle_handshake_failure(SSL *ssl, int ret)
+{
+    fd_set readfds, writefds;
+    struct timeval timeout = {0};
+    int fd;
+
+    fd = SSL_get_fd(ssl);
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+
+    if (update_fds_for_ssl_failure(ssl, ret, fd, &readfds, &writefds)) {
+        printf("No need to wait on select for handshake failure\n");
         return -1;
     }
-    printf("SSL_write[%d] sent %s\n", ret, msg);
+    do {
+        if (DTLSv1_get_timeout(ssl, &timeout) != 1) {
+            printf("DTLS get timeout failed\n");
+            return -1;
+        }
+        printf("DTLS handshake timeout is %ld sec, and %ld usec\n", timeout.tv_sec, timeout.tv_usec);
+        if (select(fd + 1, &readfds, &writefds, NULL, &timeout) > 0) {
+            printf("Select succeeds, time spent is %ld sec, and %ld usec\n", timeout.tv_sec, timeout.tv_usec);
+            return 0;
+        }
+        printf("Calling DTLS handle timeout as select timed out, ret=%d\n", ret);
+        if (DTLSv1_handle_timeout(ssl) != 1) {
+            printf("DTLS handle timeout failed\n");
+            return -1;
+        }
+    } while (1);
+    return 0;
+}
+
+int handle_listen_failure(SSL *ssl, int ret)
+{
+    fd_set readfds, writefds;
+    int fd;
+
+    fd = SSL_get_fd(ssl);
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+
+    /* SSL_get_error should not be called on DTLSv1_listen */
+    /* Instead retry should be done for return value of 0 */
+    if (ret != 0) {
+        return -1;
+    }
+    FD_SET(fd, &readfds);
+
+    /* Wait for some max timeout or wait indefinitely */
+    if (select(fd + 1, &readfds, &writefds, NULL, NULL) > 0) {
+        printf("Select succeeds\n");
+        return 0;
+    }
+    printf("select failed\n");
+    return -1;
+}
+
+int do_dtls_accept(SSL *ssl)
+{
+    BIO_ADDR *peer_addr;
+    int ret;
+
+    peer_addr = BIO_ADDR_new();
+    if (!peer_addr) {
+        printf("BIO ADDR new failed\n");
+        return -1;
+    }
+
+    do {
+        ret = DTLSv1_listen(ssl, peer_addr);
+        if (ret != 1) {
+            printf("Going to wait for incoming msg for doing DTLS listen\n");
+            if (handle_listen_failure(ssl, ret)) {
+                printf("DTLS listen failed\n");
+                BIO_ADDR_free(peer_addr);
+                return -1;
+            }
+        }
+    } while (ret != 1);
+    printf("DTLS listen finished\n");
+    BIO_ADDR_free(peer_addr);
+    do {
+        ret = SSL_accept(ssl);
+        if (ret == 1) {
+            printf("DTLS accept succeeded\n");
+            break;
+        }
+        printf("Check and going to wait for sock failure in DTLS accept\n");
+        if (handle_handshake_failure(ssl, ret)) {
+            printf("DTLS accept failed\n");
+            return -1;
+        }
+        printf("Continue DTLS connection\n");
+    } while (1);
     return 0;
 }
 
@@ -169,12 +430,11 @@ void do_cleanup(SSL_CTX *ctx, SSL *ssl)
     }
 }
 
-int tls12_server()
+int dtls12_server()
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
-    int ret;
 
     ctx = create_context();
     if (!ctx) {
@@ -186,9 +446,8 @@ int tls12_server()
         goto err_handler;
     }
 
-    ret = SSL_accept(ssl); 
-    if (ret != 1) {
-        printf("SSL accept failed%d\n", ret);
+    if (do_dtls_accept(ssl)) {
+        printf("SSL accept failed\n");
         goto err_handler;
     }
 
@@ -209,8 +468,8 @@ err_handler:
 int main()
 {
     printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION), OpenSSL_version(OPENSSL_BUILT_ON));
-    if (tls12_server()) {
-        printf("TLS12 server connection failed\n");
+    if (dtls12_server()) {
+        printf("DTLS12 server connection failed\n");
         return -1;
     }
     return 0;

@@ -17,7 +17,7 @@
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 #define EC_CURVE_NAME NID_X9_62_prime256v1
 
-/* 
+/*
  * Cookie key is needed to generate strongly and regenerate periodically.
  * For example regenerate every 8 hours
  */
@@ -27,7 +27,7 @@ char g_cookie_key[] = "1111222233334444";
 
 /*
  * Generate cookie by below step
- * 1) Generate hmac of peer info (Here peer sock addr is used, any more 
+ * 1) Generate hmac of peer info (Here peer sock addr is used, any more
  * information also can be added).
  * 2) Need to periodically regenerate the cookie key
  */
@@ -254,12 +254,39 @@ void do_cleanup(SSL_CTX *ctx, SSL *ssl)
     }
 }
 
+int do_dtls_accept(SSL *ssl)
+{
+    BIO_ADDR *peer_addr;
+    int ret;
+
+    peer_addr = BIO_ADDR_new();
+    if (!peer_addr) {
+        printf("BIO ADDR new failed\n");
+        return -1;
+    }
+
+    ret = DTLSv1_listen(ssl, peer_addr);
+    if (ret != 1) {
+        printf("DTLS listen failed %d\n", ret);
+        BIO_ADDR_free(peer_addr);
+        return -1;
+    }
+    printf("DTLS listen finished\n");
+    BIO_ADDR_free(peer_addr);
+    ret = SSL_accept(ssl);
+    if (ret != 1) {
+        printf("SSL accept failed%d\n", ret);
+        return -1;
+    }
+
+    return 0;
+}
+
 int dtls12_server()
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
-    int ret;
 
     ctx = create_context();
     if (!ctx) {
@@ -271,9 +298,8 @@ int dtls12_server()
         goto err_handler;
     }
 
-    ret = SSL_accept(ssl); 
-    if (ret != 1) {
-        printf("SSL accept failed%d\n", ret);
+    if (do_dtls_accept(ssl)) {
+        printf("SSL accept failed\n");
         goto err_handler;
     }
 
