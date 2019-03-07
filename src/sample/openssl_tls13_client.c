@@ -106,11 +106,24 @@ int do_data_transfer(SSL *ssl)
     return 0;
 }
 
+void do_cleanup(SSL_CTX *ctx, SSL *ssl)
+{
+    int fd;
+    if (ssl) {
+        fd = SSL_get_fd(ssl);
+        SSL_free(ssl);
+        close(fd);
+    }
+    if (ctx) {
+        SSL_CTX_free(ctx);
+    }
+}
+
 int tls13_client()
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
-    int fd;
+    int ret_val = -1;
     int ret;
 
     ctx = create_context();
@@ -122,8 +135,6 @@ int tls13_client()
     if (!ssl) {
         goto err_handler;
     }
-
-    fd = SSL_get_fd(ssl);
 
     ret = SSL_connect(ssl); 
     if (ret != 1) {
@@ -138,18 +149,10 @@ int tls13_client()
     }
     printf("Data transfer over TLS succeeded\n");
     SSL_shutdown(ssl);
-    SSL_free(ssl);
-    SSL_CTX_free(ctx);
-    close(fd);
-
-    return 0;
+    ret_val = 0;
 err_handler:
-    if (ssl) {
-        SSL_free(ssl);
-    }
-    SSL_CTX_free(ctx);
-    close(fd);
-    return -1;
+    do_cleanup(ctx, ssl);
+    return ret_val;
 }
 
 int main()

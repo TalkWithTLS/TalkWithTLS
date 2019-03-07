@@ -111,13 +111,25 @@ int do_data_transfer(SSL *ssl)
     return 0;
 }
 
+void do_cleanup(SSL_CTX *ctx, SSL *ssl)
+{
+    int fd;
+    if (ssl) {
+        fd = SSL_get_fd(ssl);
+        SSL_free(ssl);
+        close(fd);
+    }
+    if (ctx) {
+        SSL_CTX_free(ctx);
+    }
+}
+
 int tls13_server()
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
     int lfd;
-    int fd;
     int ret;
 
     ctx = create_context();
@@ -135,8 +147,6 @@ int tls13_server()
         goto err_handler;
     }
 
-    fd = SSL_get_fd(ssl);
-
     ret = SSL_accept(ssl); 
     if (ret != 1) {
         printf("SSL accept failed%d\n", ret);
@@ -153,12 +163,8 @@ int tls13_server()
     SSL_shutdown(ssl);
     ret_val = 0;
 err_handler:
-    if (ssl) {
-        SSL_free(ssl);
-    }
-    SSL_CTX_free(ctx);
+    do_cleanup(ctx, ssl);
     close(lfd);
-    close(fd);
     return ret_val;
 }
 
