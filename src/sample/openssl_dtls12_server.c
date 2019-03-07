@@ -9,6 +9,7 @@
 #include <errno.h>
 
 #include "openssl/crypto.h"
+#include "openssl/rand.h"
 #include "openssl/ssl.h"
 
 #include "test_common.h"
@@ -21,9 +22,20 @@
  * Cookie key is needed to generate strongly and regenerate periodically.
  * For example regenerate every 8 hours
  */
-char g_cookie_key[] = "1111222233334444";
+#define DTLS_COOKIE_KEY_SIZE 16
+uint8_t g_cookie_key[DTLS_COOKIE_KEY_SIZE] =  {0};
+int g_cookie_key_len = 0;
 
 #define MAX_DTLS_COOKIE_LEN 256
+
+int generate_cookie_key()
+{
+    if (RAND_bytes(g_cookie_key, sizeof(g_cookie_key)) <= 0) {
+        printf("RAND bytes failed for cookie key gen\n");
+        return -1;
+    }
+    return 0;
+}
 
 /*
  * Generate cookie by below step
@@ -53,7 +65,7 @@ int dtls_cookie_generate(SSL *ssl, unsigned char *cookie, unsigned int *cookie_l
         goto err;
     }
 
-    if (!HMAC(EVP_sha256(), g_cookie_key, strlen(g_cookie_key),
+    if (!HMAC(EVP_sha256(), g_cookie_key, sizeof(g_cookie_key),
                 (unsigned char *)peer_addr, sizeof(struct sockaddr_in),
                 cookie, cookie_len))
     {
@@ -287,6 +299,11 @@ int dtls12_server()
     SSL_CTX *ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
+
+    if (generate_cookie_key()) {
+        printf("generate cookie key failed\n");
+        return -1;
+    }
 
     ctx = create_context();
     if (!ctx) {
