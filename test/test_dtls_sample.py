@@ -14,7 +14,8 @@ def tc_setup():
 @pytest.mark.parametrize("d12_apps", [
     (['openssl_dtls12_server', 'openssl_dtls12_client']),
     (['openssl_dtls12_server', 'openssl_dtls12_custom_bio_client']),
-    (['openssl_dtls12_server', 'openssl_dtls12_nb_client']),
+    (['openssl_dtls12_nb_server', 'openssl_dtls12_client']),
+    (['openssl_dtls12_nb_server', 'openssl_dtls12_nb_client']),
 ])
 
 def test_dtls12_sample_code(tc_setup, d12_apps):
