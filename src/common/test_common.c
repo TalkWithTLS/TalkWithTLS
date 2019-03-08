@@ -146,3 +146,15 @@ int do_tcp_accept(int lfd)
     printf("TCP connection accepted fd=%d\n", cfd);
     return cfd;
 }
+
+void check_and_close(int *fd)
+{
+    if (*fd < 0) {
+        return;
+    }
+    if (*fd == 0 || *fd == 1 || *fd == 2) {
+        printf("Trying to close fd=%d, skipping it !!!\n", *fd);
+    }
+    printf("Closing fd=%d\n", *fd);
+    close(*fd);
+}

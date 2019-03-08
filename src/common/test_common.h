@@ -16,7 +16,10 @@ extern "C" {
 #define MSG_FOR_WOLFSSL_CLNT    "Hi, This is wolfSSL client"
 #define MSG_FOR_WOLFSSL_SERV    "Hello, This is wolfSSL server"
 
+#define EC256_SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
+#define EC256_SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 #define EC256_CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
+
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 7788
 
@@ -36,6 +39,8 @@ int do_tcp_connection(const char *server_ip, uint16_t port);
 int do_tcp_listen(const char *server_ip, uint16_t port);
 
 int do_tcp_accept(int lfd);
+
+void check_and_close(int *fd);
 
 #ifdef __cplusplus
 }
