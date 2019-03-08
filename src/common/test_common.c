@@ -24,7 +24,9 @@ int create_udp_sock()
 int create_udp_serv_sock(const char *server_ip, uint16_t port)
 {
     struct sockaddr_in serv_addr;
+    int optval = 1;
     int fd;
+
     fd = create_udp_sock();
     if (fd < 0) {
         printf("socket creation failed\n");
@@ -38,6 +40,9 @@ int create_udp_serv_sock(const char *server_ip, uint16_t port)
     }
     serv_addr.sin_port = htons(port);
 
+    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval))) {
+        printf("set sock reuseaddr failed\n");
+    }
     if (bind(fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) {
         printf("bind failed, errno=%d\n", errno);
         goto err_handler;
