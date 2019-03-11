@@ -11,6 +11,8 @@ extern "C" {
 #include "openssl/rand.h"
 #include "openssl/ssl.h"
 
+#define SSL_SESS_ID_CTX "TalkWithTLS"
+
 /* Flags for auth in TC_CONF */
 #define TC_CONF_AUTH_ECDSA      0x01
 #define TC_CONF_AUTH_RSA        0x02
@@ -53,6 +55,7 @@ typedef struct test_case_conf_st {
     int cert_type;
     const char *priv_key;
     int priv_key_type;
+    uint8_t resumption;
 }TC_CONF;
 
 void init_tc_conf(TC_CONF *conf);

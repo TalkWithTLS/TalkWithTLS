@@ -22,10 +22,12 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
 
     init_tc_conf(conf);
 
-    while((opt = getopt(argc, argv, "Sa:p:")) != -1) {
+    while((opt = getopt(argc, argv, "SRa:p:")) != -1) {
         switch (opt) {
             case 'S':
                 conf->server = 1;
+            case 'R':
+                conf->resumption = 1;
         }
     }
 

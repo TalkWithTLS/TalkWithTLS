@@ -1,4 +1,5 @@
 #include "test_openssl_common.h"
+#include "test_openssl_resumption.h"
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -64,9 +65,19 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
         printf("Loaded server key %s on context\n", conf->priv_key);
     }
 
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+    if (conf->server == 0) {
+        SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+    }
     SSL_CTX_set_verify_depth(ctx, 5);
+    /*if (SSL_CTX_set_session_id_context(ctx, SSL_SESS_ID_CTX, strlen(SSL_SESS_ID_CTX)) != 1) {
+        printf("Set sess id ctx failed\n");
+        goto err_handler;
+    }*/
 
+    if ((conf->resumption) && (initialize_resumption_params(conf, ctx) != 0)) {
+        printf("Initializing resumption params failed\n");
+        goto err_handler;
+    }
     printf("SSL context configurations completed\n");
 
     return ctx;
@@ -130,6 +141,14 @@ int do_ssl_accept(TC_CONF *conf, SSL *ssl)
         return -1;
     }
     printf("SSL accept succeeded\n");
+    if (conf->resumption) { //TODO Need to improve this check for TLS1.2 resumption also
+        if (SSL_session_reused(ssl)) {
+            printf("SSL session reused\n");
+        } else {
+            printf("SSL session not reused\n");
+            return -1;
+        }
+    }
     return 0;
 }
 
