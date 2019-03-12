@@ -22,12 +22,24 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
 
     init_tc_conf(conf);
 
-    while((opt = getopt(argc, argv, "SRa:p:")) != -1) {
+    while((opt = getopt(argc, argv, "SRimMa:p:")) != -1) {
         switch (opt) {
             case 'S':
                 conf->server = 1;
+                break;
             case 'R':
                 conf->resumption = 1;
+                break;
+            case 'i':
+                conf->cb.info_cb = 1;
+                break;
+            case 'm':
+                conf->cb.msg_cb = 1;
+                break;
+            case 'M':
+                conf->cb.msg_cb = 1;
+                conf->cb.msg_cb_detailed = 1;
+                break;
         }
     }
 

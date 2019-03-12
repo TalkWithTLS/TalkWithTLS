@@ -86,6 +86,102 @@ err_handler:
     return NULL;
 }
 
+void ssl_info_cb(const SSL *ssl, int type, int val)
+{
+    printf("SSL Info cb: type=%d, val=%d\n", type, val);
+}
+
+const char *get_handshake_msg_type(const void *buf, size_t len)
+{
+    if (len < 1) {
+        return "Handshake zero len";
+    }
+    switch (*((uint8_t *)buf)) {
+        case SSL3_MT_HELLO_REQUEST:
+            return "Hello Request";
+        case SSL3_MT_CLIENT_HELLO:
+            return "Client Hello";
+        case SSL3_MT_SERVER_HELLO:
+            return "Server Hello";
+        case SSL3_MT_NEWSESSION_TICKET:
+            return "New session ticket";
+        case SSL3_MT_END_OF_EARLY_DATA:
+            return "End of Ealy Data";
+        case SSL3_MT_ENCRYPTED_EXTENSIONS:
+            return "Encrypted extensions";
+        case SSL3_MT_CERTIFICATE:
+            return "Certificate";
+        case SSL3_MT_SERVER_KEY_EXCHANGE:
+            return "Server key exchange";
+        case SSL3_MT_CERTIFICATE_REQUEST:
+            return "Certificate Request";
+        case SSL3_MT_SERVER_DONE:
+            return "Server Done";
+        case SSL3_MT_CERTIFICATE_VERIFY:
+            return "Certificate Verify";
+        case SSL3_MT_CLIENT_KEY_EXCHANGE:
+            return "Client Key exchange";
+        case SSL3_MT_FINISHED:
+            return "Finished";
+        case SSL3_MT_CERTIFICATE_URL:
+            return "Certificate URL";
+        case SSL3_MT_CERTIFICATE_STATUS:
+            return "Certificate Status";
+        case SSL3_MT_SUPPLEMENTAL_DATA:
+            return "Supplemental Data";
+        case SSL3_MT_NEXT_PROTO:
+            return "Next Protocol";
+        case SSL3_MT_MESSAGE_HASH:
+            return "Message hash";
+        case DTLS1_MT_HELLO_VERIFY_REQUEST:
+            return "DTLS Hello Verify Request";
+    }
+    return "Unknown Handshake";
+}
+
+void print_content_type(int write_p, int version, int content_type, const void *buf,
+                                                    size_t len, const char *prefix_str)
+{
+    const char *op = (write_p ? "Sent" : "Received");
+    const char *cont_type = "Unknown msg";
+    switch(content_type) {
+        case SSL3_RT_CHANGE_CIPHER_SPEC:
+            cont_type = "Change Cipher Spec";
+            break;
+        case SSL3_RT_ALERT:
+            cont_type = "Alert";
+            break;
+        case SSL3_RT_HANDSHAKE:
+            cont_type = get_handshake_msg_type(buf, len);
+            break;
+        case SSL3_RT_APPLICATION_DATA:
+            cont_type = "Application";
+            break;
+        case SSL3_RT_HEADER:
+            cont_type = "Header";
+            break;
+        case SSL3_RT_INNER_CONTENT_TYPE:
+            cont_type = "Inner Content";
+            break;
+    }
+    printf("%s[ver=%04X]%s %s msg[%zu]", prefix_str, version, op, cont_type, len);
+}
+
+#define MSG_CB_PREFIX "[MSG_CB]"
+void ssl_msg_cb(int write_p, int version, int content_type, const void *buf, size_t len,
+                                                                SSL *ssl, void *arg)
+{
+    int i;
+    print_content_type(write_p, version, content_type, buf, len, MSG_CB_PREFIX);
+    if (arg != NULL) {
+        printf(":");
+        for (i = 0; i < len; i++) {
+            printf(" %02X", *(((uint8_t *)buf) + i));
+        }
+    }
+    printf("\n");
+}
+
 SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
 {
     SSL *ssl;
@@ -124,6 +220,15 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
         }
     }
 
+    if (conf->cb.info_cb) {
+        SSL_set_info_callback(ssl, ssl_info_cb);
+    }
+    if (conf->cb.msg_cb) {
+        SSL_set_msg_callback(ssl, ssl_msg_cb);
+        if (conf->cb.msg_cb_detailed) {
+            SSL_set_msg_callback_arg(ssl, ssl_msg_cb);
+        }
+    }
     printf("SSL object creation finished\n");
 
     return ssl;

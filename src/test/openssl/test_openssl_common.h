@@ -41,6 +41,12 @@ extern "C" {
 
 #define MAX_CA_FILE_LOAD    5
 
+typedef struct test_case_conf_cb_st {
+    uint8_t info_cb;
+    uint8_t msg_cb;
+    uint8_t msg_cb_detailed;
+}TC_CONF_CB;
+
 typedef struct test_case_conf_st {
     uint8_t server;
     int tcp_listen_fd;
@@ -56,6 +62,7 @@ typedef struct test_case_conf_st {
     const char *priv_key;
     int priv_key_type;
     uint8_t resumption;
+    TC_CONF_CB cb;
 }TC_CONF;
 
 void init_tc_conf(TC_CONF *conf);
