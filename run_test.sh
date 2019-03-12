@@ -8,4 +8,10 @@ if [ ! -f ${ENV_SETUP_SCRIPT} ]; then
 fi
 . "${ENV_SETUP_SCRIPT}"
 
-python -m pytest ${TEST_DIR} -v --html=${REPORT_DIR}/TalkWithTLS.html
+if [ $1 != "" ]; then
+    TS=$1
+else
+    TS=${TEST_DIR}
+fi
+
+python -m pytest ${TS} -v --html=${REPORT_DIR}/TalkWithTLS.html

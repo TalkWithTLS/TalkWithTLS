@@ -44,15 +44,25 @@ def validate_app(app):
 
 def validate_apps(apps):
     log_tc(apps)
-    if len(apps) != 2:
+    if len(apps) < 2:
         TWT_LOG('Count [' + str(len(apps)) + 'of Apps passed is invalid !!!\n');
     assert validate_app(apps[0]) == 0
     assert validate_app(apps[1]) == 0
 
 def run_serv_clnt_app(apps):
     validate_apps(apps)
-    proc1 = subprocess.Popen([bin_dir + "/" + apps[0]], stdout=subprocess.PIPE)
-    proc2 = subprocess.Popen([bin_dir + "/" + apps[1]], stdout=subprocess.PIPE)
+    serv_cmd = bin_dir + "/" + apps[0]
+    clnt_cmd = bin_dir + "/" + apps[1]
+    if len(apps) > 2:
+        serv_cmd = serv_cmd + " " + apps[2]
+    if len(apps) > 3:
+        clnt_cmd = clnt_cmd + " " + apps[3]
+    TWT_LOG("Serv Cmd: " + serv_cmd + "\n")
+    TWT_LOG("Clnt Cmd: " + clnt_cmd + "\n")
+    proc1 = subprocess.Popen(serv_cmd.split(' '), stdout=subprocess.PIPE)
+    proc2 = subprocess.Popen(clnt_cmd.split(' '), stdout=subprocess.PIPE)
+    #proc1 = subprocess.Popen(bin_dir + "/" + apps[0] + " " + serv_arg, stdout=subprocess.PIPE)
+    #proc2 = subprocess.Popen(bin_dir + "/" + apps[1] + " " + clnt_arg, stdout=subprocess.PIPE)
     ret1 = proc1.wait()
     ret2 = proc2.wait()
     log_procs(proc1, proc2)

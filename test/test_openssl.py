@@ -12,7 +12,8 @@ def tc_setup():
     TWT_set_log_filename(filename)
 
 @pytest.mark.parametrize("basic_apps_and_args", [
-    (['openssl_tls13_server', 'test_openssl']) #TODO Need to update this to pass args
+    (['test_openssl', 'test_openssl', '-S']),
+    (['test_openssl', 'test_openssl', '-S -n', '-n']),
 ])
 
 def test_openssl_basic(tc_setup, basic_apps_and_args):
