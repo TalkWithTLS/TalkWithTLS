@@ -16,10 +16,29 @@ void do_openssl_fini(TC_CONF *conf)
     return;
 }
 
-void init_tc_conf(TC_CONF *conf)
+int init_psk_params(TC_CONF *conf, const char *psk_id, const char *psk_key)
+{
+    if ((strlen(psk_id) >= sizeof(conf->res.psk_id))
+            || (strlen(psk_key) >= sizeof(conf->res.psk_key))) {
+        printf("Insufficient space in TC_CONF for storing PSK\n");
+        return -1;
+    }
+    strcpy(conf->res.psk_id, psk_id);
+    conf->res.psk_id_len = strlen(psk_id);
+    strcpy(conf->res.psk_key, psk_key);
+    conf->res.psk_key_len = strlen(psk_key);
+    return 0;
+}
+
+int init_tc_conf(TC_CONF *conf)
 {
     memset(conf, 0, sizeof(TC_CONF));
     conf->tcp_listen_fd = conf->fd = -1;
+    if (init_psk_params(conf, DEFAULT_PSK_ID, DEFAULT_PSK_KEY)) {
+        printf("Initializing psk params failed\n");
+        return -1;
+    }
+    return 0;
 }
 
 SSL_CTX *create_context_openssl(TC_CONF *conf)
@@ -74,7 +93,7 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
         goto err_handler;
     }*/
 
-    if ((conf->resumption) && (initialize_resumption_params(conf, ctx) != 0)) {
+    if ((conf->res.resumption) && (initialize_resumption_params(conf, ctx) != 0)) {
         printf("Initializing resumption params failed\n");
         goto err_handler;
     }
@@ -171,9 +190,10 @@ void print_content_type(int write_p, int version, int content_type, const void *
 void ssl_msg_cb(int write_p, int version, int content_type, const void *buf, size_t len,
                                                                 SSL *ssl, void *arg)
 {
+    TC_CONF *conf = SSL_get_ex_data(ssl, SSL_EX_DATA_TC_CONF);
     int i;
     print_content_type(write_p, version, content_type, buf, len, MSG_CB_PREFIX);
-    if (arg != NULL) {
+    if (conf->cb.msg_cb_detailed) {
         printf(":");
         for (i = 0; i < len; i++) {
             printf(" %02X", *(((uint8_t *)buf) + i));
@@ -210,7 +230,7 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
         printf("SSL object creation failed\n");
         return NULL; 
     }
-
+    SSL_set_ex_data(ssl, SSL_EX_DATA_TC_CONF, conf);
     SSL_set_fd(ssl, conf->fd);
 
     if (conf->kexch_groups && conf->kexch_groups_count) {
@@ -225,9 +245,6 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
     }
     if (conf->cb.msg_cb) {
         SSL_set_msg_callback(ssl, ssl_msg_cb);
-        if (conf->cb.msg_cb_detailed) {
-            SSL_set_msg_callback_arg(ssl, ssl_msg_cb);
-        }
     }
     printf("SSL object creation finished\n");
 
@@ -246,7 +263,7 @@ int do_ssl_accept(TC_CONF *conf, SSL *ssl)
         return -1;
     }
     printf("SSL accept succeeded\n");
-    if (conf->resumption) { //TODO Need to improve this check for TLS1.2 resumption also
+    if (conf->res.resumption) { //TODO Need to improve this check for TLS1.2 resumption also
         if (SSL_session_reused(ssl)) {
             printf("SSL session reused\n");
         } else {

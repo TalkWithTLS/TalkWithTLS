@@ -20,15 +20,21 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
 {
     int opt;
 
-    init_tc_conf(conf);
+    if (init_tc_conf(conf)) {
+        printf("TC conf failed\n");
+        return -1;
+    }
 
-    while((opt = getopt(argc, argv, "SRimMa:p:")) != -1) {
+    while((opt = getopt(argc, argv, "SREimMa:p:")) != -1) {
         switch (opt) {
             case 'S':
                 conf->server = 1;
                 break;
             case 'R':
-                conf->resumption = 1;
+                conf->res.resumption = 1;
+                break;
+            case 'E':
+                conf->res.early_data = 1;
                 break;
             case 'i':
                 conf->cb.info_cb = 1;

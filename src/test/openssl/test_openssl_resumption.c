@@ -3,21 +3,19 @@
 
 const unsigned char g_tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
 const unsigned char g_tls13_aes256gcmsha384_id[] = { 0x13, 0x02 };
-const char *g_psk_identity = "clientid1";
-/* Hex string representation of 16 byte key */
-const char *g_psk_key = "A1A2A3A4A5A6A7A8A9A0AAABACADAEAF";
 
 int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
                               const unsigned char **id, size_t *idlen,
                               SSL_SESSION **sess)
 {
+    TC_CONF *conf = SSL_get_ex_data(s, SSL_EX_DATA_TC_CONF);
     SSL_SESSION *usesess = NULL;
     const SSL_CIPHER *cipher = NULL;
     long key_len;
     unsigned char *key;
     
     printf("Called PSK use sess cb\n");
-    key = OPENSSL_hexstr2buf(g_psk_key, &key_len);
+    key = OPENSSL_hexstr2buf(conf->res.psk_key, &key_len);
     if (key == NULL) {
         printf("hexstr2buf failed\n");
         return 0;
@@ -31,6 +29,11 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
         return 0;
     }
 
+    if (md != NULL && SSL_CIPHER_get_handshake_digest(cipher) != md) {
+        /* PSK not usable, ignore it */
+        return 1;
+    }
+
     usesess = SSL_SESSION_new();
     if (usesess == NULL
             || !SSL_SESSION_set1_master_key(usesess, key, key_len)
@@ -41,17 +44,9 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
     }
     OPENSSL_free(key);
 
-    if (md != NULL && SSL_CIPHER_get_handshake_digest(cipher) != md) {
-        /* PSK not usable, ignore it */
-        *id = NULL;
-        *idlen = 0;
-        *sess = NULL;
-        SSL_SESSION_free(usesess);
-    } else {
-        *sess = usesess;
-        *id = (unsigned char *)g_psk_identity;
-        *idlen = strlen(g_psk_identity);
-    }
+    *sess = usesess;
+    *id = (unsigned char *)conf->res.psk_id;
+    *idlen = strlen(conf->res.psk_id);
 
     return 1;
 
@@ -63,18 +58,20 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
 int tls13_psk_find_session_cb(SSL *ssl, const unsigned char *id,
                                size_t id_len, SSL_SESSION **sess)
 {
+    TC_CONF *conf = SSL_get_ex_data(ssl, SSL_EX_DATA_TC_CONF);
     SSL_SESSION *tmpsess = NULL;
     unsigned char *key;
     long key_len;
     const SSL_CIPHER *cipher = NULL;
 
     printf("Called PSK find sess cb\n");
-    if ((id_len != strlen(g_psk_identity))
-            || (memcmp(id, g_psk_identity, id_len) != 0)) {
+    if ((id_len != strlen(conf->res.psk_id))
+            || (memcmp(id, conf->res.psk_id, id_len) != 0)) {
         *sess = NULL;
         return 1;
     }
-    key = OPENSSL_hexstr2buf(g_psk_key, &key_len);
+
+    key = OPENSSL_hexstr2buf(conf->res.psk_key, &key_len);
     if (key == NULL) {
         printf("hexstr2buf conversion failed\n");
         return 0;

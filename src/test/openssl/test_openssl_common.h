@@ -13,6 +13,12 @@ extern "C" {
 
 #define SSL_SESS_ID_CTX "TalkWithTLS"
 
+#define DEFAULT_PSK_ID "clientid1"
+/* Hex string representation of 16 byte key */
+#define DEFAULT_PSK_KEY "A1A2A3A4A5A6A7A8A9A0AAABACADAEAF"
+
+#define SSL_EX_DATA_TC_CONF         1
+
 /* Flags for auth in TC_CONF */
 #define TC_CONF_AUTH_ECDSA      0x01
 #define TC_CONF_AUTH_RSA        0x02
@@ -47,6 +53,18 @@ typedef struct test_case_conf_cb_st {
     uint8_t msg_cb_detailed;
 }TC_CONF_CB;
 
+#define TEST_MAX_PSK_ID     32
+#define TEST_MAX_PSK_KEY    64
+
+typedef struct test_case_conf_resumption_st {
+    uint8_t resumption;
+    char psk_id[TEST_MAX_PSK_ID];
+    uint16_t psk_id_len;
+    char psk_key[TEST_MAX_PSK_KEY];
+    uint16_t psk_key_len;
+    uint8_t early_data;
+}TC_CONF_RESUMPTION;
+
 typedef struct test_case_conf_st {
     uint8_t server;
     int tcp_listen_fd;
@@ -61,11 +79,13 @@ typedef struct test_case_conf_st {
     int cert_type;
     const char *priv_key;
     int priv_key_type;
-    uint8_t resumption;
+    TC_CONF_RESUMPTION res;
     TC_CONF_CB cb;
 }TC_CONF;
 
-void init_tc_conf(TC_CONF *conf);
+int init_tc_conf(TC_CONF *conf);
+
+int init_psk_params(TC_CONF *conf, const char *psk_id, const char *psk_key);
 
 int do_test_openssl(TC_CONF *conf);
 
