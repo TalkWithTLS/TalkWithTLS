@@ -25,7 +25,7 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
         return -1;
     }
 
-    while((opt = getopt(argc, argv, "SREimMa:p:")) != -1) {
+    while((opt = getopt(argc, argv, "SREimMna:p:")) != -1) {
         switch (opt) {
             case 'S':
                 conf->server = 1;
@@ -46,6 +46,8 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
                 conf->cb.msg_cb = 1;
                 conf->cb.msg_cb_detailed = 1;
                 break;
+            case 'n':
+                conf->nb_sock = 1;
         }
     }
 

@@ -4,6 +4,8 @@
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
 
+#include <fcntl.h>
+
 int do_openssl_init(TC_CONF *conf)
 {
     (void)conf;
@@ -202,6 +204,25 @@ void ssl_msg_cb(int write_p, int version, int content_type, const void *buf, siz
     printf("\n");
 }
 
+int enable_nonblock(TC_CONF *conf)
+{
+    int fd = conf->fd;
+    int flags;
+    if (conf->nb_sock) {
+        flags = fcntl(fd, F_GETFL, 0);
+        if (flags == -1) {
+            printf("Get flag failed for fcntl");
+            return -1;
+        }
+        flags |= O_NONBLOCK;
+        if (fcntl(fd, F_SETFL, flags) != 0) {
+            printf("Set nonblock flags on fcntl failed\n");
+            return -1;
+        }
+    }
+    return 0;
+}
+
 SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
 {
     SSL *ssl;
@@ -240,6 +261,10 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
         }
     }
 
+    if (enable_nonblock(conf)) {
+        printf("Enable non block failed");
+        goto err_handler;
+    }
     if (conf->cb.info_cb) {
         SSL_set_info_callback(ssl, ssl_info_cb);
     }
@@ -254,15 +279,56 @@ err_handler:
     return NULL;
 }
 
+int wait_for_sock_io(SSL *ssl, int ret, const char *op)
+{
+    fd_set readfds, writefds;
+    struct timeval timeout;
+    int err;
+    int fd;
+
+    fd = SSL_get_fd(ssl);
+    FD_ZERO(&readfds);
+    FD_ZERO(&writefds);
+
+    err = SSL_get_error(ssl, ret);
+    switch (err) {
+        case SSL_ERROR_WANT_READ:
+            printf("SSL want read occured for %s\n", op);
+            FD_SET(fd, &readfds);
+            break;
+        case SSL_ERROR_WANT_WRITE:
+            printf("SSL want write occured for %s\n", op);
+            FD_SET(fd, &writefds);
+            break;
+        default:
+            printf("%s failed with err%d\n", op, err);
+            return -1;
+    }
+    timeout.tv_sec = TLS_SOCK_TIMEOUT_MS / 1000;
+    timeout.tv_usec = (TLS_SOCK_TIMEOUT_MS % 1000) * 1000;
+    if (select(fd + 1, &readfds, &writefds, NULL, &timeout) < 1) {
+        printf("select timed out, ret=%d\n", ret);
+        return -1;
+    }
+    printf("Time spent on select %ldsecs and %ldusecs\n", timeout.tv_sec, timeout.tv_usec);
+    return 0;
+}
+
 int do_ssl_accept(TC_CONF *conf, SSL *ssl)
 {
     int ret;
-    ret = SSL_accept(ssl); 
-    if (ret != 1) {
-        printf("SSL accept failed%d\n", ret);
-        return -1;
-    }
-    printf("SSL accept succeeded\n");
+    do {
+        ret = SSL_accept(ssl);
+        if (ret == 1) {
+            printf("SSL accept succeeded\n");
+            break;
+        }
+        if (wait_for_sock_io(ssl, ret, "SSL_accept")) {
+            printf("SSL accept failed\n");
+            return -1;
+        }
+        printf("Continue SSL accept\n");
+    } while (1);
     if (conf->res.resumption) { //TODO Need to improve this check for TLS1.2 resumption also
         if (SSL_session_reused(ssl)) {
             printf("SSL session reused\n");
@@ -277,12 +343,19 @@ int do_ssl_accept(TC_CONF *conf, SSL *ssl)
 int do_ssl_connect(TC_CONF *conf, SSL *ssl)
 {
     int ret;
-    ret = SSL_connect(ssl);
-    if (ret != 1) {
-        printf("SSL connect failed%d\n", ret);
-        return -1;
-    }
-    printf("SSL connect succeeded\n");
+
+    do {
+        ret = SSL_connect(ssl);
+        if (ret == 1) {
+            printf("SSL connect succeeded\n");
+            break;
+        }
+        if (wait_for_sock_io(ssl, ret, "SSL_connect")) {
+            printf("SSL connect failed\n");
+            return -1;
+        }
+        printf("Continue SSL connection\n");
+    } while (1);
     return 0;
 }
 
@@ -295,45 +368,67 @@ int do_ssl_handshake(TC_CONF *conf, SSL *ssl)
     }
 }
 
+int do_ssl_read(TC_CONF *conf, SSL *ssl)
+{
+    char buf[MAX_BUF_SIZE] = {0};
+    const char *msg_for_cmp;
+    int ret;
+
+    msg_for_cmp = conf->server ? MSG_FOR_OPENSSL_CLNT : MSG_FOR_OPENSSL_SERV;
+    do {
+        ret = SSL_read(ssl, buf, sizeof(buf) - 1);
+        if (ret > 0) {
+            break;
+        }
+        if (wait_for_sock_io(ssl, ret, "SSL_read")) {
+            printf("SSL read failed\n");
+            return -1;
+        }
+    } while (1);
+    printf("SSL_read[%d] %s\n", ret, buf);
+    if (memcmp(buf, msg_for_cmp, strlen(msg_for_cmp))) {
+        printf("Invalid msg received\n");
+    }
+    return 0;
+}
+
+int do_ssl_write(TC_CONF *conf, SSL *ssl)
+{
+    const char *msg;
+    int ret;
+
+    msg = conf->server ? MSG_FOR_OPENSSL_SERV : MSG_FOR_OPENSSL_CLNT;
+    do {
+        ret = SSL_write(ssl, msg, strlen(msg));
+        if (ret == strlen(msg)) {
+            break;
+        }
+        if (wait_for_sock_io(ssl, ret, "SSL_write")) {
+            printf("SSL write failed\n");
+            return -1;
+        }
+    } while (1);
+    printf("SSL_write[%d] sent %s\n", ret, msg);
+    return 0;
+}
+
 int do_data_transfer_client(TC_CONF *conf, SSL *ssl)
 {
-    const char *msg = MSG_FOR_OPENSSL_CLNT;
-    char buf[MAX_BUF_SIZE] = {0};
-    int ret;
-    ret = SSL_write(ssl, msg, strlen(msg));
-    if (ret <= 0) {
-        printf("SSL_write failed ret=%d\n", ret);
+    if ((do_ssl_write(conf, ssl) != 0)
+            || (do_ssl_read(conf, ssl) != 0)) {
+        printf("Data transfer failed\n");
         return -1;
     }
-    printf("SSL_write[%d] sent %s\n", ret, msg);
-
-    ret = SSL_read(ssl, buf, sizeof(buf) - 1);
-    if (ret <= 0) {
-        printf("SSL_read failed ret=%d\n", ret);
-        return -1;
-    }
-    printf("SSL_read[%d] %s\n", ret, buf);
     return 0;
 }
 
 int do_data_transfer_server(TC_CONF *conf, SSL *ssl)
 {
-    const char *msg = MSG_FOR_OPENSSL_SERV;
-    char buf[MAX_BUF_SIZE] = {0};
-    int ret;
-    ret = SSL_read(ssl, buf, sizeof(buf) - 1);
-    if (ret <= 0) {
-        printf("SSL_read failed ret=%d\n", ret);
+    if ((do_ssl_read(conf, ssl) != 0)
+            || (do_ssl_write(conf, ssl) != 0)) {
+        printf("Data transfer failed\n");
         return -1;
     }
-    printf("SSL_read[%d] %s\n", ret, buf);
-
-    ret = SSL_write(ssl, msg, strlen(msg));
-    if (ret <= 0) {
-        printf("SSL_write failed ret=%d\n", ret);
-        return -1;
-    }
-    printf("SSL_write[%d] sent %s\n", ret, msg);
     return 0;
 }
 

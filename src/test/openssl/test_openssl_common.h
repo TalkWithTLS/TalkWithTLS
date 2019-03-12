@@ -69,6 +69,7 @@ typedef struct test_case_conf_st {
     uint8_t server;
     int tcp_listen_fd;
     int fd;
+    uint8_t nb_sock;
     uint8_t auth;
     int *kexch_groups; /* Used for TLS1.3 connections */
     int kexch_groups_count;

@@ -44,6 +44,12 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
     }
     OPENSSL_free(key);
 
+    if ((conf->res.early_data)
+            && (SSL_SESSION_set_max_early_data(usesess, 4098) != 1)) {
+        printf("Use sess cb: Enabled early data\n");
+        goto err;
+    }
+
     *sess = usesess;
     *id = (unsigned char *)conf->res.psk_id;
     *idlen = strlen(conf->res.psk_id);
