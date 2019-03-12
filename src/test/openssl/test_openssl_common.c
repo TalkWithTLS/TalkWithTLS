@@ -3,6 +3,7 @@
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
+#include "openssl/err.h"
 
 #include <fcntl.h>
 
@@ -279,6 +280,17 @@ err_handler:
     return NULL;
 }
 
+void print_ssl_err()
+{
+    char err_buf[512] = {0};
+    unsigned long error;
+    const char *file;
+    int line_num = 0;
+    error = ERR_peek_error_line(&file, &line_num);
+    ERR_error_string_n(error, err_buf, sizeof(err_buf));
+    printf("SSL error[%lu][%s] on [%s:%d]\n", error, err_buf, file, line_num);
+}
+
 int wait_for_sock_io(SSL *ssl, int ret, const char *op)
 {
     fd_set readfds, writefds;
@@ -301,7 +313,10 @@ int wait_for_sock_io(SSL *ssl, int ret, const char *op)
             FD_SET(fd, &writefds);
             break;
         default:
-            printf("%s failed with err%d\n", op, err);
+            printf("%s failed with err=%d\n", op, err);
+            if (err == SSL_ERROR_SSL) {
+                print_ssl_err();
+            }
             return -1;
     }
     timeout.tv_sec = TLS_SOCK_TIMEOUT_MS / 1000;
@@ -340,6 +355,18 @@ int do_ssl_accept(TC_CONF *conf, SSL *ssl)
     return 0;
 }
 
+int do_ssl_write_early_data(TC_CONF *conf, SSL *ssl)
+{
+    const char *msg = EARLY_DATA_MSG_FOR_OPENSSL_CLNT;
+    size_t sent = 0;
+    int ret = 0;
+    if ((conf->res.early_data != 1) && (conf->res.early_data_sent == 0)) {
+        ret = SSL_write_early_data(ssl, msg, strlen(msg), &sent);
+        printf("write early data ret=%d\n", ret);
+    }
+    return ret;
+}
+
 int do_ssl_connect(TC_CONF *conf, SSL *ssl)
 {
     int ret;
@@ -355,7 +382,11 @@ int do_ssl_connect(TC_CONF *conf, SSL *ssl)
             return -1;
         }
         printf("Continue SSL connection\n");
+        /* Send early data if configured to send */
+        //ret = do_ssl_write_early_data(conf, ssl);
     } while (1);
+    /* Send early data if configured to send */
+    //ret = do_ssl_write_early_data(conf, ssl);
     return 0;
 }
 

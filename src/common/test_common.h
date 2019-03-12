@@ -13,7 +13,7 @@ extern "C" {
 
 #define MSG_FOR_OPENSSL_CLNT    "Hi, This is OpenSSL client"
 #define MSG_FOR_OPENSSL_SERV    "Hello, This is OpenSSL server"
-#define EARLY_DATA_FOR_OPENSSL_CLNT "Hi, This is an early data from OpenSSL Client"
+#define EARLY_DATA_MSG_FOR_OPENSSL_CLNT "Hi, This is an early data from OpenSSL Client"
 #define MSG_FOR_WOLFSSL_CLNT    "Hi, This is wolfSSL client"
 #define MSG_FOR_WOLFSSL_SERV    "Hello, This is wolfSSL server"
 

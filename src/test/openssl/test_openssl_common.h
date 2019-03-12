@@ -63,6 +63,7 @@ typedef struct test_case_conf_resumption_st {
     char psk_key[TEST_MAX_PSK_KEY];
     uint16_t psk_key_len;
     uint8_t early_data;
+    uint8_t early_data_sent;
 }TC_CONF_RESUMPTION;
 
 typedef struct test_case_conf_st {
