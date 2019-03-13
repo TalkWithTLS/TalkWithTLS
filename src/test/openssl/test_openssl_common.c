@@ -1,5 +1,6 @@
 #include "test_openssl_common.h"
 #include "test_openssl_resumption.h"
+#include "test_openssl_validation.h"
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -279,11 +280,12 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
     SSL_set_ex_data(ssl, SSL_EX_DATA_TC_CONF, conf);
     SSL_set_fd(ssl, conf->fd);
 
-    if (conf->kexch_groups && conf->kexch_groups_count) {
-        if (SSL_set1_groups(ssl, conf->kexch_groups, conf->kexch_groups_count) != 1) {
+    if (conf->kexch.kexch_groups && conf->kexch.kexch_groups_count) {
+        if (SSL_set1_groups(ssl, conf->kexch.kexch_groups, conf->kexch.kexch_groups_count) != 1) {
             printf("Set Groups failed\n");
             goto err;
         }
+        printf("Configured kexchange groups of count=%d\n", conf->kexch.kexch_groups_count);
     }
 
     if (enable_nonblock(conf)) {
@@ -412,11 +414,14 @@ int do_ssl_connect(TC_CONF *conf, SSL *ssl)
 
 int do_ssl_handshake(TC_CONF *conf, SSL *ssl)
 {
+    int ret;
     if (conf->server) {
-        return do_ssl_accept(conf, ssl);
+        ret = do_ssl_accept(conf, ssl);
     } else {
-        return do_ssl_connect(conf, ssl);
+        ret = do_ssl_connect(conf, ssl);
     }
+    if (ret) return ret;
+    return do_after_handshake_validation(conf, ssl);
 }
 
 int do_ssl_read(TC_CONF *conf, SSL *ssl)

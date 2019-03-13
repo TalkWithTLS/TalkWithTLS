@@ -35,6 +35,10 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    /* This should be the alg should get negotiated in supported groups */
+    /* After handshake this is validated in Server */
+    conf.kexch.kexch_should_neg = NID_X25519;
+
     if (parse_arg(argc, argv, &conf)) {
         printf("Parsing arg failed\n");
         return -1;

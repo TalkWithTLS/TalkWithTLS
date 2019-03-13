@@ -68,15 +68,19 @@ typedef struct test_case_conf_resumption_st {
     uint8_t early_data_sent;
 }TC_CONF_RESUMPTION;
 
+typedef struct test_case_kexch_st {
+    int kexch_should_neg; /* Alg ID it should be negotiation in TLS1.3 supported groups ext */
+    int *kexch_groups; /* Used for TLS1.3 connections */
+    int kexch_groups_count;
+    uint8_t kexch_tmp_key; /* Used for TLS1.2 and lower versions */
+}TC_CONF_KEXCH;
+
 typedef struct test_case_conf_st {
     uint8_t server;
     int tcp_listen_fd;
     int fd;
     uint8_t nb_sock;
     uint8_t auth;
-    int *kexch_groups; /* Used for TLS1.3 connections */
-    int kexch_groups_count;
-    uint8_t kexch_tmp_key; /* Used for TLS1.2 and lower versions */
     const char *cafiles[MAX_CA_FILE_LOAD];
     uint8_t cafiles_count;
     const char *cert;
@@ -84,6 +88,7 @@ typedef struct test_case_conf_st {
     const char *priv_key;
     int priv_key_type;
     uint16_t con_count;
+    TC_CONF_KEXCH kexch;
     TC_CONF_RESUMPTION res;
     TC_CONF_CB cb;
 }TC_CONF;
