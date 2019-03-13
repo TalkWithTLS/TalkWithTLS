@@ -22,13 +22,21 @@ void usage()
     printf("-k      - Key Exchange group for TLS1.3\n");
     printf("          1 - All ECDHE\n");
     printf("          2 - All FFDHE\n");
+    printf("-V      - [D]TLS Max Version\n");
+    printf("          10 - TLS1.0\n");
+    printf("          11 - TLS1.1\n");
+    printf("          12 - TLS1.2\n");
+    printf("          13 - TLS1.3\n");
+    printf("          1312 - Server TLS1.3 and Client TLS1.2\n");
+    printf("          1213 - Server TLS1.2 and Client TLS1.3\n");
+    printf("-S      - [D]TLS server\n");
 }
 
 int parse_arg(int argc, char *argv[], TC_CONF *conf)
 {
     int opt;
 
-    while((opt = getopt(argc, argv, "hSRPEimMnk:a:p:")) != -1) {
+    while((opt = getopt(argc, argv, "hSRPEimMnk:V:a:p:")) != -1) {
         switch (opt) {
             case 'h':
                 usage();
@@ -60,6 +68,9 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
                 break;
             case 'k':
                 conf->kexch.kexch_conf = atoi(optarg);
+                break;
+            case 'V':
+                conf->max_version = atoi(optarg);
                 break;
         }
     }

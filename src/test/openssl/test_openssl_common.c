@@ -2,6 +2,7 @@
 #include "test_openssl_resumption.h"
 #include "test_openssl_validation.h"
 #include "test_openssl_kexch.h"
+#include "test_openssl_version.h"
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -72,6 +73,11 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
     }
 
     printf("SSL context created\n");
+
+    if (ssl_ctx_version_conf(conf, ctx)) {
+        printf("Version conf failed\n");
+        goto err;
+    }
 
     if (conf->cafiles_count) {
         for (i = 0; i < conf->cafiles_count; i++) {

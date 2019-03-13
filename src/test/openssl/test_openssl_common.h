@@ -31,6 +31,16 @@ extern "C" {
 #define TC_CONF_KEXCH_TMP_ECDHE      0x01
 #define TC_CONF_KEXCH_TMP_DHE        0x02
 
+/* max_version and min_version values */
+#define TC_CONF_TLS_1_0_VERSION                 10
+#define TC_CONF_TLS_1_1_VERSION                 11
+#define TC_CONF_TLS_1_2_VERSION                 12
+#define TC_CONF_TLS_1_3_VERSION                 13
+#define TC_CONF_DTLS_1_0_VERSION                910
+#define TC_CONF_DTLS_1_2_VERSION                912
+#define TC_CONF_SERV_T13_CLNT_T12_VERSION       1312
+#define TC_CONF_SERV_T12_CLNT_T13_VERSION       1213
+
 #define MAX_CA_FILE_LOAD    5
 
 typedef struct test_case_conf_cb_st {
@@ -75,6 +85,9 @@ typedef struct test_case_conf_st {
     const char *priv_key;
     int priv_key_type;
     uint16_t con_count;
+    int min_version; /*TODO Need to CLI arg for this */
+    int max_version;
+    int ver_should_negotiate;
     TC_CONF_KEXCH kexch;
     TC_CONF_RESUMPTION res;
     TC_CONF_CB cb;
