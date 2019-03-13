@@ -17,6 +17,8 @@ extern "C" {
 #define MSG_FOR_WOLFSSL_CLNT    "Hi, This is wolfSSL client"
 #define MSG_FOR_WOLFSSL_SERV    "Hello, This is wolfSSL server"
 
+#define MAX_EARLY_DATA_MSG  4098
+
 #define EC256_SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define EC256_SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 #define EC256_CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"

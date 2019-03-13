@@ -18,3 +18,10 @@ def tc_setup():
 
 def test_openssl_basic(tc_setup, basic_apps_and_args):
     assert run_serv_clnt_app(basic_apps_and_args) == 0
+
+@pytest.mark.parametrize("psk_apps_and_args", [
+    (['test_openssl', 'test_openssl', '-SPm', '-Pm']),
+])
+
+def test_openssl_psk(tc_setup, psk_apps_and_args):
+    assert run_serv_clnt_app(psk_apps_and_args) == 0

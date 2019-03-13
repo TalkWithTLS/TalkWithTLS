@@ -57,7 +57,9 @@ typedef struct test_case_conf_cb_st {
 #define TEST_MAX_PSK_KEY    64
 
 typedef struct test_case_conf_resumption_st {
+    void *sess;
     uint8_t resumption;
+    uint8_t psk;
     char psk_id[TEST_MAX_PSK_ID];
     uint16_t psk_id_len;
     char psk_key[TEST_MAX_PSK_KEY];
@@ -81,11 +83,14 @@ typedef struct test_case_conf_st {
     int cert_type;
     const char *priv_key;
     int priv_key_type;
+    uint16_t con_count;
     TC_CONF_RESUMPTION res;
     TC_CONF_CB cb;
 }TC_CONF;
 
 int init_tc_conf(TC_CONF *conf);
+
+void fini_tc_conf(TC_CONF *conf);
 
 int init_psk_params(TC_CONF *conf, const char *psk_id, const char *psk_key);
 

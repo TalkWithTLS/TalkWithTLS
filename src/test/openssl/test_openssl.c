@@ -28,11 +28,19 @@ int g_ec_kexch_groups[] = {
 int main(int argc, char *argv[])
 {
     TC_CONF conf;
+    int ret;
+
+    if (init_tc_conf(&conf)) {
+        printf("TC conf failed\n");
+        return -1;
+    }
 
     if (parse_arg(argc, argv, &conf)) {
         printf("Parsing arg failed\n");
         return -1;
     }
 
-    return do_test_openssl(&conf);
+    ret = do_test_openssl(&conf);
+    fini_tc_conf(&conf);
+    return ret;
 }

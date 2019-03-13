@@ -61,8 +61,6 @@ def run_serv_clnt_app(apps):
     TWT_LOG("Clnt Cmd: " + clnt_cmd + "\n")
     proc1 = subprocess.Popen(serv_cmd.split(' '), stdout=subprocess.PIPE)
     proc2 = subprocess.Popen(clnt_cmd.split(' '), stdout=subprocess.PIPE)
-    #proc1 = subprocess.Popen(bin_dir + "/" + apps[0] + " " + serv_arg, stdout=subprocess.PIPE)
-    #proc2 = subprocess.Popen(bin_dir + "/" + apps[1] + " " + clnt_arg, stdout=subprocess.PIPE)
     ret1 = proc1.wait()
     ret2 = proc2.wait()
     log_procs(proc1, proc2)
