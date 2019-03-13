@@ -8,26 +8,21 @@
 #include "test_common.h"
 #include "test_openssl_common.h"
 #include "test_openssl_arg.h"
+#include "test_openssl_kexch.h"
 
-int g_dhe_kexch_groups[] = {
-    NID_ffdhe2048,
-    NID_ffdhe3072,
-    NID_ffdhe4096,
-    NID_ffdhe6144,
-    NID_ffdhe8192
-};
-
-int g_ec_kexch_groups[] = {
-    NID_X9_62_prime256v1,   /* secp256r1 */
-    NID_secp384r1,          /* secp384r1 */
-    NID_secp521r1,          /* secp521r1 */
-    NID_X25519,             /* x25519 */
-    NID_X448                /* x448 */
-};
+int tc_conf_update(TC_CONF *conf)
+{
+    if (tc_conf_kexch(conf)) {
+        printf("TC conf for kexch failed\n");
+        return -1;
+    }
+    return 0;
+}
 
 int main(int argc, char *argv[])
 {
     TC_CONF conf;
+    int ret_val = -1;
     int ret;
 
     if (init_tc_conf(&conf)) {
@@ -35,16 +30,23 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    /* This should be the alg should get negotiated in supported groups */
-    /* After handshake this is validated in Server */
-    conf.kexch.kexch_should_neg = NID_X25519;
-
-    if (parse_arg(argc, argv, &conf)) {
+    ret = parse_arg(argc, argv, &conf);
+    if (ret == -1) {
         printf("Parsing arg failed\n");
         return -1;
     }
+    if (ret == 1) {
+        /* Printed only help */
+        ret_val =  0;
+        goto err;
+    }
 
-    ret = do_test_openssl(&conf);
+    if (tc_conf_update(&conf)) {
+        return -1;
+    }
+
+    ret_val = do_test_openssl(&conf);
+err:
     fini_tc_conf(&conf);
-    return ret;
+    return ret_val;
 }

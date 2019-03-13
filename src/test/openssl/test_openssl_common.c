@@ -1,6 +1,7 @@
 #include "test_openssl_common.h"
 #include "test_openssl_resumption.h"
 #include "test_openssl_validation.h"
+#include "test_openssl_kexch.h"
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -280,12 +281,9 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
     SSL_set_ex_data(ssl, SSL_EX_DATA_TC_CONF, conf);
     SSL_set_fd(ssl, conf->fd);
 
-    if (conf->kexch.kexch_groups && conf->kexch.kexch_groups_count) {
-        if (SSL_set1_groups(ssl, conf->kexch.kexch_groups, conf->kexch.kexch_groups_count) != 1) {
-            printf("Set Groups failed\n");
-            goto err;
-        }
-        printf("Configured kexchange groups of count=%d\n", conf->kexch.kexch_groups_count);
+    if (ssl_kexch_config(conf, ssl)) {
+        printf("SSL kexch conf failed\n");
+        goto err;
     }
 
     if (enable_nonblock(conf)) {

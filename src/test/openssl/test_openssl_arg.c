@@ -16,12 +16,23 @@ void update_certs(TC_CONF *conf)
     }
 }
 
+void usage()
+{
+    printf("-h      - Help\n");
+    printf("-k      - Key Exchange group for TLS1.3\n");
+    printf("          1 - All ECDHE\n");
+    printf("          2 - All FFDHE\n");
+}
+
 int parse_arg(int argc, char *argv[], TC_CONF *conf)
 {
     int opt;
 
-    while((opt = getopt(argc, argv, "SRPEimMna:p:")) != -1) {
+    while((opt = getopt(argc, argv, "hSRPEimMnk:a:p:")) != -1) {
         switch (opt) {
+            case 'h':
+                usage();
+                return 1;
             case 'S':
                 conf->server = 1;
                 break;
@@ -46,6 +57,10 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
                 break;
             case 'n':
                 conf->nb_sock = 1;
+                break;
+            case 'k':
+                conf->kexch.kexch_conf = atoi(optarg);
+                break;
         }
     }
 

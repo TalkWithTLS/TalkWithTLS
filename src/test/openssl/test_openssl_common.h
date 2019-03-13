@@ -23,23 +23,9 @@ extern "C" {
 #define TC_CONF_AUTH_ECDSA      0x01
 #define TC_CONF_AUTH_RSA        0x02
 
-#if 0
 #define MAX_TLS13_KEXCH_GROUPS      9
-/* Flags for kexch_sup_groups */
-#define TC_CONF_KEXCH_GROUP_SECP256R1         0x00000001U
-#define TC_CONF_KEXCH_GROUP_SECP384R1         0x00000002U
-#define TC_CONF_KEXCH_GROUP_SECP521R1         0x00000004U
-#define TC_CONF_KEXCH_GROUP_X25519            0x00000008U
-#define TC_CONF_KEXCH_GROUP_X448              0x00000010U
-#define TC_CONF_KEXCH_GROUP_FFDHE2048         0x00000020U
-#define TC_CONF_KEXCH_GROUP_FFDHE3072         0x00000040U
-#define TC_CONF_KEXCH_GROUP_FFDHE4096         0x00000080U
-#define TC_CONF_KEXCH_GROUP_FFDHE6144         0x00000100U
-#define TC_CONF_KEXCH_GROUP_FFDHE8192         0x00000200U
-
-#define TC_CONF_KEXCH_GROUP_ALL_ECC           0x0000001FU
-#define TC_CONF_KEXCH_GROUP_ALL_FFDHE         0x000003E0U
-#endif
+#define TC_CONF_KEXCH_GROUP_ALL_ECC           1
+#define TC_CONF_KEXCH_GROUP_ALL_FFDHE         2
 
 /* Flags for kexch_tmp_key in TC_CONF */
 #define TC_CONF_KEXCH_TMP_ECDHE      0x01
@@ -70,8 +56,9 @@ typedef struct test_case_conf_resumption_st {
 
 typedef struct test_case_kexch_st {
     int kexch_should_neg; /* Alg ID it should be negotiation in TLS1.3 supported groups ext */
-    int *kexch_groups; /* Used for TLS1.3 connections */
+    int kexch_groups[MAX_TLS13_KEXCH_GROUPS]; /* Used for TLS1.3 connections */
     int kexch_groups_count;
+    uint32_t kexch_conf;
     uint8_t kexch_tmp_key; /* Used for TLS1.2 and lower versions */
 }TC_CONF_KEXCH;
 
