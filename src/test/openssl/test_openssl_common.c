@@ -173,6 +173,8 @@ const char *get_handshake_msg_type(const void *buf, size_t len)
             return "Certificate Status";
         case SSL3_MT_SUPPLEMENTAL_DATA:
             return "Supplemental Data";
+        case SSL3_MT_KEY_UPDATE:
+            return "Key Update";
         case SSL3_MT_NEXT_PROTO:
             return "Next Protocol";
         case SSL3_MT_MESSAGE_HASH:
@@ -180,7 +182,7 @@ const char *get_handshake_msg_type(const void *buf, size_t len)
         case DTLS1_MT_HELLO_VERIFY_REQUEST:
             return "DTLS Hello Verify Request";
     }
-    return "Unknown Handshake";
+    return NULL;
 }
 
 void print_content_type(int write_p, int version, int content_type, const void *buf,
@@ -188,6 +190,11 @@ void print_content_type(int write_p, int version, int content_type, const void *
 {
     const char *op = (write_p ? "Sent" : "Received");
     const char *cont_type = "Unknown msg";
+    const char *handshake_type;
+    int first_byte_val = -1;
+    if (len >= 1) {
+        first_byte_val = *((char*)buf);
+    }
     switch(content_type) {
         case SSL3_RT_CHANGE_CIPHER_SPEC:
             cont_type = "Change Cipher Spec";
@@ -196,7 +203,8 @@ void print_content_type(int write_p, int version, int content_type, const void *
             cont_type = "Alert";
             break;
         case SSL3_RT_HANDSHAKE:
-            cont_type = get_handshake_msg_type(buf, len);
+            handshake_type = get_handshake_msg_type(buf, len);
+            cont_type = handshake_type ? handshake_type : "Unknown Handshake";
             break;
         case SSL3_RT_APPLICATION_DATA:
             cont_type = "Application";
@@ -208,7 +216,14 @@ void print_content_type(int write_p, int version, int content_type, const void *
             cont_type = "Inner Content";
             break;
     }
-    printf("%s[ver=%04X]%s %s msg[%zu]", prefix_str, version, op, cont_type, len);
+    printf("%s[ver=%04X]%s %s msg[len=%zu]", prefix_str, version, op, cont_type, len);
+    if (content_type == SSL3_RT_HEADER) {
+        printf(" rec_type=%d", first_byte_val);
+    } else if (content_type == SSL3_RT_INNER_CONTENT_TYPE) {
+        printf(" val=%d", first_byte_val);
+    } else if (handshake_type == NULL) {
+        printf(" type_val=%d", first_byte_val);
+    }
 }
 
 #define MSG_CB_PREFIX "[MSG_CB]"
@@ -416,8 +431,27 @@ int do_ssl_connect(TC_CONF *conf, SSL *ssl)
     return 0;
 }
 
+int do_handshake(TC_CONF *conf, SSL *ssl)
+{
+    int ret;
+    do {
+        ret = SSL_do_handshake(ssl);
+        if (ret == 1) {
+            printf("SSL handshake succeeded\n");
+            break;
+        }
+        if (wait_for_sock_io(ssl, ret, "SSL_do_handshake")) {
+            printf("SSL handshake failed\n");
+            return -1;
+        }
+        printf("Continue SSL_handshake\n");
+    } while (1);
+    return 0;
+}
+
 int do_ssl_handshake(TC_CONF *conf, SSL *ssl)
 {
+    printf("###Doing SSL handshake\n");
     int ret;
     if (conf->server) {
         ret = do_ssl_accept(conf, ssl);
@@ -494,11 +528,52 @@ int do_data_transfer_server(TC_CONF *conf, SSL *ssl)
 
 int do_data_transfer(TC_CONF *conf, SSL *ssl)
 {
+    printf("### Doing Data transfer\n");
     if (conf->server) {
         return do_data_transfer_server(conf, ssl);
     } else {
         return do_data_transfer_client(conf, ssl);
     }
+}
+
+int do_key_update(TC_CONF *conf, SSL *ssl)
+{
+    printf("### Doing Key update\n");
+    if (SSL_version(ssl) != TLS1_3_VERSION) {
+        printf("Key update for non TLS13 version=%#x\n", SSL_version(ssl));
+        return -1;
+    }
+    if (SSL_key_update(ssl, SSL_KEY_UPDATE_REQUESTED) != 1) {
+        printf("Key update failed\n");
+        return -1;
+    }
+    if (do_handshake(conf, ssl)) {
+        printf("Do handshake after key update failed\n");
+        return -1;
+    }
+    printf("Do handshake after key update succeeded\n");
+    printf("Key update Request done\n");
+    return 0;
+}
+
+int do_key_update_test(TC_CONF *conf, SSL *ssl)
+{
+    if (conf->ku.key_update_test == 0) {
+        /* Key update testing is not configured */
+        return 0;
+    }
+    if ((conf->ku.key_update_test == TC_CONF_KEY_UPDATE_REQ_ON_SERVER)
+            && (conf->server)) {
+        if (do_key_update(conf, ssl)) {
+            printf("Keyupdate failed\n");
+            return -1;
+        }
+    }
+    if (do_data_transfer(conf, ssl)) {
+        printf("Data transfer failed\n");
+        return -1;
+    }
+    return 0;
 }
 
 void do_cleanup_openssl(TC_CONF *conf, SSL_CTX *ctx, SSL *ssl)
@@ -541,6 +616,10 @@ int do_test_tls_connection(TC_CONF *conf)
         goto err;
     }
     printf("Data transfer over TLS succeeded\n");
+    if (do_key_update_test(conf, ssl)) {
+        printf("Key update testing failed\n");
+        goto err;
+    }
     if (conf->server == 0) {
         /* Store SSL session for resumption */
         conf->res.sess = SSL_get1_session(ssl);
