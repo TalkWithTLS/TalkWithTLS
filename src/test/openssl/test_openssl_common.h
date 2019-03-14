@@ -74,7 +74,8 @@ typedef struct test_case_kexch_st {
 
 #define TC_CONF_KEY_UPDATE_REQ_ON_SERVER    1
 #define TC_CONF_KEY_UPDATE_REQ_ON_CLIENT    2
-#define TC_CONF_KEY_UPDATE_NREQ_ON_CLIENT   3
+#define TC_CONF_KEY_UPDATE_NREQ_ON_SERVER   3
+#define TC_CONF_KEY_UPDATE_NREQ_ON_CLIENT   4
 
 typedef struct test_key_update_st {
     uint8_t key_update_test;

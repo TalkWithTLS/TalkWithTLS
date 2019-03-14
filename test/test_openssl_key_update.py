@@ -15,6 +15,12 @@ def tc_setup():
     # Server initiates key update after first handshake and data transfer.
     # And perfroms data transfer again
     (['test_openssl', 'test_openssl', '-S -K 1 -m', '-K 1 m']),
+    # Key update on client
+    (['test_openssl', 'test_openssl', '-S -K 2 -m', '-K 2 m']),
+    # Non request key update on server
+    (['test_openssl', 'test_openssl', '-S -K 3 -m', '-K 3 m']),
+    # Non request key update on client 
+    (['test_openssl', 'test_openssl', '-S -K 4 -m', '-K 4 m']),
 ])
 
 def test_openssl_kupdate(tc_setup, kupdate_apps_and_args):
