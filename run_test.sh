@@ -8,7 +8,7 @@ if [ ! -f ${ENV_SETUP_SCRIPT} ]; then
 fi
 . "${ENV_SETUP_SCRIPT}"
 
-if [ $1 != "" ]; then
+if (( $# > 0 )); then
     TS=$1
 else
     TS=${TEST_DIR}
