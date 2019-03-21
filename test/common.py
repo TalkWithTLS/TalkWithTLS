@@ -28,6 +28,8 @@ def log_tc(apps):
     TWT_LOG('===============================================\n')
 
 def validate_tc_result(testParam):
+    TWT_LOG('Serv Result' + str(testParam.servResult) + '\n')
+    TWT_LOG('Clnt Result' + str(testParam.clntResult) + '\n')
     if testParam.servResult != testParam.servExpectedResult \
             or testParam.clntResult != testParam.clntExpectedResult:
         TWT_LOG('###FAILED !!!!\n\n')
@@ -76,8 +78,10 @@ class TestParam(object):
             self.clntCmd = self.clntCmd + " " + apps[self.appsClntCmdArgIdx]
         if len(apps) > self.appsServExpectedResultIdx:
             self.servExpectedResult = apps[self.appsServExpectedResultIdx]
+            TWT_LOG('Expected serv res ' + str(self.servExpectedResult) + '\n')
         if len(apps) > self.appsClntExpectedResultIdx:
             self.clntExpectedResult = apps[self.appsClntExpectedResultIdx]
+            TWT_LOG('Expected clnt res ' + str(self.clntExpectedResult) + '\n')
 
     def updateProcHandlers(self, servProc, clntProc):
         self.servProc = servProc
