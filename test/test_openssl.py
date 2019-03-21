@@ -12,7 +12,7 @@ def tc_setup():
     TWT_set_log_filename(filename)
 
 @pytest.mark.parametrize("basic_apps_and_args", [
-    (['test_openssl', 'test_openssl', '-S']),
+    (['test_openssl', 'test_openssl', '-S', '']),
     (['test_openssl', 'test_openssl', '-S -n', '-n']),
 ])
 

@@ -16,10 +16,10 @@ def log_std_out_and_err(exe, out, err):
         TWT_LOG('-----------------------------------------------\n')
         TWT_LOG(str(err) + '\n')
 
-def log_procs(proc1, proc2):
-    (out, err) = proc1.communicate()
+def log_procs(servProc, clntProc):
+    (out, err) = servProc.communicate()
     log_std_out_and_err('Server', out, err)
-    (out, err) = proc2.communicate()
+    (out, err) = clntProc.communicate()
     log_std_out_and_err('Client', out, err)
 
 def log_tc(apps):
@@ -27,8 +27,9 @@ def log_tc(apps):
     TWT_LOG('Running ' + apps[0]  + ' vs ' + apps[1] + ' ...\n')
     TWT_LOG('===============================================\n')
 
-def validate_tc_result(ret1, ret2):
-    if ret1 != 0 or ret2 != 0:
+def validate_tc_result(testParam):
+    if testParam.servResult != testParam.servExpectedResult \
+            or testParam.clntResult != testParam.clntExpectedResult:
         TWT_LOG('###FAILED !!!!\n\n')
         result = -1
     else:
@@ -49,20 +50,53 @@ def validate_apps(apps):
     assert validate_app(apps[0]) == 0
     assert validate_app(apps[1]) == 0
 
+class TestParam(object):
+    def initialize(self):
+        # Update Idx of apps
+        self.appsServCmdIdx = 0
+        self.appsClntCmdIdx = 1
+        self.appsServCmdArgIdx = 2
+        self.appsClntCmdArgIdx = 3
+        self.appsServExpectedResultIdx = 4
+        self.appsClntExpectedResultIdx = 5
+        # Update default expected result value 
+        self.servExpectedResult = 0;
+        self.clntExpectedResult = 0;
+
+    def updateCommand(self, apps):
+        self.initialize()
+        self.servCmd = bin_dir + "/" + apps[self.appsServCmdIdx]
+        self.clntCmd = bin_dir + "/" + apps[self.appsClntCmdIdx]
+        TWT_LOG("Serv Cmd: " + self.servCmd + "\n")
+        TWT_LOG("Clnt Cmd: " + self.clntCmd + "\n")
+        # Get optional params
+        if len(apps) > self.appsServCmdArgIdx:
+            self.servCmd = self.servCmd + " " + apps[self.appsServCmdArgIdx]
+        if len(apps) > self.appsClntCmdArgIdx:
+            self.clntCmd = self.clntCmd + " " + apps[self.appsClntCmdArgIdx]
+        if len(apps) > self.appsServExpectedResultIdx:
+            self.servExpectedResult = apps[self.appsServExpectedResultIdx]
+        if len(apps) > self.appsClntExpectedResultIdx:
+            self.clntExpectedResult = apps[self.appsClntExpectedResultIdx]
+
+    def updateProcHandlers(self, servProc, clntProc):
+        self.servProc = servProc
+        self.clntProc = clntProc
+
+    def updateProcResult(self, servProcRes, clntProcRes):
+        self.servResult = servProcRes
+        self.clntResult = clntProcRes
+
 def run_serv_clnt_app(apps):
     validate_apps(apps)
-    serv_cmd = bin_dir + "/" + apps[0]
-    clnt_cmd = bin_dir + "/" + apps[1]
-    if len(apps) > 2:
-        serv_cmd = serv_cmd + " " + apps[2]
-    if len(apps) > 3:
-        clnt_cmd = clnt_cmd + " " + apps[3]
-    TWT_LOG("Serv Cmd: " + serv_cmd + "\n")
-    TWT_LOG("Clnt Cmd: " + clnt_cmd + "\n")
-    proc1 = subprocess.Popen(serv_cmd.split(' '), stdout=subprocess.PIPE)
-    proc2 = subprocess.Popen(clnt_cmd.split(' '), stdout=subprocess.PIPE)
-    ret1 = proc1.wait()
-    ret2 = proc2.wait()
-    log_procs(proc1, proc2)
-    return validate_tc_result(ret1, ret2)
+    testParam = TestParam()
+    testParam.updateCommand(apps)
+    servProc = subprocess.Popen(testParam.servCmd.split(' '), stdout=subprocess.PIPE)
+    clntProc = subprocess.Popen(testParam.clntCmd.split(' '), stdout=subprocess.PIPE)
+    testParam.updateProcHandlers(servProc, clntProc)
+    ret1 = servProc.wait()
+    ret2 = clntProc.wait()
+    testParam.updateProcResult(ret1, ret2)
+    log_procs(servProc, clntProc)
+    return validate_tc_result(testParam)
 
