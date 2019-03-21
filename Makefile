@@ -147,6 +147,8 @@ RM = rm
 
 all : init_task $(TARGET)
 
+test : init_task $(TEST_BIN)
+
 $(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
