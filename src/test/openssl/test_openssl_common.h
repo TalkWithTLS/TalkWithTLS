@@ -26,6 +26,7 @@ extern "C" {
 #define MAX_TLS13_KEXCH_GROUPS      9
 #define TC_CONF_KEXCH_GROUP_ALL_ECC           1
 #define TC_CONF_KEXCH_GROUP_ALL_FFDHE         2
+#define TC_CONF_KEXCH_GROUP_ALL_ECC_STR       3
 
 /* Flags for kexch_tmp_key in TC_CONF */
 #define TC_CONF_KEXCH_TMP_ECDHE      0x01

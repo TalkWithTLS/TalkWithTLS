@@ -60,6 +60,11 @@ int tc_conf_all_ecc_kexch_group(TC_CONF *conf)
     return 0;
 }
 
+int tc_conf_all_ecc_kexch_group_str(TC_CONF *conf)
+{
+    return 0;
+}
+
 int tc_conf_kexch(TC_CONF *conf)
 {
     switch(conf->kexch.kexch_conf) {
@@ -70,6 +75,8 @@ int tc_conf_kexch(TC_CONF *conf)
             return tc_conf_all_ecc_kexch_group(conf);
         case TC_CONF_KEXCH_GROUP_ALL_FFDHE:
             return tc_conf_all_ffdhe_kexch_group(conf);
+        case TC_CONF_KEXCH_GROUP_ALL_ECC_STR:
+            return tc_conf_all_ecc_kexch_group_str(conf);
         default:
             /* Any other non zero received on CLI is failure */
             return -1;
