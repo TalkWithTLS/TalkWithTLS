@@ -14,9 +14,6 @@
 
 #include "test_common.h"
 
-#define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
-#define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
-
 int g_kexch_groups[] = {
     NID_X9_62_prime256v1,   /* secp256r1 */
     NID_secp384r1,          /* secp384r1 */
@@ -24,6 +21,25 @@ int g_kexch_groups[] = {
     NID_X25519,             /* x25519 */
     NID_X448                /* x448 */
 };
+
+int load_cert_and_key(SSL_CTX *ctx, const char *serv_cert_pem_file, const char *serv_key_der_file)
+{
+    if (SSL_CTX_use_certificate_file(ctx, serv_cert_pem_file, SSL_FILETYPE_PEM) != 1) {
+        printf("Load Server cert %s failed\n", serv_cert_pem_file);
+        return -1;
+    }
+
+    printf("Loaded server cert %s on context\n", serv_cert_pem_file);
+
+    if (SSL_CTX_use_PrivateKey_file(ctx, serv_key_der_file, SSL_FILETYPE_ASN1) != 1) {
+        printf("Load Server key %s failed\n", serv_key_der_file);
+        return -1;
+    }
+
+    printf("Loaded server key %s on context\n", serv_key_der_file);
+
+    return 0;
+}
 
 SSL_CTX *create_context()
 {
@@ -37,19 +53,13 @@ SSL_CTX *create_context()
 
     printf("SSL context created\n");
 
-    if (SSL_CTX_use_certificate_file(ctx, SERVER_CERT_FILE, SSL_FILETYPE_PEM) != 1) {
-        printf("Load Server cert %s failed\n", SERVER_CERT_FILE);
+    if (load_cert_and_key(ctx, EC256_SERVER_CERT_FILE, EC256_SERVER_KEY_FILE)) {
         goto err_handler;
     }
 
-    printf("Loaded server cert %s on context\n", SERVER_CERT_FILE);
-
-    if (SSL_CTX_use_PrivateKey_file(ctx, SERVER_KEY_FILE, SSL_FILETYPE_ASN1) != 1) {
-        printf("Load Server key %s failed\n", SERVER_KEY_FILE);
+    if (load_cert_and_key(ctx, RSA2048_SERVER_CERT_FILE, RSA2048_SERVER_KEY_FILE)) {
         goto err_handler;
     }
-
-    printf("Loaded server key %s on context\n", SERVER_KEY_FILE);
 
     printf("SSL context configurations completed\n");
 
@@ -62,6 +72,7 @@ err_handler:
 SSL *create_ssl_object(SSL_CTX *ctx, int lfd)
 {
     SSL *ssl;
+    EC_KEY *ecdh;
     int fd;
 
     fd = do_tcp_accept(lfd);
@@ -78,15 +89,30 @@ SSL *create_ssl_object(SSL_CTX *ctx, int lfd)
 
     SSL_set_fd(ssl, fd);
 
-    if (SSL_set1_groups(ssl, g_kexch_groups, sizeof(g_kexch_groups)/sizeof(g_kexch_groups[0])) != 1) {
+    /*if (SSL_set1_groups(ssl, g_kexch_groups, sizeof(g_kexch_groups)/sizeof(g_kexch_groups[0])) != 1) {
         printf("Set Groups failed\n");
-        goto err_handler;
+        goto err;
+    }*/
+
+    if (SSL_set_dh_auto(ssl, 1) != 1) {
+        printf("Set DH Auto failed\n");
+        goto err;
     }
+
+    ecdh = EC_KEY_new_by_curve_name(EC256_CURVE_NAME);
+    if (!ecdh) {
+        printf("ECDH generation failed\n");
+        goto err;
+    }
+
+    SSL_set_tmp_ecdh(ssl, ecdh);
+    EC_KEY_free(ecdh);
+    ecdh = NULL;
 
     printf("SSL object creation finished\n");
 
     return ssl;
-err_handler:
+err:
     SSL_free(ssl);
     return NULL;
 }

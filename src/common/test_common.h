@@ -19,12 +19,18 @@ extern "C" {
 
 #define MAX_EARLY_DATA_MSG  4098
 
+#define RSA2048_SERVER_CERT_FILE "./certs/RSA_Certs/serv_cert.pem"
+#define RSA2048_SERVER_KEY_FILE "./certs/RSA_Certs/serv_key.der"
+#define RSA2048_CAFILE1 "./certs/RSA_Certs/rootcert.pem"
+
 #define EC256_SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define EC256_SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 #define EC256_CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
 
+#define EC256_CURVE_NAME NID_X9_62_prime256v1
+
 #define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 7788
+#define SERVER_PORT 4433
 
 #define TCP_CON_RETRY_COUNT 20
 #define TCP_CON_RETRY_WAIT_TIME_MS 200
