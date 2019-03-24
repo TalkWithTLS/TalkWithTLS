@@ -10,6 +10,14 @@ int ssl_kexch_config(TC_CONF *conf, SSL *ssl)
         printf("Configured kexchange groups of count=%d\n", conf->kexch.kexch_groups_count);
     }
 
+    if (strlen(conf->kexch.kexch_groups_str)) {
+        if (SSL_set1_groups_list(ssl, conf->kexch.kexch_groups_str) != 1) {
+            printf("Set groups list failed\n");
+            return -1;
+        }
+        printf("Configured kexchange groups str=%s\n", conf->kexch.kexch_groups_str);
+    }
+
     return 0;
 }
 
@@ -62,6 +70,9 @@ int tc_conf_all_ecc_kexch_group(TC_CONF *conf)
 
 int tc_conf_all_ecc_kexch_group_str(TC_CONF *conf)
 {
+    const char *all_ec_kexch_str = "P-256:P-384:P-521";
+    strcpy(conf->kexch.kexch_groups_str, all_ec_kexch_str);
+    conf->kexch.kexch_should_neg = NID_X9_62_prime256v1;
     return 0;
 }
 

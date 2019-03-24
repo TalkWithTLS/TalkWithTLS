@@ -22,6 +22,7 @@ void usage()
     printf("-k      - Key Exchange group for TLS1.3\n");
     printf("          1 - All ECDHE\n");
     printf("          2 - All FFDHE\n");
+    printf("          3 - All ECDHE set using str API (SSL_set1_group_list)\n");
     printf("-K      - Key update\n");
     printf("          1 - Sever initiating Key update request\n");
     printf("-V      - [D]TLS Max Version\n");

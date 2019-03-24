@@ -24,9 +24,13 @@ extern "C" {
 #define TC_CONF_AUTH_RSA        0x02
 
 #define MAX_TLS13_KEXCH_GROUPS      9
+
+/* Values of kexch_conf */
 #define TC_CONF_KEXCH_GROUP_ALL_ECC           1
 #define TC_CONF_KEXCH_GROUP_ALL_FFDHE         2
 #define TC_CONF_KEXCH_GROUP_ALL_ECC_STR       3
+
+#define MAX_KEXCH_STR                         64
 
 /* Flags for kexch_tmp_key in TC_CONF */
 #define TC_CONF_KEXCH_TMP_ECDHE      0x01
@@ -69,7 +73,8 @@ typedef struct test_case_kexch_st {
     int kexch_should_neg; /* Alg ID it should be negotiation in TLS1.3 supported groups ext */
     int kexch_groups[MAX_TLS13_KEXCH_GROUPS]; /* Used for TLS1.3 connections */
     int kexch_groups_count;
-    uint32_t kexch_conf;
+    char kexch_groups_str[MAX_KEXCH_STR];
+    uint32_t kexch_conf; /* CLI argument is stored here */
     uint8_t kexch_tmp_key; /* Used for TLS1.2 and lower versions */
 }TC_CONF_KEXCH;
 
