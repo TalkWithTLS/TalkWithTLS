@@ -123,18 +123,19 @@ DEPENDENCY = $(OPENSSL_1_1_1_LIBS) $(WOLFSSL_LIBS)
 
 # Enable leak sanitizer by default
 LEAKSAN=1
+ADDRSAN=1
 
 ifeq ($(ADDRSAN),1)
-	SANFLAGS = -fsanitize=address
+	SANFLAGS = -fsanitize=address -static-libasan
 endif
 ifeq ($(LEAKSAN),1)
-	SANFLAGS = -fsanitize=leak
+	SANFLAGS += -fsanitize=leak
 endif
 ifeq ($(NOSAN),1)
 	SANFLAGS =
 endif
 
-CFLAGS = -g -ggdb -Wall -Werror $(SANFLAGS) -I $(COMMON_SRC)
+CFLAGS = -g -ggdb -Wall -Werror -fstack-protector-all $(SANFLAGS) -I $(COMMON_SRC)
 OPENSSL_CFLAGS = $(CFLAGS) -I $(OPENSSL_1_1_1_DIR)/include
 WOLFSSL_CFLAGS = $(CFLAGS) -I $(WOLFSSL_DIR)
 #TEST_OPENSSL_CFLAGS = -I $(TEST_OPENSSL_DIR)
