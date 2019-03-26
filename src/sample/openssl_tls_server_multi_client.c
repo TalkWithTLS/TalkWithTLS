@@ -19,7 +19,12 @@ int g_kexch_groups[] = {
     NID_secp384r1,          /* secp384r1 */
     NID_secp521r1,          /* secp521r1 */
     NID_X25519,             /* x25519 */
-    NID_X448                /* x448 */
+    NID_X448,                /* x448 */
+    NID_ffdhe2048,
+    NID_ffdhe3072,
+    NID_ffdhe4096,
+    NID_ffdhe6144,
+    NID_ffdhe8192
 };
 
 int load_cert_and_key(SSL_CTX *ctx, const char *serv_cert_pem_file, const char *serv_key_der_file)
@@ -89,11 +94,6 @@ SSL *create_ssl_object(SSL_CTX *ctx, int lfd)
 
     SSL_set_fd(ssl, fd);
 
-    /*if (SSL_set1_groups(ssl, g_kexch_groups, sizeof(g_kexch_groups)/sizeof(g_kexch_groups[0])) != 1) {
-        printf("Set Groups failed\n");
-        goto err;
-    }*/
-
     if (SSL_set_dh_auto(ssl, 1) != 1) {
         printf("Set DH Auto failed\n");
         goto err;
@@ -108,6 +108,11 @@ SSL *create_ssl_object(SSL_CTX *ctx, int lfd)
     SSL_set_tmp_ecdh(ssl, ecdh);
     EC_KEY_free(ecdh);
     ecdh = NULL;
+
+    if (SSL_set1_groups(ssl, g_kexch_groups, sizeof(g_kexch_groups)/sizeof(g_kexch_groups[0])) != 1) {
+        printf("Set Groups failed\n");
+        goto err;
+    }
 
     printf("SSL object creation finished\n");
 
