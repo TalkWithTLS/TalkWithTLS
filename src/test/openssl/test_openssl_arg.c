@@ -19,12 +19,15 @@ void update_certs(TC_CONF *conf)
 void usage()
 {
     printf("-h      - Help\n");
+    printf("-s      - Run as [D]TLS server\n");
+    printf("-S      - Run as [D]TLS server, fork a server process and send all args.\n");
+    printf("          This is used in test automation with pytest.\n");
     printf("-k      - Key Exchange group for TLS1.3\n");
     printf("          1 - All ECDHE\n");
     printf("          2 - All FFDHE\n");
     printf("          3 - All ECDHE set using str API (SSL_set1_group_list)\n");
     printf("-K      - Key update\n");
-    printf("          1 - Sever initiating Key update request\n");
+    printf("          1 - Server initiating Key update request\n");
     printf("-V      - [D]TLS Max Version\n");
     printf("          10 - TLS1.0\n");
     printf("          11 - TLS1.1\n");
