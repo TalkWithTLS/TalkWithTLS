@@ -114,11 +114,19 @@ TEST_OPENSSL_OBJ=$(addprefix $(OBJ_DIR)/,$(TEST_OPENSSL_SRC:.c=.o))
 
 DEPENDENCY_DIR=dependency
 OPENSSL_1_1_1=openssl-1.1.1a
-OPENSSL_1_1_1_DIR=$(DEPENDENCY_DIR)/$(OPENSSL_1_1_1)
+
+ifneq ($(OSSL111_PATH),)
+	OPENSSL_1_1_1_DIR=$(OSSL111_PATH)
+else
+	OPENSSL_1_1_1_DIR=$(DEPENDENCY_DIR)/$(OPENSSL_1_1_1)
+endif
+
 OPENSSL_1_1_1_LIBS=$(OPENSSL_1_1_1_DIR)/libssl.a
+
 WOLFSSL_MASTER=wolfssl-master
 WOLFSSL_DIR=$(DEPENDENCY_DIR)/$(WOLFSSL_MASTER)
 WOLFSSL_LIBS=$(WOLFSSL_DIR)/src/.libs/libwolfssl.so
+
 DEPENDENCY = $(OPENSSL_1_1_1_LIBS) $(WOLFSSL_LIBS)
 
 # Enable leak sanitizer by default
@@ -170,9 +178,10 @@ build_dependency:$(DEPENDENCY)
 #TODO Add build for OpenSSL-master
 #TODO Generate exes from different openssl version
 
-$(OPENSSL_1_1_1_LIBS): $(OPENSSL_1_1_1_DIR).tar.gz
+$(OPENSSL_1_1_1_LIBS):
 	@echo "Building $(OPENSSL_1_1_1_DIR)..."
-	@cd $(DEPENDENCY_DIR) && tar -zxvf $(OPENSSL_1_1_1).tar.gz > /dev/null
+	@if [ -f $(OPENSSL_1_1_1_DIR).tar.gz ]; then \
+		cd $(DEPENDENCY_DIR) && tar -zxvf $(OPENSSL_1_1_1).tar.gz > /dev/null; fi
 	@cd $(OPENSSL_1_1_1_DIR) && ./config -d > /dev/null
 	@cd $(OPENSSL_1_1_1_DIR) && make > /dev/null
 
