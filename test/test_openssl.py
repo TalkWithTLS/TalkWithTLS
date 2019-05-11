@@ -11,17 +11,17 @@ def tc_setup():
     '''Initializes log file in TWT log module'''
     TWT_set_log_filename(filename)
 
-@pytest.mark.parametrize("basic_apps_and_args", [
-    (['test_openssl', 'test_openssl', '-S', '']),
-    (['test_openssl', 'test_openssl', '-S -n', '-n']),
+@pytest.mark.parametrize("basic_app1, basic_app2, app1_args, app2_args", [
+    (['test_openssl', 'test_openssl', ' -S ', '']),
+    (['test_openssl', 'test_openssl', ' -S -n ', ' -n ']),
 ])
 
-def test_openssl_basic(tc_setup, basic_apps_and_args):
-    assert run_serv_clnt_app(basic_apps_and_args) == 0
+def test_openssl_basic(tc_setup, basic_app1, basic_app2, app1_args, app2_args):
+    assert run_serv_clnt_app([basic_app1, basic_app2, app1_args, app2_args]) == 0
 
-@pytest.mark.parametrize("psk_apps_and_args", [
-    (['test_openssl', 'test_openssl', '-SPm', '-Pm']),
+@pytest.mark.parametrize("psk_app1, psk_app2, app1_args, app2_args", [
+    ('test_openssl', 'test_openssl', ' -SPm ', ' -Pm '),
 ])
 
-def test_openssl_psk(tc_setup, psk_apps_and_args):
-    assert run_serv_clnt_app(psk_apps_and_args) == 0
+def test_openssl_psk(tc_setup, psk_app1, psk_app2, app1_args, app2_args):
+    assert run_serv_clnt_app([psk_app1, psk_app2, app1_args, app2_args]) == 0
