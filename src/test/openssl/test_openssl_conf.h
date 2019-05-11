@@ -17,12 +17,13 @@ extern "C" {
 #define TC_CONF_AUTH_ECDSA      0x01
 #define TC_CONF_AUTH_RSA        0x02
 
-#define MAX_TLS13_KEXCH_GROUPS      9
+#define MAX_TLS13_KEXCH_GROUPS      10
 
 /* Values of kexch_conf */
 #define TC_CONF_KEXCH_GROUP_ALL_ECC           1
 #define TC_CONF_KEXCH_GROUP_ALL_FFDHE         2
 #define TC_CONF_KEXCH_GROUP_ALL_ECC_STR       3
+#define TC_CONF_KEXCH_GROUP_ALL_FFDHE_STR     4
 
 #define MAX_KEXCH_STR                         64
 

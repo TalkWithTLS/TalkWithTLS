@@ -70,9 +70,17 @@ int tc_conf_all_ecc_kexch_group(TC_CONF *conf)
 
 int tc_conf_all_ecc_kexch_group_str(TC_CONF *conf)
 {
-    const char *all_ec_kexch_str = "P-256:P-384:P-521";
+    const char *all_ec_kexch_str = "P-256:P-384:P-521:X25519:X448";
     strcpy(conf->kexch.kexch_groups_str, all_ec_kexch_str);
     conf->kexch.kexch_should_neg = NID_X9_62_prime256v1;
+    return 0;
+}
+
+int tc_conf_all_ffdhe_kexch_group_str(TC_CONF *conf)
+{
+    const char *all_ec_kexch_str = "ffdhe2048:ffdhe3072:ffdhe4096:ffdhe6144:ffdhe8192";
+    strcpy(conf->kexch.kexch_groups_str, all_ec_kexch_str);
+    conf->kexch.kexch_should_neg = NID_ffdhe2048;
     return 0;
 }
 
@@ -88,6 +96,8 @@ int tc_conf_kexch(TC_CONF *conf)
             return tc_conf_all_ffdhe_kexch_group(conf);
         case TC_CONF_KEXCH_GROUP_ALL_ECC_STR:
             return tc_conf_all_ecc_kexch_group_str(conf);
+        case TC_CONF_KEXCH_GROUP_ALL_FFDHE_STR:
+            return tc_conf_all_ffdhe_kexch_group_str(conf);
         default:
             /* Any other non zero received on CLI is failure */
             return -1;
