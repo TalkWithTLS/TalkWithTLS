@@ -14,8 +14,9 @@ extern "C" {
 #define SSL_EX_DATA_TC_CONF         1
 
 /* Flags for auth in TC_CONF */
-#define TC_CONF_AUTH_ECDSA      0x01
-#define TC_CONF_AUTH_RSA        0x02
+#define TC_CONF_AUTH_ECDSA          0x01
+#define TC_CONF_AUTH_RSA            0x02
+#define TC_CONF_CLIENT_CERT_AUTH    0x04
 
 #define MAX_TLS13_KEXCH_GROUPS      10
 

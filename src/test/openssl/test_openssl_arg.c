@@ -5,12 +5,21 @@
 void update_certs(TC_CONF *conf)
 {
     if (conf->server) {
-        conf->server = 1;
         conf->cert = EC256_SERVER_CERT_FILE;
         conf->cert_type = SSL_FILETYPE_PEM;
         conf->priv_key = EC256_SERVER_KEY_FILE;
         conf->priv_key_type = SSL_FILETYPE_ASN1;
+        if ((conf->auth & TC_CONF_CLIENT_CERT_AUTH) != 0) {
+            conf->cafiles[0] = EC256_CAFILE1;
+            conf->cafiles_count = 1;
+        }
     } else {
+        if ((conf->auth & TC_CONF_CLIENT_CERT_AUTH) != 0) {
+            conf->cert = EC256_CLIENT_CERT_FILE;
+            conf->cert_type = SSL_FILETYPE_PEM;
+            conf->priv_key = EC256_CLIENT_KEY_FILE;
+            conf->priv_key_type = SSL_FILETYPE_ASN1;
+        }
         conf->cafiles[0] = EC256_CAFILE1;
         conf->cafiles_count = 1;
     }
@@ -19,8 +28,8 @@ void update_certs(TC_CONF *conf)
 void usage()
 {
     printf("-h      - Help\n");
-    printf("-s      - Run as [D]TLS server\n");
-    printf("-S      - Run as [D]TLS server, fork a server process and send all args.\n");
+    printf("-S      - Run as [D]TLS server\n");
+    printf("-s      - Run as [D]TLS server, fork a server process and send all args.\n");
     printf("          This is used in test automation with pytest.\n");
     printf("-k      - Key Exchange group for TLS1.3\n");
     printf("          1 - All ECDHE\n");
@@ -35,14 +44,14 @@ void usage()
     printf("          13 - TLS1.3\n");
     printf("          1312 - Server TLS1.3 and Client TLS1.2\n");
     printf("          1213 - Server TLS1.2 and Client TLS1.3\n");
-    printf("-S      - [D]TLS server\n");
+    printf("-c      - Client Cert Authentication\n");
 }
 
 int parse_arg(int argc, char *argv[], TC_CONF *conf)
 {
     int opt;
 
-    while((opt = getopt(argc, argv, "hSRPEimMnK:k:V:a:p:")) != -1) {
+    while((opt = getopt(argc, argv, "hSRPEimMnK:k:V:a:p:c")) != -1) {
         switch (opt) {
             case 'h':
                 usage();
@@ -80,6 +89,9 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
                 break;
             case 'V':
                 conf->max_version = atoi(optarg);
+                break;
+            case 'c':
+                conf->auth |= TC_CONF_CLIENT_CERT_AUTH;
                 break;
         }
     }

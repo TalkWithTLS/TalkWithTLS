@@ -106,8 +106,9 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
         printf("Loaded server key %s on context\n", conf->priv_key);
     }
 
-    if (conf->server == 0) {
-        SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+    if ((conf->server == 0) || (conf->auth & TC_CONF_CLIENT_CERT_AUTH)) {
+        SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+        printf("Configured Verify Peer\n");
     }
     SSL_CTX_set_verify_depth(ctx, 5);
     /*if (SSL_CTX_set_session_id_context(ctx, SSL_SESS_ID_CTX, strlen(SSL_SESS_ID_CTX)) != 1) {

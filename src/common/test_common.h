@@ -25,6 +25,8 @@ extern "C" {
 
 #define EC256_SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define EC256_SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
+#define EC256_CLIENT_CERT_FILE "./certs/ECC_Prime256_Certs/client_cert.pem"
+#define EC256_CLIENT_KEY_FILE "./certs/ECC_Prime256_Certs/client_key.der"
 #define EC256_CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
 
 #define EC256_CURVE_NAME NID_X9_62_prime256v1
