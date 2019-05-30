@@ -22,6 +22,7 @@ def test_tls12_sample_code(tc_setup, t12_apps):
 
 @pytest.mark.parametrize("t13_apps", [
     (['openssl_tls13_server', 'openssl_tls13_client']),
+    (['openssl_tls13_server_both_auth', 'openssl_tls13_client_both_auth']),
     #(['openssl_tls13_dhe_server', 'openssl_tls13_dhe_client']), #TODO ffdhe PR is not yet merged
     (['wolfssl_tls13_server', 'wolfssl_tls13_client']),
 ])
