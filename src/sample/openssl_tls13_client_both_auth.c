@@ -14,6 +14,8 @@
 #include "test_common.h"
 
 #define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
+#define CLIENT_CERT_FILE "./certs/ECC_Prime256_Certs/client_cert.pem"
+#define CLIENT_KEY_FILE "./certs/ECC_Prime256_Certs/client_key.der"
 
 int g_kexch_groups[] = {
     NID_X9_62_prime256v1,   /* secp256r1 */
@@ -34,6 +36,20 @@ SSL_CTX *create_context()
     }
 
     printf("SSL context created\n");
+
+    if (SSL_CTX_use_certificate_file(ctx, CLIENT_CERT_FILE, SSL_FILETYPE_PEM) != 1) {
+        printf("Load Server cert %s failed\n", CLIENT_CERT_FILE);
+        goto err_handler;
+    }
+
+    printf("Loaded server cert %s on context\n", CLIENT_CERT_FILE);
+
+    if (SSL_CTX_use_PrivateKey_file(ctx, CLIENT_KEY_FILE, SSL_FILETYPE_ASN1) != 1) {
+        printf("Load Server key %s failed\n", CLIENT_KEY_FILE);
+        goto err_handler;
+    }
+
+    printf("Loaded server key %s on context\n", CLIENT_KEY_FILE);
 
     if (SSL_CTX_load_verify_locations(ctx, CAFILE1, NULL) != 1) {
         printf("Load CA cert failed\n");

@@ -13,6 +13,7 @@
 
 #include "test_common.h"
 
+#define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
 #define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 
@@ -50,6 +51,15 @@ SSL_CTX *create_context()
 
     printf("Loaded server key %s on context\n", SERVER_KEY_FILE);
 
+    if (SSL_CTX_load_verify_locations(ctx, CAFILE1, NULL) != 1) {
+        printf("Load CA cert failed\n");
+        goto err_handler;
+    }
+
+    printf("Loaded cert %s on context\n", CAFILE1);
+
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+    SSL_CTX_set_verify_depth(ctx, 5);
     printf("SSL context configurations completed\n");
 
     return ctx;
