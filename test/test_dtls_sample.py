@@ -11,13 +11,13 @@ def tc_setup():
     '''Initializes log file in TWT log module'''
     TWT_set_log_filename(filename)
 
-@pytest.mark.parametrize("d12_apps", [
-    (['openssl_dtls12_server', 'openssl_dtls12_client']),
-    (['openssl_dtls12_server', 'openssl_dtls12_custom_bio_client']),
-    (['openssl_dtls12_nb_server', 'openssl_dtls12_client']),
-    (['openssl_dtls12_nb_server', 'openssl_dtls12_nb_client']),
+@pytest.mark.parametrize("d12_app1, d12_app2", [
+    ('openssl_dtls12_server', 'openssl_dtls12_client'),
+    ('openssl_dtls12_server', 'openssl_dtls12_custom_bio_client'),
+    ('openssl_dtls12_nb_server', 'openssl_dtls12_client'),
+    ('openssl_dtls12_nb_server', 'openssl_dtls12_nb_client'),
 ])
 
-def test_dtls12_sample_code(tc_setup, d12_apps):
-    assert run_serv_clnt_app(d12_apps) == 0
+def test_dtls12_sample_code(tc_setup, d12_app1, d12_app2):
+    assert run_serv_clnt_app([d12_app1, d12_app2]) == 0
 
