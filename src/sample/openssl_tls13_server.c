@@ -154,6 +154,7 @@ int tls13_server()
     }
 
     printf("SSL accept succeeded\n");
+    printf("Negotiated Cipher suite:%s\n", SSL_CIPHER_get_name(SSL_get_current_cipher(ssl)));
 
     if (do_data_transfer(ssl)) {
         printf("Data transfer over TLS failed\n");

@@ -42,6 +42,18 @@ SSL_CTX *create_context()
 
     printf("Loaded cert %s on context\n", CAFILE1);
 
+    if (SSL_CTX_set_ciphersuites(ctx, TLS1_3_RFC_CHACHA20_POLY1305_SHA256) != 1) {
+        printf("Setting TLS1.3 cipher suite failed\n");
+        goto err_handler;
+    }
+    printf("Setting TLS1.3 cipher suite succeeded\n");
+
+    if (SSL_CTX_set_cipher_list(ctx, TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) != 1) {
+        printf("Setting TLS1.2 cipher suite failed\n");
+        goto err_handler;
+    }
+    printf("Setting TLS1.2 cipher suite succeeded\n");
+
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
     SSL_CTX_set_verify_depth(ctx, 5);
 
@@ -143,6 +155,7 @@ int tls13_client()
     }
     printf("SSL connect succeeded\n");
 
+    printf("Negotiated Cipher suite:%s\n", SSL_CIPHER_get_name(SSL_get_current_cipher(ssl)));
     if (do_data_transfer(ssl)) {
         printf("Data transfer over TLS failed\n");
         goto err_handler;
