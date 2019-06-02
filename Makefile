@@ -121,7 +121,7 @@ OPENSSL_T13RESUMPTION_CLNT_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_T13RESUMPTION_C
 TEST_OPENSSL_OBJ=$(addprefix $(OBJ_DIR)/,$(TEST_OPENSSL_SRC:.c=.o))
 
 DEPENDENCY_DIR=dependency
-OPENSSL_1_1_1=openssl-1.1.1a
+OPENSSL_1_1_1=openssl-1.1.1c
 
 ifneq ($(OSSL111_PATH),)
 	OPENSSL_1_1_1_DIR=$(OSSL111_PATH)
@@ -185,6 +185,7 @@ build_dependency:$(DEPENDENCY)
 
 #TODO Add build for OpenSSL-master
 #TODO Generate exes from different openssl version
+#TODO Better to avoid using DEPENDENCY_DIR instead use generic way while untaring
 
 $(OPENSSL_1_1_1_LIBS):
 	@echo "Building $(OPENSSL_1_1_1_DIR)..."
