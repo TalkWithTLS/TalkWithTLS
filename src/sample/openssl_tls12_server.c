@@ -131,6 +131,7 @@ int tls12_server()
     }
 
     ssl = create_ssl_object(ctx, lfd);
+    check_and_close(&lfd);
     if (!ssl) {
         goto err_handler;
     }
@@ -158,7 +159,6 @@ err_handler:
     }
     SSL_CTX_free(ctx);
     close(fd);
-    close(lfd);
     return ret_val;
 }
 

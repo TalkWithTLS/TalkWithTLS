@@ -53,5 +53,6 @@ int main(int argc, char *argv[])
     ret_val = do_test_openssl(&conf);
 err:
     fini_tc_conf(&conf);
+    fflush(stdout);
     return ret_val;
 }

@@ -1,4 +1,5 @@
 #include "test_openssl_common.h"
+#include "test_openssl_sock.h"
 #include "test_openssl_resumption.h"
 #include "test_openssl_validation.h"
 #include "test_openssl_kexch.h"
@@ -256,31 +257,6 @@ int enable_nonblock(TC_CONF *conf)
         flags |= O_NONBLOCK;
         if (fcntl(fd, F_SETFL, flags) != 0) {
             printf("Set nonblock flags on fcntl failed\n");
-            return -1;
-        }
-    }
-    return 0;
-}
-
-int create_sock_connection(TC_CONF *conf)
-{
-    if (conf->server) {
-        if (conf->tcp_listen_fd == -1) {
-            conf->tcp_listen_fd = do_tcp_listen(SERVER_IP, SERVER_PORT);
-            if (conf->tcp_listen_fd < 0) {
-                return -1;
-            }
-        }
-
-        conf->fd = do_tcp_accept(conf->tcp_listen_fd);
-        if (conf->fd < 0) {
-            printf("TCP connection establishment failed\n");
-            return -1;
-        }
-    } else {
-        conf->fd = do_tcp_connection(SERVER_IP, SERVER_PORT);
-        if (conf->fd < 0) {
-            printf("TCP connection establishment failed\n");
             return -1;
         }
     }
@@ -718,6 +694,9 @@ int do_test_openssl(TC_CONF *conf)
 {
     int ret_val = -1;
 
+    if (create_listen_sock(conf)) {
+        return -1;
+    }
     if (do_openssl_init(conf)) {
         printf("Openssl init failed\n");
         return -1;

@@ -165,6 +165,7 @@ int tls13_server()
     }
 
     ssl = create_ssl_object(ctx, lfd);
+    check_and_close(&lfd);
     if (!ssl) {
         goto err_handler;
     }
@@ -187,7 +188,6 @@ int tls13_server()
     ret_val = 0;
 err_handler:
     do_cleanup(ctx, ssl);
-    close(lfd);
     ssl_fini();
     return ret_val;
 }
@@ -196,6 +196,7 @@ int main()
 {
     if (tls13_server()) {
         printf("TLS13 server connection failed\n");
+        fflush(stdout);
         return -1;
     }
     return 0;

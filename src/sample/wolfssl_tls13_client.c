@@ -182,6 +182,7 @@ int main()
 {
     if (tls13_client()) {
         printf("TLS13 client connection failed\n");
+        fflush(stdout);
         return -1;
     }
     return 0;

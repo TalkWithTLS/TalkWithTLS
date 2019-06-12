@@ -153,6 +153,7 @@ int tls13_server()
     }
 
     ssl = create_ssl_object(ctx, lfd);
+    check_and_close(&lfd);
     if (!ssl) {
         goto err_handler;
     }
@@ -178,7 +179,6 @@ int tls13_server()
     ret_val = 0;
 err_handler:
     do_cleanup(ctx, ssl);
-    close(lfd);
     return ret_val;
 }
 
@@ -187,6 +187,7 @@ int main()
     printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION), OpenSSL_version(OPENSSL_BUILT_ON));
     if (tls13_server()) {
         printf("TLS12 server connection failed\n");
+        fflush(stdout);
         return -1;
     }
     return 0;
