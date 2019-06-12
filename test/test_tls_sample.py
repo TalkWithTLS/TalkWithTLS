@@ -31,7 +31,7 @@ def test_tls13_sample_code(tc_setup, t13_app1, t13_app2):
     assert run_serv_clnt_app([t13_app1, t13_app2]) == 0
 
 @pytest.mark.parametrize("t13_interop_app1, t13_interop_app2", [
-    #('openssl_tls13_server', 'wolfssl_tls13_client'), #TODO Failing
+    ('openssl_tls13_server', 'wolfssl_tls13_client'),
     ('wolfssl_tls13_server', 'openssl_tls13_client'),
 ])
 

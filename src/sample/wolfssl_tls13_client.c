@@ -17,8 +17,8 @@
 #define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
 
 int g_kexch_groups[] = {
-    WOLFSSL_FFDHE_2048
-    //WOLFSSL_ECC_SECP256R1
+    WOLFSSL_FFDHE_2048,
+    WOLFSSL_ECC_SECP256R1
 };
 
 void ssl_init()

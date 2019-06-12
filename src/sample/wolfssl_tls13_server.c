@@ -18,8 +18,8 @@
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 
 int g_kexch_groups[] = {
-    WOLFSSL_FFDHE_2048
-    //WOLFSSL_ECC_SECP256R1
+    WOLFSSL_FFDHE_2048,
+    WOLFSSL_ECC_SECP256R1
 };
 
 void ssl_init()
