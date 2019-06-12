@@ -10,6 +10,7 @@
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
+#include "openssl/err.h"
 
 #include "test_common.h"
 
@@ -124,6 +125,15 @@ void do_cleanup(SSL_CTX *ctx, SSL *ssl)
     }
 }
 
+void get_error()
+{
+    unsigned long error;
+    const char *file = NULL;
+    int line= 0;
+    error = ERR_get_error_line(&file, &line);
+    printf("Error reason=%d on [%s:%d]\n", ERR_GET_REASON(error), file, line);
+}
+
 int tls13_server()
 {
     SSL_CTX *ctx;
@@ -150,6 +160,9 @@ int tls13_server()
     ret = SSL_accept(ssl); 
     if (ret != 1) {
         printf("SSL accept failed%d\n", ret);
+        if (SSL_get_error(ssl, ret) == SSL_ERROR_SSL) {
+            get_error();
+        }
         goto err_handler;
     }
 
