@@ -3,7 +3,7 @@ bin
 report
 
 openssl-1.1.1*
-!openssl-1.1.1*.tar.gz
+!openssl*.tar.gz
 
 tags
 cscope*
