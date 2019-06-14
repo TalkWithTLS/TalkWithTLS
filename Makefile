@@ -196,7 +196,7 @@ $(OPENSSL_1_1_1_LIBS):
 
 WOLFSSL_CONF_ARGS=--enable-tls13 --enable-harden --enable-debug
 
-$(WOLFSSL_LIBS): $(WOLFSSL_DIR)
+$(WOLFSSL_LIBS):
 	@echo "Building $(WOLFSSL_DIR)..."
 	@cd $(WOLFSSL_DIR) && autoreconf -i > /dev/null
 	@cd $(WOLFSSL_DIR) && ./configure $(WOLFSSL_CONF_ARGS) > /dev/null
