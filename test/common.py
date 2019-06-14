@@ -111,7 +111,7 @@ class TestParam(object):
                 if servRet == None:
                     self.servProc.kill()
                 if clntRet == None:
-                    self.clntProc.Kill()
+                    self.clntProc.kill()
             #Even after Kill if process is not quiting, just break and come out
             if timetaken > PROC_DEFAULT_POLLING_TIME_SEC + 1:
                 TWT_LOG('Even after kill proc is not quitting')
