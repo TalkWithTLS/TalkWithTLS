@@ -74,6 +74,7 @@ int do_tcp_connection(const char *server_ip, uint16_t port)
     }
     serv_addr.sin_port = htons(port);
 
+    printf("Connecting to %s:%d...\n", server_ip, port);
     do {
         ret = connect(fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
         if (ret) {
@@ -122,12 +123,12 @@ int do_tcp_listen(const char *server_ip, uint16_t port)
         goto err_handler;
     }
 
+    printf("TCP listening on %s:%d...\n", server_ip, port);
     ret = listen(lfd, 5);
     if (ret) {
         printf("listen failed\n");
         goto err_handler;
     }
-    printf("Listening on %s:%d\n", server_ip, port);
     printf("TCP listen fd=%d\n", lfd);
     return lfd;
 err_handler:
