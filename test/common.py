@@ -36,7 +36,7 @@ class TestLog(object):
         TWT_LOG('===============================================\n')
 
 class TestParam(object):
-    def __init__(self, apps):
+    def initialize(self, apps):
         self.testLog = TestLog()
         self.apps = apps
         self.validateApps()
@@ -67,7 +67,8 @@ class TestParam(object):
             return -1
         return 0
 
-    def updateCommand(self):
+    def updateCommand(self, apps):
+        self.initialize(apps)
         self.servCmd = bin_dir + "/" + self.apps[self.appsServCmdIdx]
         self.clntCmd = bin_dir + "/" + self.apps[self.appsClntCmdIdx]
         TWT_LOG("Serv Cmd: " + self.servCmd + "\n")
@@ -129,20 +130,13 @@ class TestParam(object):
             self.result = 0
         return self.result
 
-    def __del__(self):
-        self.testLog = None
-
 def run_serv_clnt_app(apps):
-    testParam = TestParam(apps)
-    testParam.updateCommand()
+    testParam = TestParam()
+    testParam.updateCommand(apps)
     servProc = subprocess.Popen(testParam.servCmd.split(' '), stdout=subprocess.PIPE)
     clntProc = subprocess.Popen(testParam.clntCmd.split(' '), stdout=subprocess.PIPE)
     testParam.updateProcHandlers(servProc, clntProc)
     testParam.waitForProc()
     testParam.testLog.logProcs(testParam, servProc, clntProc)
     testParam.validateTCResult()
-    ret = testParam.result
-    testParam = None
-    return ret
-    
-
+    return testParam.result
