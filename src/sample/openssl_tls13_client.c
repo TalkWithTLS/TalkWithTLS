@@ -14,7 +14,19 @@
 
 #include "test_common.h"
 
-#define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
+#define CAFILE1 EC256_CAFILE1
+#define CAFILE2 RAS2048_PSS_PSS_CAFILE1
+
+int load_ca_cert(SSL_CTX *ctx, const char *ca_file)
+{
+    if (SSL_CTX_load_verify_locations(ctx, ca_file, NULL) != 1) {
+        printf("Load CA cert failed\n");
+        return -1;
+    }
+
+    printf("Loaded cert %s on context\n", ca_file);
+    return 0;
+}
 
 int g_kexch_groups[] = {
     NID_X9_62_prime256v1,   /* secp256r1 */
@@ -36,12 +48,9 @@ SSL_CTX *create_context()
 
     printf("SSL context created\n");
 
-    if (SSL_CTX_load_verify_locations(ctx, CAFILE1, NULL) != 1) {
-        printf("Load CA cert failed\n");
+    if (load_ca_cert(ctx, CAFILE1) || load_ca_cert(ctx, CAFILE2)) {
         goto err_handler;
     }
-
-    printf("Loaded cert %s on context\n", CAFILE1);
 
     if (SSL_CTX_set_ciphersuites(ctx, TLS1_3_RFC_CHACHA20_POLY1305_SHA256) != 1) {
         printf("Setting TLS1.3 cipher suite failed\n");

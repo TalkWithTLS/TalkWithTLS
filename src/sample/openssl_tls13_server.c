@@ -14,8 +14,8 @@
 
 #include "test_common.h"
 
-#define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
-#define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
+#define SERVER_CERT_FILE EC256_SERVER_CERT_FILE
+#define SERVER_KEY_FILE EC256_SERVER_KEY_FILE
 
 int g_kexch_groups[] = {
     NID_X9_62_prime256v1,   /* secp256r1 */

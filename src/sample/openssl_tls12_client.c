@@ -13,6 +13,19 @@
 
 #include "test_common.h"
 
+#define CAFILE1 EC256_CAFILE1
+
+int load_ca_cert(SSL_CTX *ctx, const char *ca_file)
+{
+    if (SSL_CTX_load_verify_locations(ctx, ca_file, NULL) != 1) {
+        printf("Load CA cert failed\n");
+        return -1;
+    }
+
+    printf("Loaded cert %s on context\n", ca_file);
+    return 0;
+}
+
 SSL_CTX *create_context()
 {
     SSL_CTX *ctx;
@@ -25,12 +38,9 @@ SSL_CTX *create_context()
 
     printf("SSL context created\n");
 
-    if (SSL_CTX_load_verify_locations(ctx, EC256_CAFILE1, NULL) != 1) {
-        printf("Load CA cert failed\n");
+    if (load_ca_cert(ctx, CAFILE1)) {
         goto err_handler;
     }
-
-    printf("Loaded cert %s on context\n", EC256_CAFILE1);
 
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
     SSL_CTX_set_verify_depth(ctx, 5);
