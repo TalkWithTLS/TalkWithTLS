@@ -20,7 +20,7 @@
 int load_ca_cert(SSL_CTX *ctx, const char *ca_file)
 {
     if (SSL_CTX_load_verify_locations(ctx, ca_file, NULL) != 1) {
-        printf("Load CA cert failed\n");
+        printf("Load CA cert %s failed\n", ca_file);
         return -1;
     }
 

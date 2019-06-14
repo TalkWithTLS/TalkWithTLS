@@ -25,7 +25,7 @@ extern "C" {
 
 #define RAS2048_PSS_PSS_SERV_CERT "./certs/RSA_PSS_PSS_Certs/serv_cert.pem"
 #define RAS2048_PSS_PSS_SERV_KEY "./certs/RSA_PSS_PSS_Certs/serv_key.pem"
-#define RAS2048_PSS_PSS_CAFILE1 "./certs/RSA_PSS_PSS_Certs/serv_key.pem"
+#define RAS2048_PSS_PSS_CAFILE1 "./certs/RSA_PSS_PSS_Certs/rootcert.pem"
 
 #define EC256_SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define EC256_SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
