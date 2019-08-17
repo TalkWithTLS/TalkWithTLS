@@ -137,15 +137,11 @@ WOLFSSL_LIBS=$(WOLFSSL_DIR)/src/.libs/libwolfssl.so
 
 DEPENDENCY = $(OPENSSL_1_1_1_LIBS) $(WOLFSSL_LIBS)
 
-# Enable leak sanitizer by default
-LEAKSAN=1
+# Enable address sanitizer by default
 ADDRSAN=1
 
 ifeq ($(ADDRSAN),1)
 	SANFLAGS = -fsanitize=address -static-libasan
-endif
-ifeq ($(LEAKSAN),1)
-	SANFLAGS += -fsanitize=leak
 endif
 ifeq ($(NOSAN),1)
 	SANFLAGS =
@@ -158,6 +154,8 @@ WOLFSSL_CFLAGS = $(CFLAGS) -I $(WOLFSSL_DIR)
 
 LDFLAGS = $(OPENSSL_1_1_1_DIR)/libssl.a $(OPENSSL_1_1_1_DIR)/libcrypto.a -lpthread -ldl $(SANFLAGS)
 WOLFSSL_LDFLAGS = -L $(BIN_DIR) -lwolfssl $(SANFLAGS)
+
+OSSL_CC="gcc -Wall -Werror -fstack-protector-all $(SANFLAGS)"
 
 CC = gcc
 CP = cp
@@ -191,7 +189,7 @@ $(OPENSSL_1_1_1_LIBS):
 	@echo "Building $(OPENSSL_1_1_1_DIR)..."
 	@if [ -f $(OPENSSL_1_1_1_DIR).tar.gz ]; then \
 		cd $(DEPENDENCY_DIR) && tar -zxvf $(OPENSSL_1_1_1).tar.gz > /dev/null; fi
-	@cd $(OPENSSL_1_1_1_DIR) && ./config -d > /dev/null
+	@cd $(OPENSSL_1_1_1_DIR) && export CC=$(OSSL_CC) && ./config -d > /dev/null
 	@cd $(OPENSSL_1_1_1_DIR) && make > /dev/null
 
 WOLFSSL_CONF_ARGS=--enable-tls13 --enable-harden --enable-debug
@@ -283,3 +281,7 @@ clean:
 	@$(RM) -rf *.o *.a
 	@$(RM) -rf $(TARGET)
 	@$(RM) -rf $(OBJ_DIR) $(BIN_DIR)
+
+clobber: clean
+	@cd $(OPENSSL_1_1_1_DIR) && make clean > /dev/null
+	@cd $(WOLFSSL_DIR) && make clean > /dev/null
