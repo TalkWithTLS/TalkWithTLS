@@ -83,6 +83,10 @@ typedef struct test_case_kexch_st {
     uint8_t kexch_tmp_key; /* Used for TLS1.2 and lower versions */
 }TC_CONF_KEXCH;
 
+typedef struct test_case_ssl_mode_st {
+    uint8_t release_buf;
+}TC_CONF_SSL_MODE;
+
 #define TC_CONF_KEY_UPDATE_REQ_ON_SERVER    1
 #define TC_CONF_KEY_UPDATE_REQ_ON_CLIENT    2
 #define TC_CONF_KEY_UPDATE_NREQ_ON_SERVER   3
@@ -112,6 +116,7 @@ typedef struct test_case_conf_st {
     TC_CONF_RESUMPTION res;
     TC_CONF_CB cb;
     TC_CONF_KEY_UPDATE ku;
+    TC_CONF_SSL_MODE ssl_mode;
 }TC_CONF;
 
 #ifdef __cplusplus

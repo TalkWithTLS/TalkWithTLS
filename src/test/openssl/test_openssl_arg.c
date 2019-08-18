@@ -26,13 +26,16 @@ void usage()
     printf("-i      - TLS Info Callback\n");
     printf("-m      - TLS msg Callback\n");
     printf("-M      - TLS detailed msg Callback\n");
+    printf("-b      - Release TLS buffer\n");
+    printf("          1 - Enable at SSL context\n");
+    printf("          other than 1 - Enable at SSL\n");
 }
 
 int parse_arg(int argc, char *argv[], TC_CONF *conf)
 {
     int opt;
 
-    while((opt = getopt(argc, argv, "hSRPEimMnK:k:V:a:p:cC")) != -1) {
+    while((opt = getopt(argc, argv, "hSRPEimMnK:k:V:a:p:cCb:")) != -1) {
         switch (opt) {
             case 'h':
                 usage();
@@ -76,6 +79,14 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
                 break;
             case 'C':
                 conf->cb.crypto_mem_cb = 1;
+                break;
+            case 'b':
+                if (optarg == NULL) {
+                    conf->ssl_mode.release_buf = 2;
+                } else {
+                    conf->ssl_mode.release_buf = (uint8_t)atoi(optarg);
+                }
+                break;
         }
     }
 

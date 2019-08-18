@@ -5,6 +5,7 @@
 #include "test_openssl_kexch.h"
 #include "test_openssl_version.h"
 #include "test_openssl_crypto_mem.h"
+#include "test_openssl_ssl_mode.h"
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -128,6 +129,9 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
     }
     if ((conf->res.early_data) && (conf->server)) {
         SSL_CTX_set_max_early_data(ctx, MAX_EARLY_DATA_MSG);
+    }
+    if (ssl_ctx_mode_config(conf, ctx) != 0) {
+        goto err;
     }
     printf("SSL context configurations completed\n");
 
@@ -298,6 +302,9 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
     }
     if (conf->cb.msg_cb) {
         SSL_set_msg_callback(ssl, ssl_msg_cb);
+    }
+    if (ssl_mode_config(conf, ssl) != 0) {
+        goto err;
     }
     printf("SSL object creation finished\n");
 
