@@ -22,13 +22,17 @@ void usage()
     printf("          1312 - Server TLS1.3 and Client TLS1.2\n");
     printf("          1213 - Server TLS1.2 and Client TLS1.3\n");
     printf("-c      - Client Cert Authentication\n");
+    printf("-C      - Crypto mem Callback\n");
+    printf("-i      - TLS Info Callback\n");
+    printf("-m      - TLS msg Callback\n");
+    printf("-M      - TLS detailed msg Callback\n");
 }
 
 int parse_arg(int argc, char *argv[], TC_CONF *conf)
 {
     int opt;
 
-    while((opt = getopt(argc, argv, "hSRPEimMnK:k:V:a:p:c")) != -1) {
+    while((opt = getopt(argc, argv, "hSRPEimMnK:k:V:a:p:cC")) != -1) {
         switch (opt) {
             case 'h':
                 usage();
@@ -70,6 +74,8 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
             case 'c':
                 conf->auth |= TC_CONF_CLIENT_CERT_AUTH;
                 break;
+            case 'C':
+                conf->cb.crypto_mem_cb = 1;
         }
     }
 

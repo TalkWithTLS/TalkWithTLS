@@ -44,10 +44,19 @@ extern "C" {
 
 #define MAX_CA_FILE_LOAD    5
 
+#if 0
+typedef struct test_mem_debug_st {
+    size_t allocated;
+    size_t freed;
+}TC_MEM_DEBUG;
+#endif
+
 typedef struct test_case_conf_cb_st {
     uint8_t info_cb;
     uint8_t msg_cb;
     uint8_t msg_cb_detailed;
+    /* Enable mem cb using CRYPTO_set_mem_functions */
+    uint8_t crypto_mem_cb;
 }TC_CONF_CB;
 
 #define TEST_MAX_PSK_ID     32

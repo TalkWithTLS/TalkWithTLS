@@ -4,6 +4,7 @@
 #include "test_openssl_validation.h"
 #include "test_openssl_kexch.h"
 #include "test_openssl_version.h"
+#include "test_openssl_crypto_mem.h"
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -14,7 +15,11 @@
 int do_openssl_init(TC_CONF *conf)
 {
     (void)conf;
-    printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION), OpenSSL_version(OPENSSL_BUILT_ON));
+    printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION),
+            OpenSSL_version(OPENSSL_BUILT_ON));
+    if (conf->cb.crypto_mem_cb != 0) {
+        CRYPTO_set_mem_functions(TWT_malloc, TWT_realloc, TWT_free);
+    }
     return 0;
 }
 
