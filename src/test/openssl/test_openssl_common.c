@@ -6,6 +6,7 @@
 #include "test_openssl_version.h"
 #include "test_openssl_crypto_mem.h"
 #include "test_openssl_ssl_mode.h"
+#include "test_openssl_dtls.h"
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -71,7 +72,9 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
     SSL_CTX *ctx;
     int i;
 
-    meth = conf->server ? TLS_server_method() : TLS_client_method();
+    meth = conf->server ? \
+           (conf->dtls ? DTLS_server_method() : TLS_server_method()) \
+           : (conf->dtls ? DTLS_client_method() : TLS_client_method());
 
     ctx = SSL_CTX_new(meth);
     if (!ctx) {
@@ -286,7 +289,16 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
         return NULL; 
     }
     SSL_set_ex_data(ssl, SSL_EX_DATA_TC_CONF, conf);
-    SSL_set_fd(ssl, conf->fd);
+
+    if (conf->dtls == 0) {
+        if (SSL_set_fd(ssl, conf->fd) != 1) {
+            goto err;
+        }
+    } else {
+        if (ssl_config_dtls_bio(conf, ssl, SERVER_IP, SERVER_PORT) != 0) {
+            goto err;
+        }
+    }
 
     if (ssl_kexch_config(conf, ssl)) {
         printf("SSL kexch conf failed\n");

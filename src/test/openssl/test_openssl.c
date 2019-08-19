@@ -11,6 +11,14 @@
 #include "test_openssl_kexch.h"
 #include "test_openssl_auth.h"
 
+void tc_conf_dtls(TC_CONF *conf)
+{
+    if ((conf->max_version == TC_CONF_DTLS_1_0_VERSION) ||
+            (conf->max_version == TC_CONF_DTLS_1_2_VERSION)) {
+        conf->dtls = 1;
+    }
+}
+
 int tc_conf_update(TC_CONF *conf)
 {
     if (tc_conf_kexch(conf)) {
@@ -21,6 +29,7 @@ int tc_conf_update(TC_CONF *conf)
         printf("TC conf for authentication failed\n");
         return -1;
     }
+    tc_conf_dtls(conf);
     return 0;
 }
 

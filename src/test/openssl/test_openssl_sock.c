@@ -2,11 +2,20 @@
 
 int create_listen_sock(TC_CONF *conf)
 {
-    if (conf->server) {
-        if (conf->tcp_listen_fd == -1) {
-            conf->tcp_listen_fd = do_tcp_listen(SERVER_IP, SERVER_PORT);
-            if (conf->tcp_listen_fd < 0) {
-                return -1;
+    if (conf->server == 1) {
+        if (conf->dtls == 0) {
+            if (conf->tcp_listen_fd == -1) {
+                conf->tcp_listen_fd = do_tcp_listen(SERVER_IP, SERVER_PORT);
+                if (conf->tcp_listen_fd < 0) {
+                    return -1;
+                }
+            }
+        } else {
+            if (conf->fd == -1) {
+                conf->fd = create_udp_serv_sock(SERVER_IP, SERVER_PORT);
+                if (conf->fd < 0) {
+                    return -1;
+                }
             }
         }
     }
@@ -21,17 +30,25 @@ void close_listen_sock(TC_CONF *conf)
 int create_sock_connection(TC_CONF *conf)
 {
     if (conf->server) {
-        /* tcp_listen_fd would have already created */
-        conf->fd = do_tcp_accept(conf->tcp_listen_fd);
+        if (conf->dtls == 0) {
+            /* tcp_listen_fd would have already created */
+            conf->fd = do_tcp_accept(conf->tcp_listen_fd);
+            close_listen_sock(conf);
+        }
+        /* No need to create any fd at this place for DTLS
+         * As already created in above function */
         if (conf->fd < 0) {
-            printf("TCP connection establishment failed\n");
+            printf("TCP/UDP connection establishment failed\n");
             return -1;
         }
-        close_listen_sock(conf);
     } else {
-        conf->fd = do_tcp_connection(SERVER_IP, SERVER_PORT);
+        if (conf->dtls == 0) {
+            conf->fd = do_tcp_connection(SERVER_IP, SERVER_PORT);
+        } else {
+            conf->fd = create_udp_sock();
+        }
         if (conf->fd < 0) {
-            printf("TCP connection establishment failed\n");
+            printf("TCP/UDP connection establishment failed\n");
             return -1;
         }
     }

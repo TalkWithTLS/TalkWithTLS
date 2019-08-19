@@ -3,7 +3,7 @@
 int ssl_ctx_version_conf(TC_CONF *conf, SSL_CTX *ctx)
 {
     if (conf->max_version) {
-        switch(conf->max_version) {
+        switch (conf->max_version) {
             case TC_CONF_TLS_1_0_VERSION:
                 SSL_CTX_set_max_proto_version(ctx, TLS1_VERSION);
                 conf->ver_should_negotiate = TLS1_VERSION;
@@ -19,6 +19,14 @@ int ssl_ctx_version_conf(TC_CONF *conf, SSL_CTX *ctx)
             case TC_CONF_TLS_1_3_VERSION:
                 SSL_CTX_set_max_proto_version(ctx, TLS1_3_VERSION);
                 conf->ver_should_negotiate = TLS1_3_VERSION;
+                break;
+            case TC_CONF_DTLS_1_0_VERSION:
+                SSL_CTX_set_max_proto_version(ctx, DTLS1_VERSION);
+                conf->ver_should_negotiate = DTLS1_VERSION;
+                break;
+            case TC_CONF_DTLS_1_2_VERSION:
+                SSL_CTX_set_max_proto_version(ctx, DTLS1_2_VERSION);
+                conf->ver_should_negotiate = DTLS1_2_VERSION;
                 break;
             /*TODO for DTLS version */
             case TC_CONF_SERV_T13_CLNT_T12_VERSION:

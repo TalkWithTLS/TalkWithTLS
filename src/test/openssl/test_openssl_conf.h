@@ -98,6 +98,7 @@ typedef struct test_key_update_st {
 
 typedef struct test_case_conf_st {
     uint8_t server;
+    uint32_t dtls:1;
     int tcp_listen_fd;
     int fd;
     uint8_t nb_sock;
