@@ -21,6 +21,9 @@ void usage()
     printf("          13 - TLS1.3\n");
     printf("          1312 - Server TLS1.3 and Client TLS1.2\n");
     printf("          1213 - Server TLS1.2 and Client TLS1.3\n");
+    printf("          910 - DTLS1.0\n");
+    printf("          912 - DTLS1.2\n");
+    printf("          11 - TLS1.1\n");
     printf("-c      - Client Cert Authentication\n");
     printf("-C      - Crypto mem Callback\n");
     printf("-i      - TLS Info Callback\n");
