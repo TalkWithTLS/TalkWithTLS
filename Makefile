@@ -4,6 +4,7 @@ OBJ_DIR=obj
 
 OPENSSL = openssl
 WOLFSSL = wolfssl
+BORINGSSL = boringssl
 
 # Sample binaries
 OPENSSL_SAMPLE_NB_CLNT = openssl_nb_client
@@ -135,7 +136,11 @@ WOLFSSL_MASTER=wolfssl-master
 WOLFSSL_DIR=$(DEPENDENCY_DIR)/$(WOLFSSL_MASTER)
 WOLFSSL_LIBS=$(WOLFSSL_DIR)/src/.libs/libwolfssl.so
 
-DEPENDENCY = $(OPENSSL_1_1_1_LIBS) $(WOLFSSL_LIBS)
+BSSL_CHROMIUM=boringssl_chromium
+BSSL_CHROMIUM_DIR=$(DEPENDENCY_DIR)/$(BSSL_CHROMIUM)
+BSSL_CHROMIUM_LIBS=$(BSSL_CHROMIUM)/build/ssl/libssl.a
+
+DEPENDENCY = $(OPENSSL_1_1_1_LIBS) $(WOLFSSL_LIBS) $(BSSL_CHROMIUM_LIBS)
 
 # Enable address sanitizer by default
 ADDRSAN=1
@@ -199,6 +204,12 @@ $(WOLFSSL_LIBS):
 	@cd $(WOLFSSL_DIR) && autoreconf -i > /dev/null
 	@cd $(WOLFSSL_DIR) && ./configure $(WOLFSSL_CONF_ARGS) > /dev/null
 	@cd $(WOLFSSL_DIR) && make
+
+$(BSSL_CHROMIUM_LIBS):
+	@echo "Building $(BSSL_CHROMIUM)..."
+	@mkdir -p $(BSSL_CHROMIUM_DIR)/build
+	@cd $(DEPENDENCY_DIR) && tar -zxvf $(BSSL_CHROMIUM).tar.gz -C $(BSSL_CHROMIUM) > /dev/null
+	@cd $(BSSL_CHROMIUM_DIR)/build && cmake .. > /dev/null && make > /dev/null
 
 init_task: build_dependency
 	@mkdir -p $(BIN_DIR)
