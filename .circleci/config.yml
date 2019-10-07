@@ -17,7 +17,7 @@ jobs:
                     sudo pip install pipenv
                     pipenv install pytest
                     pipenv install pytest-html
-                    sudo apt install libunwind-dev golang-go
+                    #sudo apt install libunwind-dev golang-go
             - run:
                 name: Run_Test
                 command: pipenv run ./run_test.sh
