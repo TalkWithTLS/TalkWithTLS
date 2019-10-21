@@ -13,13 +13,13 @@ def tc_setup():
 
 @pytest.mark.parametrize("ver_apps_and_args", [
     #Test with max version as TLS1.0
-    (['test_openssl', 'test_openssl', '-S -V 10 -m', '-V 10 m']),
-    (['test_openssl', 'test_openssl', '-S -V 11 -m', '-V 11 m']),
-    (['test_openssl', 'test_openssl', '-S -V 12 -m', '-V 12 m']),
-    (['test_openssl', 'test_openssl', '-S -V 13 -m', '-V 13 m']),
+    (['test_openssl', 'test_openssl', '-s -v 10 --msgcb', '-v 10 --msgcb']),
+    (['test_openssl', 'test_openssl', '-s -v 11 --msgcb', '-v 11 --msgcb']),
+    (['test_openssl', 'test_openssl', '-s -v 12 --msgcb', '-v 12 --msgcb']),
+    (['test_openssl', 'test_openssl', '-s -v 13 --msgcb', '-v 13 --msgcb']),
     #Test with max ver on server as TLS1.3, and max ver on client as TLS1.2
-    (['test_openssl', 'test_openssl', '-S -V 1312 -m', '-V 1312 m']),
-    (['test_openssl', 'test_openssl', '-S -V 1213 -m', '-V 1213 m']),
+    (['test_openssl', 'test_openssl', '-s -v 1312 --msgcb', '-v 1312 --msgcb']),
+    (['test_openssl', 'test_openssl', '-s -v 1213 --msgcb', '-v 1213 --msgcb']),
 ])
 
 def test_openssl_version(tc_setup, ver_apps_and_args):
