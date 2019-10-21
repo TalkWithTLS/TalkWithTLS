@@ -5,32 +5,47 @@
 
 void usage()
 {
-    printf("-h      - Help\n");
-    printf("-s      - Run as [D]TLS server\n");
-    printf("-k      - Key Exchange group for TLS1.3\n");
-    printf("          1 - All ECDHE\n");
-    printf("          2 - All FFDHE\n");
-    printf("          3 - All ECDHE set using str API (SSL_set1_group_list)\n");
-    printf("-K      - Key update\n");
+    printf("-h or --help\n");
+    printf("    - Help\n");
+    printf("-s or --serv\n");
+    printf("    - Run as [D]TLS server\n");
+    printf("-c or --cauth\n");
+    printf("    - Client Cert Authentication\n");
+    printf("-k or --kex\n");
+    printf("    - Key Exchange group for TLS1.3\n");
+    printf("    1 - All ECDHE\n");
+    printf("    2 - All FFDHE\n");
+    printf("    3 - All ECDHE set using str API (SSL_set1_group_list)\n");
+    printf("-n or --nbsock\n");
+    printf("    - Enable non blocking socket\n");
+    printf("-r or --res\n");
+    printf("    - Perform resumption\n");
+    printf("-p or --psk\n");
+    printf("    - Enable PSK\n");
+    printf("-v or --ver\n");
+    printf("    - [D]TLS Max Version\n");
+    printf("    10 - TLS1.0\n");
+    printf("    11 - TLS1.1\n");
+    printf("    12 - TLS1.2\n");
+    printf("    13 - TLS1.3\n");
+    printf("    1312 - Server TLS1.3 and Client TLS1.2\n");
+    printf("    1213 - Server TLS1.2 and Client TLS1.3\n");
+    printf("    910 - DTLS1.0\n");
+    printf("    912 - DTLS1.2\n");
+    printf("    11 - TLS1.1\n");
+    printf("--kupda\n");
+    printf("    - Key update\n");
     printf("          1 - Server initiating Key update request\n");
-    printf("-V      - [D]TLS Max Version\n");
-    printf("          10 - TLS1.0\n");
-    printf("          11 - TLS1.1\n");
-    printf("          12 - TLS1.2\n");
-    printf("          13 - TLS1.3\n");
-    printf("          1312 - Server TLS1.3 and Client TLS1.2\n");
-    printf("          1213 - Server TLS1.2 and Client TLS1.3\n");
-    printf("          910 - DTLS1.0\n");
-    printf("          912 - DTLS1.2\n");
-    printf("          11 - TLS1.1\n");
-    printf("-c      - Client Cert Authentication\n");
-    printf("-C      - Crypto mem Callback\n");
-    printf("-i      - TLS Info Callback\n");
-    printf("-m      - TLS msg Callback\n");
-    printf("-M      - TLS detailed msg Callback\n");
-    printf("-b      - Release TLS buffer\n");
-    printf("          1 - Enable at SSL context\n");
-    printf("          other than 1 - Enable at SSL\n");
+    printf("--infocb\n");
+    printf("    - TLS Info Callback\n");
+    printf("--msgcb\n");
+    printf("    - TLS msg Callback\n");
+    printf("--memcb\n");
+    printf("    - Crypto mem Callback\n");
+    printf("--relbuf\n");
+    printf("    - Release TLS buffer\n");
+    printf("    1 - Enable at SSL context\n");
+    printf("    other than 1 - Enable at SSL\n");
 }
 
 struct option lopts[] = {
