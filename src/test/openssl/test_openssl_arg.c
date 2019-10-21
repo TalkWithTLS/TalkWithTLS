@@ -1,13 +1,12 @@
 #include <unistd.h>
+#include <getopt.h>
 #include "test_openssl_common.h"
 #include "test_openssl_arg.h"
 
 void usage()
 {
     printf("-h      - Help\n");
-    printf("-S      - Run as [D]TLS server\n");
-    printf("-s      - Run as [D]TLS server, fork a server process and send all args.\n");
-    printf("          This is used in test automation with pytest.\n");
+    printf("-s      - Run as [D]TLS server\n");
     printf("-k      - Key Exchange group for TLS1.3\n");
     printf("          1 - All ECDHE\n");
     printf("          2 - All FFDHE\n");
@@ -34,56 +33,72 @@ void usage()
     printf("          other than 1 - Enable at SSL\n");
 }
 
+struct option lopts[] = {
+    {"cauth", optional_argument, NULL, 'c'},
+    {"earlydata", optional_argument, NULL, 'e'},
+    {"help", no_argument, NULL, 'h'},
+    {"kex", required_argument, NULL, 'k'},
+    {"nbsock", optional_argument, NULL, 'n'},
+    {"res", optional_argument, NULL, 'r'},
+    {"psk", optional_argument, NULL, 'p'},
+    {"serv", optional_argument, NULL, 's'},
+    {"ver", required_argument, NULL, 'v'},
+    {"kupda", required_argument, NULL, 255},
+    {"infocb", no_argument, NULL, 256},
+    {"msgcb", optional_argument, NULL, 257},
+    {"memcb", optional_argument, NULL, 258},
+    {"relbuf", optional_argument, NULL, 259},
+};
+
 int parse_arg(int argc, char *argv[], TC_CONF *conf)
 {
     int opt;
 
-    while((opt = getopt(argc, argv, "hSRPEimMnK:k:V:a:p:cCb:")) != -1) {
+    //while ((opt = getopt(argc, argv, "hSRPEimMnK:k:V:a:p:cCb:")) != -1) {
+    while ((opt = getopt_long_only(argc, argv, "" /*"hsRPEimMnK:k:V:a:p:cCb:"*/, lopts, NULL)) != -1) {
         switch (opt) {
+            case 'c':
+                conf->auth |= TC_CONF_CLIENT_CERT_AUTH;
+                break;
+            case 'e':
+                conf->res.early_data = 1;
+                break;
             case 'h':
                 usage();
                 return 1;
-            case 'S':
-                conf->server = 1;
-                break;
-            case 'R':
-                conf->res.resumption = 1;
-                break;
-            case 'P':
-                conf->res.psk = 1;
-                break;
-            case 'E':
-                conf->res.early_data = 1;
-                break;
-            case 'i':
-                conf->cb.info_cb = 1;
-                break;
-            case 'm':
-                conf->cb.msg_cb = 1;
-                break;
-            case 'M':
-                conf->cb.msg_cb = 1;
-                conf->cb.msg_cb_detailed = 1;
+            case 'k':
+                conf->kexch.kexch_conf = atoi(optarg);
                 break;
             case 'n':
                 conf->nb_sock = 1;
                 break;
-            case 'K':
-                conf->ku.key_update_test = atoi(optarg);
+            case 'p':
+                conf->res.psk = 1;
                 break;
-            case 'k':
-                conf->kexch.kexch_conf = atoi(optarg);
+            case 'r':
+                conf->res.resumption = 1;
                 break;
-            case 'V':
+            case 's':
+                conf->server = 1;
+                break;
+            case 'v':
                 conf->max_version = atoi(optarg);
                 break;
-            case 'c':
-                conf->auth |= TC_CONF_CLIENT_CERT_AUTH;
+            case 255:
+                conf->ku.key_update_test = atoi(optarg);
                 break;
-            case 'C':
+            case 256:
+                conf->cb.info_cb = 1;
+                break;
+            case 257:
+                conf->cb.msg_cb = 1;
+                if (optarg != NULL)
+                    conf->cb.msg_cb_detailed = 1;
+                break;
+            case 258:
                 conf->cb.crypto_mem_cb = 1;
                 break;
-            case 'b':
+            case 259:
                 if (optarg == NULL) {
                     conf->ssl_mode.release_buf = 2;
                 } else {
