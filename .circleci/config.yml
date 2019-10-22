@@ -8,7 +8,7 @@ jobs:
             - checkout
             - run:
                 name: Get_Submodules
-                command: git submodule init && git submodule update
+                command: ./get_submodules.sh
             - run:
                 name: Build_All
                 command: make NOSAN=1
