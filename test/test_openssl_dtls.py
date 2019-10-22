@@ -13,9 +13,9 @@ def tc_setup():
 
 @pytest.mark.parametrize("app1, app2, app1_args, app2_args, app1_res, app2_res", [
     # Test DTLS 1.0
-    ('test_openssl', 'test_openssl', ' -s -v 910', ' -v 910 ', 0, 0),
+    ('test_openssl', 'test_openssl', ' --serv --ver 910', ' --ver 910 ', 0, 0),
     # Test DTLS 1.2
-    ('test_openssl', 'test_openssl', ' -s -v 912', ' -v 912 ', 0, 0),
+    ('test_openssl', 'test_openssl', ' --serv --ver 912', ' --ver 912 ', 0, 0),
 ])
 
 def test_openssl_dtls_basic(tc_setup, app1, app2, app1_args, app2_args, app1_res, app2_res):
