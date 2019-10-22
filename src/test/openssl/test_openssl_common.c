@@ -718,6 +718,7 @@ int do_test_openssl(TC_CONF *conf)
 {
     int ret_val = -1;
 
+    printf("Staring Test OpenSSL\n");
     if (create_listen_sock(conf)) {
         return -1;
     }

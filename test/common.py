@@ -71,13 +71,13 @@ class TestParam(object):
         self.initialize(apps)
         self.servCmd = bin_dir + "/" + self.apps[self.appsServCmdIdx]
         self.clntCmd = bin_dir + "/" + self.apps[self.appsClntCmdIdx]
-        TWT_LOG("Serv Cmd: " + self.servCmd + "\n")
-        TWT_LOG("Clnt Cmd: " + self.clntCmd + "\n")
         # Get optional params
         if len(self.apps) > self.appsServCmdArgIdx:
             self.servCmd = self.servCmd + " " + self.apps[self.appsServCmdArgIdx]
         if len(self.apps) > self.appsClntCmdArgIdx:
             self.clntCmd = self.clntCmd + " " + self.apps[self.appsClntCmdArgIdx]
+        TWT_LOG("Serv Cmd: " + self.servCmd + "\n")
+        TWT_LOG("Clnt Cmd: " + self.clntCmd + "\n")
         if len(self.apps) > self.appsServExpectedResultIdx:
             self.servExpectedResult = self.apps[self.appsServExpectedResultIdx]
             TWT_LOG('Expected serv res ' + str(self.servExpectedResult) + '\n')

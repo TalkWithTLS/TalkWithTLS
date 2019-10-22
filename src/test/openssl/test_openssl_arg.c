@@ -53,9 +53,10 @@ struct option lopts[] = {
 int parse_arg(int argc, char *argv[], TC_CONF *conf)
 {
     int opt;
+    int count = 0;
 
-    //while ((opt = getopt(argc, argv, "hSRPEimMnK:k:V:a:p:cCb:")) != -1) {
-    while ((opt = getopt_long_only(argc, argv, "" /*"hsRPEimMnK:k:V:a:p:cCb:"*/, lopts, NULL)) != -1) {
+    while ((opt = getopt_long_only(argc, argv, "", lopts, NULL)) != -1) {
+        count++;
         switch (opt) {
             case 'c':
                 conf->auth |= TC_CONF_CLIENT_CERT_AUTH;
@@ -108,5 +109,6 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
         }
     }
 
+    printf("Processed %d arguments successfully\n", count);
     return 0;
 }
