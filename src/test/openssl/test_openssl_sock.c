@@ -4,18 +4,14 @@ int create_listen_sock(TC_CONF *conf)
 {
     if (conf->server == 1) {
         if (conf->dtls == 0) {
-            if (conf->tcp_listen_fd == -1) {
-                conf->tcp_listen_fd = do_tcp_listen(SERVER_IP, SERVER_PORT);
-                if (conf->tcp_listen_fd < 0) {
-                    return -1;
-                }
+            if ((conf->tcp_listen_fd == -1)
+                    && ((conf->tcp_listen_fd = do_tcp_listen(SERVER_IP, SERVER_PORT)) < 0)) {
+                return -1;
             }
         } else {
-            if (conf->fd == -1) {
-                conf->fd = create_udp_serv_sock(SERVER_IP, SERVER_PORT);
-                if (conf->fd < 0) {
-                    return -1;
-                }
+            if ((conf->fd == -1)
+                    && ((conf->fd = create_udp_serv_sock(SERVER_IP, SERVER_PORT)) < 0)) {
+                return -1;
             }
         }
     }
