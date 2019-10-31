@@ -7,6 +7,15 @@ void usage()
 {
     printf("-help\n");
     printf("    - Help\n");
+    printf("-bind [<arg>]\n");
+    printf("    - Listens for test command on a TCP socket on a default address [0.0.0.0:25100]\n");
+    printf("    - Arg is optional, requires if bind address should be changed\n");
+    printf("    - Arg should be an integer which is added to default port 25100 for binding\n");
+    printf("    - If -bind or -bind-addr is used, then all other option gets ignored and "\
+                  "directly listens on TCP socket\n");
+    printf("    - goes for receiving test cmds via TCP socket\n");
+    printf("-bind-addr <arg>\n");
+    printf("    - Different bind address in the format of <0.0.0.0:25100>\n");
     printf("-serv\n");
     printf("    - Run as [D]TLS server\n");
     printf("-cauth\n");
@@ -51,21 +60,42 @@ void usage()
     printf("    2 - Enable at SSL\n");
 }
 
+enum cmd_opt_id {
+    OPT_HELP = 1,
+    OPT_BIND,
+    OPT_BIND_ADDR,
+    OPT_SERV,
+    OPT_CAUTH,
+    OPT_KEX,
+    OPT_NBSOCK,
+    OPT_RES,
+    OPT_PSK,
+    OPT_VER,
+    OPT_KUPDA,
+    OPT_EARLYDATA,
+    OPT_INFOCB,
+    OPT_MSGCB,
+    OPT_MEMCB,
+    OPT_RELBUF,
+};
+
 struct option lopts[] = {
-    {"help", no_argument, NULL, 1},
-    {"serv", optional_argument, NULL, 2},
-    {"cauth", optional_argument, NULL, 3},
-    {"kex", required_argument, NULL, 4},
-    {"nbsock", optional_argument, NULL, 5},
-    {"res", optional_argument, NULL, 6},
-    {"psk", optional_argument, NULL, 7},
-    {"ver", required_argument, NULL, 8},
-    {"kupda", required_argument, NULL, 9},
-    {"earlydata", optional_argument, NULL, 10},
-    {"infocb", no_argument, NULL, 11},
-    {"msgcb", optional_argument, NULL, 12},
-    {"memcb", optional_argument, NULL, 13},
-    {"relbuf", required_argument, NULL, 14},
+    {"help", no_argument, NULL, OPT_HELP},
+    {"bind", optional_argument, NULL, OPT_BIND},
+    {"bind-addr", required_argument, NULL, OPT_BIND_ADDR},
+    {"serv", optional_argument, NULL, OPT_SERV},
+    {"cauth", optional_argument, NULL, OPT_CAUTH},
+    {"kex", required_argument, NULL, OPT_KEX},
+    {"nbsock", optional_argument, NULL, OPT_NBSOCK},
+    {"res", optional_argument, NULL, OPT_RES},
+    {"psk", optional_argument, NULL, OPT_PSK},
+    {"ver", required_argument, NULL, OPT_VER},
+    {"kupda", required_argument, NULL, OPT_KUPDA},
+    {"earlydata", optional_argument, NULL, OPT_EARLYDATA},
+    {"infocb", no_argument, NULL, OPT_INFOCB},
+    {"msgcb", optional_argument, NULL, OPT_MSGCB},
+    {"memcb", optional_argument, NULL, OPT_MEMCB},
+    {"relbuf", required_argument, NULL, OPT_RELBUF},
 };
 
 int parse_arg(int argc, char *argv[], TC_CONF *conf)
@@ -76,48 +106,48 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
     while ((opt = getopt_long_only(argc, argv, "", lopts, NULL)) != -1) {
         count++;
         switch (opt) {
-            case 1:
+            case OPT_HELP:
                 usage();
                 return 1;
-            case 2:
+            case OPT_SERV:
                 conf->server = 1;
                 break;
-            case 3:
+            case OPT_CAUTH:
                 conf->auth |= TC_CONF_CLIENT_CERT_AUTH;
                 break;
-            case 4:
+            case OPT_KEX:
                 conf->kexch.kexch_conf = atoi(optarg);
                 break;
-            case 5:
+            case OPT_NBSOCK:
                 conf->nb_sock = 1;
                 break;
-            case 6:
+            case OPT_RES:
                 conf->res.resumption = 1;
                 break;
-            case 7:
+            case OPT_PSK:
                 conf->res.psk = 1;
                 break;
-            case 8:
+            case OPT_VER:
                 conf->max_version = atoi(optarg);
                 break;
-            case 9:
+            case OPT_KUPDA:
                 conf->ku.key_update_test = atoi(optarg);
                 break;
-            case 10:
+            case OPT_EARLYDATA:
                 conf->res.early_data = 1;
                 break;
-            case 11:
+            case OPT_INFOCB:
                 conf->cb.info_cb = 1;
                 break;
-            case 12:
+            case OPT_MSGCB:
                 conf->cb.msg_cb = 1;
                 if (optarg != NULL)
                     conf->cb.msg_cb_detailed = 1;
                 break;
-            case 13:
+            case OPT_MEMCB:
                 conf->cb.crypto_mem_cb = 1;
                 break;
-            case 14:
+            case OPT_RELBUF:
                 conf->ssl_mode.release_buf = (uint8_t)atoi(optarg);
                 break;
         }
