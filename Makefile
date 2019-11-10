@@ -10,6 +10,10 @@ OPENSSL = openssl
 WOLFSSL = wolfssl
 BORINGSSL = boringssl
 
+# Binary suffixes
+OSSL_111_SUFFIX=_openssl_111
+OSSL_MASTER_SUFFIX=_openssl_master
+
 # Sample binaries
 OPENSSL_SAMPLE_NB_CLNT = openssl_nb_client
 OPENSSL_SAMPLE_NB_SERV = openssl_nb_server
@@ -24,18 +28,21 @@ OPENSSL_T_SERV_MULTI_CLNT = openssl_tls_server_multi_client
 OPENSSL_T12_VERF_CB_CLNT = openssl_tls12_verify_cb_client
 OPENSSL_T12_VERF_CB_SERV = openssl_tls12_verify_cb_server
 OPENSSL_T13_CLNT = openssl_tls13_client
-OENSSL_T13_SERV = openssl_tls13_server
+OPENSSL_T13_SERV = openssl_tls13_server
 OPENSSL_T13_CLNT_BOTH_AUTH = openssl_tls13_client_both_auth
-OENSSL_T13_SERV_BOTH_AUTH = openssl_tls13_server_both_auth
+OPENSSL_T13_SERV_BOTH_AUTH = openssl_tls13_server_both_auth
 OPENSSL_T13_CLNT_DHE = openssl_tls13_dhe_client
-OENSSL_T13_SERV_DHE = openssl_tls13_dhe_server
+OPENSSL_T13_SERV_DHE = openssl_tls13_dhe_server
 OPENSSL_T13RESUMPTION_CLNT = openssl_tls13_resumption_client
 OPENSSL_T13RESUMPTION_SERV = openssl_tls13_resumption_server
 WOLFSSL_T13_SERV_SAMPLE = wolfssl_tls13_server
 WOLFSSL_T13_CLNT_SAMPLE = wolfssl_tls13_client
 
 # Perf binaries
-OPENSSL_ED25519_SIGN_VERI = openssl_ed25519_sign_veri
+SPEED = speed
+PERF_BIN_DIR = $(BIN_DIR)/$(PERF_DIR)
+SPEED_OSSL_111 = $(PERF_BIN_DIR)/$(SPEED)$(OSSL_111_SUFFIX)
+SPEED_OSSL_MASTER = $(PERF_BIN_DIR)/$(SPEED)$(OSSL_MASTER_SUFFIX)
 
 # Test binaries
 TEST_OPENSSL = test_openssl
@@ -51,20 +58,20 @@ SAMPLE_BIN=$(BIN_DIR)/$(OPENSSL_SAMPLE_NB_CLNT) \
     $(BIN_DIR)/$(OPENSSL_T12_SERV) \
     $(BIN_DIR)/$(OPENSSL_T_SERV_MULTI_CLNT) \
     $(BIN_DIR)/$(OPENSSL_T13_CLNT_DHE) \
-    $(BIN_DIR)/$(OENSSL_T13_SERV_DHE) \
+    $(BIN_DIR)/$(OPENSSL_T13_SERV_DHE) \
     $(BIN_DIR)/$(OPENSSL_T12_VERF_CB_CLNT) \
     $(BIN_DIR)/$(OPENSSL_T12_VERF_CB_SERV) \
     $(BIN_DIR)/$(OPENSSL_T13_CLNT) \
-    $(BIN_DIR)/$(OENSSL_T13_SERV) \
+    $(BIN_DIR)/$(OPENSSL_T13_SERV) \
     $(BIN_DIR)/$(OPENSSL_T13_CLNT_BOTH_AUTH) \
-    $(BIN_DIR)/$(OENSSL_T13_SERV_BOTH_AUTH) \
+    $(BIN_DIR)/$(OPENSSL_T13_SERV_BOTH_AUTH) \
     $(BIN_DIR)/$(OPENSSL_T13RESUMPTION_CLNT) \
     $(BIN_DIR)/$(OPENSSL_T13RESUMPTION_SERV) \
 	$(BIN_DIR)/$(WOLFSSL_T13_SERV_SAMPLE) \
 	$(BIN_DIR)/$(WOLFSSL_T13_CLNT_SAMPLE)
 
-PERF_BIN_DIR = $(BIN_DIR)/$(PERF_DIR)
-PERF_BIN = $(PERF_BIN_DIR)/$(OPENSSL_ED25519_SIGN_VERI)
+PERF_BIN = $(SPEED_OSSL_111) \
+		   $(SPEED_OSSL_MASTER)
 
 TEST_BIN=$(BIN_DIR)/$(TEST_OPENSSL)
 
@@ -93,16 +100,16 @@ OPENSSL_T_SERV_MULTI_CLNT_SRC=$(SAMPLE_SRC)/$(OPENSSL_T_SERV_MULTI_CLNT).c $(COM
 OPENSSL_T12_VERF_CB_CLNT_SRC=$(SAMPLE_SRC)/$(OPENSSL_T12_VERF_CB_CLNT).c $(COMM_SRC_FILES)
 OPENSSL_T12_VERF_CB_SERV_SRC=$(SAMPLE_SRC)/$(OPENSSL_T12_VERF_CB_SERV).c $(COMM_SRC_FILES)
 OPENSSL_T13_CLNT_SRC=$(SAMPLE_SRC)/$(OPENSSL_T13_CLNT).c $(COMM_SRC_FILES)
-OENSSL_T13_SERV_SRC=$(SAMPLE_SRC)/$(OENSSL_T13_SERV).c $(COMM_SRC_FILES)
+OPENSSL_T13_SERV_SRC=$(SAMPLE_SRC)/$(OPENSSL_T13_SERV).c $(COMM_SRC_FILES)
 OPENSSL_T13_CLNT_BOTH_AUTH_SRC=$(SAMPLE_SRC)/$(OPENSSL_T13_CLNT_BOTH_AUTH).c $(COMM_SRC_FILES)
-OENSSL_T13_SERV_BOTH_AUTH_SRC=$(SAMPLE_SRC)/$(OENSSL_T13_SERV_BOTH_AUTH).c $(COMM_SRC_FILES)
+OPENSSL_T13_SERV_BOTH_AUTH_SRC=$(SAMPLE_SRC)/$(OPENSSL_T13_SERV_BOTH_AUTH).c $(COMM_SRC_FILES)
 OPENSSL_T13_CLNT_DHE_SRC=$(SAMPLE_SRC)/$(OPENSSL_T13_CLNT_DHE).c $(COMM_SRC_FILES)
-OENSSL_T13_SERV_DHE_SRC=$(SAMPLE_SRC)/$(OENSSL_T13_SERV_DHE).c $(COMM_SRC_FILES)
+OPENSSL_T13_SERV_DHE_SRC=$(SAMPLE_SRC)/$(OPENSSL_T13_SERV_DHE).c $(COMM_SRC_FILES)
 OPENSSL_T13RESUMPTION_CLNT_SRC=$(SAMPLE_SRC)/$(OPENSSL_T13RESUMPTION_CLNT).c $(COMM_SRC_FILES)
 OPENSSL_T13RESUMPTION_SERV_SRC=$(SAMPLE_SRC)/$(OPENSSL_T13RESUMPTION_SERV).c $(COMM_SRC_FILES)
 
 # Perf Code Srcs
-OPENSSL_ED25519_SIGN_VERI_SRC=$(PERF_SRC)/$(OPENSSL_ED25519_SIGN_VERI).c $(COMM_SRC_FILES)
+SPEED_SRC=$(PERF_SRC)/$(SPEED).c
 
 # Test code Srcs
 TEST_OPENSSL_SRC=$(wildcard $(TEST_OPENSSL_DIR)/*.c) $(COMM_SRC_FILES)
@@ -124,22 +131,24 @@ OPENSSL_T_SERV_MULTI_CLNT_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_T_SERV_MULTI_CLN
 OPENSSL_T12_VERF_CB_CLNT_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_T12_VERF_CB_CLNT_SRC:.c=.o))
 OPENSSL_T12_VERF_CB_SERV_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_T12_VERF_CB_SERV_SRC:.c=.o))
 OPENSSL_T13_CLNT_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_T13_CLNT_SRC:.c=.o))
-OENSSL_T13_SERV_OBJ=$(addprefix $(OBJ_DIR)/,$(OENSSL_T13_SERV_SRC:.c=.o))
+OPENSSL_T13_SERV_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_T13_SERV_SRC:.c=.o))
 OPENSSL_T13_CLNT_BOTH_AUTH_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_T13_CLNT_BOTH_AUTH_SRC:.c=.o))
-OENSSL_T13_SERV_BOTH_AUTH_OBJ=$(addprefix $(OBJ_DIR)/,$(OENSSL_T13_SERV_BOTH_AUTH_SRC:.c=.o))
+OPENSSL_T13_SERV_BOTH_AUTH_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_T13_SERV_BOTH_AUTH_SRC:.c=.o))
 OPENSSL_T13_CLNT_DHE_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_T13_CLNT_DHE_SRC:.c=.o))
-OENSSL_T13_SERV_DHE_OBJ=$(addprefix $(OBJ_DIR)/,$(OENSSL_T13_SERV_DHE_SRC:.c=.o))
+OPENSSL_T13_SERV_DHE_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_T13_SERV_DHE_SRC:.c=.o))
 OPENSSL_T13RESUMPTION_SERV_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_T13RESUMPTION_SERV_SRC:.c=.o))
 OPENSSL_T13RESUMPTION_CLNT_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_T13RESUMPTION_CLNT_SRC:.c=.o))
 
 # Perf Code Objs
-OPENSSL_ED25519_SIGN_VERI_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_ED25519_SIGN_VERI_SRC:.c=.o))
+SPEED_OSSL_111_OBJ=$(addprefix $(OBJ_DIR)/,$(SPEED_SRC:.c=$(OSSL_111_SUFFIX).o))
+SPEED_OSSL_MASTER_OBJ=$(addprefix $(OBJ_DIR)/,$(SPEED_SRC:.c=$(OSSL_MASTER_SUFFIX).o))
 
 # Test code Objs
 TEST_OPENSSL_OBJ=$(addprefix $(OBJ_DIR)/,$(TEST_OPENSSL_SRC:.c=.o))
 
 DEPENDENCY_DIR=dependency
 OPENSSL_1_1_1=openssl-1.1.1c
+OPENSSL_MASTER=openssl-master
 
 ifneq ($(OSSL111_PATH),)
 	OPENSSL_1_1_1_DIR=$(OSSL111_PATH)
@@ -147,7 +156,14 @@ else
 	OPENSSL_1_1_1_DIR=$(DEPENDENCY_DIR)/$(OPENSSL_1_1_1)
 endif
 
-OPENSSL_1_1_1_LIBS=$(OPENSSL_1_1_1_DIR)/libssl.a
+ifneq ($(OSSLMASTER_PATH),)
+	OSSL_MASTER_DIR=$(OSSLMASTER_PATH)
+else
+	OSSL_MASTER_DIR=$(DEPENDENCY_DIR)/$(OPENSSL_MASTER)
+endif
+
+OSSL_111_LIBS=$(OPENSSL_1_1_1_DIR)/libssl.a
+OSSL_MASTER_LIBS=$(OPENSSL_MASTER)/libssl.a
 
 WOLFSSL_MASTER=wolfssl-master
 WOLFSSL_DIR=$(DEPENDENCY_DIR)/$(WOLFSSL_MASTER)
@@ -157,27 +173,29 @@ BSSL_CHROMIUM=boringssl_chromium
 BSSL_CHROMIUM_DIR=$(DEPENDENCY_DIR)/$(BSSL_CHROMIUM)
 BSSL_CHROMIUM_LIBS=$(BSSL_CHROMIUM)/build/ssl/libssl.a
 
-DEPENDENCY = $(OPENSSL_1_1_1_LIBS) $(WOLFSSL_LIBS)
+DEPENDENCY = $(OSSL_111_LIBS) $(OSSL_MASTER_LIBS) $(WOLFSSL_LIBS)
 
-# Enable address sanitizer by default
-ADDRSAN=1
-
-ifeq ($(ADDRSAN),1)
-	SANFLAGS = -fsanitize=address -static-libasan
-endif
+SANFLAGS = -fsanitize=address -static-libasan
 ifeq ($(NOSAN),1)
 	SANFLAGS =
 endif
 
-CFLAGS = -g -ggdb -Wall -Werror -fstack-protector-all $(SANFLAGS) -I $(COMMON_SRC)
-OPENSSL_CFLAGS = $(CFLAGS) -I $(OPENSSL_1_1_1_DIR)/include
-WOLFSSL_CFLAGS = $(CFLAGS) -I $(WOLFSSL_DIR)
+CFLAGS_DBG = -g -ggdb -O0 -Wall -Werror -fstack-protector-all $(SANFLAGS) -I $(COMMON_SRC)
+CFLAGS_REL = -O3 -Wall -Werror
+COMMON_CFLAGS = $(CFLAGS_DBG)
+OSSL_111_CFLAGS = $(CFLAGS_DBG) -I $(OPENSSL_1_1_1_DIR)/include
+OSSL_MASTER_CFLAGS = $(CFLAGS_DBG) -I $(OSSL_MASTER_DIR)/include
+WOLFSSL_CFLAGS = $(CFLAGS_DBG) -I $(WOLFSSL_DIR)
 #TEST_OPENSSL_CFLAGS = -I $(TEST_OPENSSL_DIR)
 
-LDFLAGS = $(OPENSSL_1_1_1_DIR)/libssl.a $(OPENSSL_1_1_1_DIR)/libcrypto.a -lpthread -ldl $(SANFLAGS)
+OSSL_111_LDFLAGS = $(OPENSSL_1_1_1_DIR)/libssl.a $(OPENSSL_1_1_1_DIR)/libcrypto.a \
+				   -lpthread -ldl $(SANFLAGS)
+OSSL_MASTER_LDFLAGS = $(OSSL_MASTER_DIR)/libssl.a $(OSSL_MASTER_DIR)/libcrypto.a \
+					  -lpthread -ldl $(SANFLAGS)
 WOLFSSL_LDFLAGS = -L $(BIN_DIR) -lwolfssl $(SANFLAGS)
 
-OSSL_CC="gcc -Wall -Werror -fstack-protector-all $(SANFLAGS)"
+OSSL_111_CC="gcc -Wall -Werror -fstack-protector-all $(SANFLAGS)"
+OSSL_MASTER_CC="gcc -Wall -Werror -fstack-protector-all"
 
 CC = gcc
 CP = cp
@@ -190,32 +208,41 @@ all : init_task $(TARGET)
 test : init_task $(TEST_BIN)
 
 $(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(COMMON_CFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/$(SAMPLE_SRC)/$(OPENSSL)%.o:$(SAMPLE_SRC)/$(OPENSSL)%.c
-	$(CC) $(OPENSSL_CFLAGS) -c $< -o $@
+	$(CC) $(OSSL_111_CFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/$(SAMPLE_SRC)/$(WOLFSSL)%.o:$(SAMPLE_SRC)/$(WOLFSSL)%.c
 	$(CC) $(WOLFSSL_CFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/$(PERF_SRC)/$(OPENSSL)%.o:$(PERF_SRC)/$(OPENSSL)%.c
-	$(CC) $(OPENSSL_CFLAGS) -c $< -o $@
+$(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_111_SUFFIX).o:$(PERF_SRC)/%.c
+	$(CC) $(OSSL_111_CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_MASTER_SUFFIX).o:$(PERF_SRC)/%.c
+	$(CC) $(OSSL_MASTER_CFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/$(TEST_OPENSSL_DIR)/%.o:$(TEST_OPENSSL_DIR)/%.c
-	$(CC) $(OPENSSL_CFLAGS) $(TEST_OPENSSL_CFLAGS) -c $< -o $@
+	$(CC) $(OSSL_111_CFLAGS) $(TEST_OPENSSL_CFLAGS) -c $< -o $@
 
 build_dependency:$(DEPENDENCY)
 
-#TODO Add build for OpenSSL-master
 #TODO Generate exes from different openssl version
 #TODO Better to avoid using DEPENDENCY_DIR instead use generic way while untaring
 
-$(OPENSSL_1_1_1_LIBS):
+$(OSSL_111_LIBS):
 	@echo "Building $(OPENSSL_1_1_1_DIR)..."
 	@if [ -f $(OPENSSL_1_1_1_DIR).tar.gz ]; then \
 		cd $(DEPENDENCY_DIR) && tar -zxvf $(OPENSSL_1_1_1).tar.gz > /dev/null; fi
-	@cd $(OPENSSL_1_1_1_DIR) && export CC=$(OSSL_CC) && ./config -d > /dev/null
+	@cd $(OPENSSL_1_1_1_DIR) && export CC=$(OSSL_111_CC) && ./config -d > /dev/null
 	@cd $(OPENSSL_1_1_1_DIR) && make > /dev/null
+	@echo ""
+
+$(OSSL_MASTER_LIBS):
+	@echo "Building $(OSSL_MASTER_DIR)..."
+	@cd $(OSSL_MASTER_DIR) && export CC=$(OSSL_MASTER_CC) && ./config -d enable-asan > /dev/null
+	@cd $(OSSL_MASTER_DIR) && make > /dev/null
+	@echo ""
 
 WOLFSSL_CONF_ARGS=--enable-tls13 --enable-harden --enable-debug
 
@@ -224,6 +251,7 @@ $(WOLFSSL_LIBS):
 	@cd $(WOLFSSL_DIR) && autoreconf -i > /dev/null
 	@cd $(WOLFSSL_DIR) && ./configure $(WOLFSSL_CONF_ARGS) > /dev/null
 	@cd $(WOLFSSL_DIR) && make
+	@echo ""
 
 $(BSSL_CHROMIUM_LIBS):
 	@echo "Building $(BSSL_CHROMIUM)..."
@@ -242,65 +270,66 @@ init_task: build_dependency
 	@mkdir -p $(OBJ_DIR)/$(TEST_OPENSSL_DIR)
 	@cp $(WOLFSSL_LIBS)* $(BIN_DIR)
 
+# Sample Binaries
 $(BIN_DIR)/$(OPENSSL_SAMPLE_NB_CLNT):$(OPENSSL_SAMPLE_NB_CLNT_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_SAMPLE_NB_SERV):$(OPENSSL_SAMPLE_NB_SERV_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_D12_CLNT):$(OPENSSL_D12_CLNT_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_D12_NB_SERV):$(OPENSSL_D12_NB_SERV_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_D12_NB_CLNT):$(OPENSSL_D12_NB_CLNT_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_D12_SERV):$(OPENSSL_D12_SERV_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_D12_CUSTOM_BIO_CLNT):$(OPENSSL_D12_CUSTOM_BIO_CLNT_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_T13RESUMPTION_SERV):$(OPENSSL_T13RESUMPTION_SERV_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_T13RESUMPTION_CLNT):$(OPENSSL_T13RESUMPTION_CLNT_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
-$(BIN_DIR)/$(OENSSL_T13_SERV_DHE):$(OENSSL_T13_SERV_DHE_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+$(BIN_DIR)/$(OPENSSL_T13_SERV_DHE):$(OPENSSL_T13_SERV_DHE_OBJ)
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_T13_CLNT_DHE):$(OPENSSL_T13_CLNT_DHE_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_T13_CLNT):$(OPENSSL_T13_CLNT_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
-$(BIN_DIR)/$(OENSSL_T13_SERV):$(OENSSL_T13_SERV_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+$(BIN_DIR)/$(OPENSSL_T13_SERV):$(OPENSSL_T13_SERV_OBJ)
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_T13_CLNT_BOTH_AUTH):$(OPENSSL_T13_CLNT_BOTH_AUTH_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
-$(BIN_DIR)/$(OENSSL_T13_SERV_BOTH_AUTH):$(OENSSL_T13_SERV_BOTH_AUTH_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+$(BIN_DIR)/$(OPENSSL_T13_SERV_BOTH_AUTH):$(OPENSSL_T13_SERV_BOTH_AUTH_OBJ)
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_T12_CLNT):$(OPENSSL_T12_CLNT_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_T12_SERV):$(OPENSSL_T12_SERV_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_T_SERV_MULTI_CLNT):$(OPENSSL_T_SERV_MULTI_CLNT_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_T12_VERF_CB_CLNT):$(OPENSSL_T12_VERF_CB_CLNT_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(OPENSSL_T12_VERF_CB_SERV):$(OPENSSL_T12_VERF_CB_SERV_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 $(BIN_DIR)/$(WOLFSSL_T13_SERV_SAMPLE):$(WOLFSSL_T13_SERV_SAMPLE_OBJ)
 	$(CC) $^ $(WOLFSSL_LDFLAGS) -o $@
@@ -308,11 +337,16 @@ $(BIN_DIR)/$(WOLFSSL_T13_SERV_SAMPLE):$(WOLFSSL_T13_SERV_SAMPLE_OBJ)
 $(BIN_DIR)/$(WOLFSSL_T13_CLNT_SAMPLE):$(WOLFSSL_T13_CLNT_SAMPLE_OBJ)
 	$(CC) $^ $(WOLFSSL_LDFLAGS) -o $@
 
-$(PERF_BIN_DIR)/$(OPENSSL_ED25519_SIGN_VERI):$(OPENSSL_ED25519_SIGN_VERI_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+# Perf Binaries
+$(SPEED_OSSL_111):$(SPEED_OSSL_111_OBJ) $(OSSL_111_LIBS)
+	$(CC) $(SPEED_OSSL_111_OBJ) $(OSSL_111_LDFLAGS) -o $@
 
+$(SPEED_OSSL_MASTER):$(SPEED_OSSL_MASTER_OBJ) $(OSSL_MASTER_LIBS)
+	$(CC) $(SPEED_OSSL_MASTER_OBJ) $(OSSL_MASTER_LDFLAGS) -o $@
+
+# Test Binaries
 $(BIN_DIR)/$(TEST_OPENSSL):$(TEST_OPENSSL_OBJ)
-	$(CC) $^ $(LDFLAGS) -o $@
+	$(CC) $^ $(OSSL_111_LDFLAGS) -o $@
 
 clean:
 	@$(RM) -rf *.o *.a
@@ -320,5 +354,9 @@ clean:
 	@$(RM) -rf $(OBJ_DIR) $(BIN_DIR)
 
 clobber: clean
+	@echo "Cleaning $(OPENSSL_1_1_1_DIR)..."
 	@cd $(OPENSSL_1_1_1_DIR) && make clean > /dev/null
+	@echo "Cleaning $(OSSL_MASTER_DIR)..."
+	@cd $(OSSL_MASTER_DIR) && make clean > /dev/null
+	@echo "Cleaning $(WOLFSSL_DIR)..."
 	@cd $(WOLFSSL_DIR) && make clean > /dev/null
