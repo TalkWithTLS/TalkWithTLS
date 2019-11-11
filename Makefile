@@ -176,8 +176,11 @@ BSSL_CHROMIUM_LIBS=$(BSSL_CHROMIUM)/build/ssl/libssl.a
 DEPENDENCY = $(OSSL_111_LIBS) $(OSSL_MASTER_LIBS) $(WOLFSSL_LIBS)
 
 SANFLAGS = -fsanitize=address -static-libasan
+OSSL_SANFLAGS = enable-asan
+
 ifeq ($(NOSAN),1)
 	SANFLAGS =
+	OSSL_SANFLAGS =
 endif
 
 CFLAGS_DBG = -g -ggdb -O0 -Wall -Werror -fstack-protector-all $(SANFLAGS) -I $(COMMON_SRC)
@@ -240,7 +243,7 @@ $(OSSL_111_LIBS):
 
 $(OSSL_MASTER_LIBS):
 	@echo "Building $(OSSL_MASTER_DIR)..."
-	@cd $(OSSL_MASTER_DIR) && export CC=$(OSSL_MASTER_CC) && ./config -d enable-asan > /dev/null
+	@cd $(OSSL_MASTER_DIR) && export CC=$(OSSL_MASTER_CC) && ./config -d $(OSSL_SANFLAGS) > /dev/null
 	@cd $(OSSL_MASTER_DIR) && make > /dev/null
 	@echo ""
 
