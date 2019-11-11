@@ -71,7 +71,7 @@ err:
     return priv_key;
 }
 
-int main()
+int do_sign_verify(int alg_nid, const char *cert_file, const char *priv_file, int secs)
 {
     EVP_MD_CTX *ed_sign_ctx = NULL, *ed_veri_ctx = NULL;
     EVP_PKEY *ed_pub_key;
@@ -80,35 +80,47 @@ int main()
     uint8_t sign[MAX_SIGN_SIZE] = {0};
     size_t sign_len = sizeof(sign);
     char data[] = "abcdefghijabcdefghij";
+    long finish_time;
+    uint32_t count;
 
-    if ((ed_pub_key = get_pub_key(ED25519_CERT)) == NULL)
+    if ((ed_pub_key = get_pub_key(cert_file)) == NULL)
         goto err;
-    if ((ed_priv_key = get_priv_key(ED25519_PRIV)) == NULL)
+    if ((ed_priv_key = get_priv_key(priv_file)) == NULL)
         goto err;
 
     if ((ed_sign_ctx = EVP_MD_CTX_new()) == NULL
             || EVP_DigestSignInit(ed_sign_ctx, NULL, NULL, NULL, ed_priv_key) != 1) {
-        printf("MD Ctx init failed\n");
+        printf("MD Sign ctx init failed\n");
         goto err;
     }
-
-    if (EVP_DigestSign(ed_sign_ctx, sign, &sign_len, (uint8_t *)data, strlen(data)) != 1) {
-        printf("ED Sign failed\n");
-        goto err;
-    }
-    printf("ED sign succeeded\n");
 
     if ((ed_veri_ctx = EVP_MD_CTX_new()) == NULL
             || EVP_DigestVerifyInit(ed_veri_ctx, NULL, NULL, NULL, ed_pub_key) != 1) {
-        printf("MD Ctx init failed\n");
+        printf("MD Verify Ctx init failed\n");
         goto err;
     }
 
-    if (EVP_DigestVerify(ed_veri_ctx, sign, sign_len, (uint8_t *)data, strlen(data)) != 1) {
-        printf("MD Verify failed\n");
-        goto err;
+    finish_time = time(NULL) + secs;
+    while (1) {
+        if (finish_time < time(NULL)) {
+            break;
+        }
+        if (EVP_DigestSign(ed_sign_ctx, sign, &sign_len, (uint8_t *)data, strlen(data)) != 1) {
+            printf("ED Sign failed\n");
+            goto err;
+        }
+
+        if (EVP_DigestVerify(ed_veri_ctx, sign, sign_len, (uint8_t *)data, strlen(data)) != 1) {
+            printf("MD Verify failed\n");
+            goto err;
+        }
+        printf("*");
+        count++;
     }
-    printf("EDDSA signature verify succeeded\n");
+    printf("\n%s Sign/Verify of data %zu bytes performed %u operations in %d secs\n",
+            OBJ_nid2sn(alg_nid), sizeof(data), count, secs);
+    printf("%s Sign/Verify of data %zu bytes performed %u operations/secs\n",
+            OBJ_nid2sn(alg_nid), sizeof(data), count/secs);
     ret_val = 0;
 err:
     EVP_PKEY_free(ed_pub_key);
@@ -116,4 +128,10 @@ err:
     EVP_MD_CTX_free(ed_sign_ctx);
     EVP_MD_CTX_free(ed_veri_ctx);
     return ret_val;
+}
+
+int main(int argc, char *argv[])
+{
+    int secs = 10;
+    return do_sign_verify(NID_ED25519, ED25519_CERT, ED25519_PRIV, secs);
 }
