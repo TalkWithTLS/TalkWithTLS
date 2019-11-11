@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include <openssl/crypto.h>
+#include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 
@@ -130,8 +131,41 @@ err:
     return ret_val;
 }
 
+#define RAND_SIZE 256
+int do_rand(int secs)
+{
+    long finish_time;
+    uint8_t data[RAND_SIZE] = {0};
+    uint32_t count;
+    int ret;
+
+    finish_time = time(NULL) + secs;
+    while (1) {
+        if (finish_time < time(NULL)) {
+            break;
+        }
+
+        if ((ret = RAND_priv_bytes(data, sizeof(data))) != 1) {
+            printf("RAND_priv_bytes failed\n");
+            goto err;
+        }
+        printf("*");
+        count++;
+    }
+    printf("\nRand of data %zu bytes performed %u operations in %d secs\n",
+            sizeof(data), count, secs);
+    printf("Rand of data %zu bytes performed %u operations/secs\n",
+            sizeof(data), count/secs);
+    printf("Rand generation performance is %f MB/secs\n",
+            (((float)(sizeof(data) * count)) / secs) / (1024 * 1024));
+    return 0;
+err:
+    return -1;
+}
+
 int main(int argc, char *argv[])
 {
     int secs = 10;
-    return do_sign_verify(NID_ED25519, ED25519_CERT, ED25519_PRIV, secs);
+    //return do_sign_verify(NID_ED25519, ED25519_CERT, ED25519_PRIV, secs);
+    return do_rand(secs);
 }
