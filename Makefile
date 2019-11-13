@@ -220,7 +220,7 @@ $(OSSL_111_LIBS):
 	@if [ -f $(OPENSSL_1_1_1_DIR).tar.gz ]; then \
 		cd $(DEPENDENCY_DIR) && tar -zxvf $(OPENSSL_1_1_1).tar.gz > /dev/null; fi
 	@cd $(OPENSSL_1_1_1_DIR) && export CC=$(OSSL_111_CC) && ./config -d > /dev/null
-	@cd $(OPENSSL_1_1_1_DIR) && make > /dev/null
+	@cd $(OPENSSL_1_1_1_DIR) && $(MAKE) > /dev/null
 	@echo ""
 
 $(OSSL_MASTER_LIBS):
@@ -228,7 +228,7 @@ $(OSSL_MASTER_LIBS):
 	@if [ ! -f $(OSSL_MASTER_DIR)/.gitignore ]; then \
 		cd $(DEPENDENCY_DIR) && tar -zxvf $(OPENSSL_MASTER).tar.gz > /dev/null; fi
 	@cd $(OSSL_MASTER_DIR) && export CC=$(OSSL_MASTER_CC) && ./config -d $(OSSL_SANFLAGS) > /dev/null
-	@cd $(OSSL_MASTER_DIR) && make > /dev/null
+	@cd $(OSSL_MASTER_DIR) && $(MAKE) > /dev/null
 	@echo ""
 
 WOLFSSL_CONF_ARGS=--enable-tls13 --enable-harden --enable-debug
@@ -239,7 +239,7 @@ $(WOLFSSL_LIBS):
 		cd $(DEPENDENCY_DIR) && tar -zxvf $(WOLFSSL_MASTER).tar.gz > /dev/null; fi
 	@cd $(WOLFSSL_DIR) && autoreconf -i > /dev/null
 	@cd $(WOLFSSL_DIR) && ./configure $(WOLFSSL_CONF_ARGS) > /dev/null
-	@cd $(WOLFSSL_DIR) && make
+	@cd $(WOLFSSL_DIR) && $(MAKE) > /dev/null
 	@echo ""
 
 $(BSSL_CHROMIUM_LIBS):
@@ -259,22 +259,22 @@ init_task: build_dependency
 	@mkdir -p $(OBJ_DIR)/$(TEST_OPENSSL_DIR)
 	@cp $(WOLFSSL_LIBS)* $(BIN_DIR)
 
-$(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c
+$(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c init_task
 	$(CC) $(COMMON_CFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/$(SAMPLE_SRC)/$(OPENSSL)%.o:$(SAMPLE_SRC)/$(OPENSSL)%.c
+$(OBJ_DIR)/$(SAMPLE_SRC)/$(OPENSSL)%.o:$(SAMPLE_SRC)/$(OPENSSL)%.c init_task
 	$(CC) $(OSSL_111_CFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/$(SAMPLE_SRC)/$(WOLFSSL)%.o:$(SAMPLE_SRC)/$(WOLFSSL)%.c
+$(OBJ_DIR)/$(SAMPLE_SRC)/$(WOLFSSL)%.o:$(SAMPLE_SRC)/$(WOLFSSL)%.c init_task
 	$(CC) $(WOLFSSL_CFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_111_SUFFIX).o:$(PERF_SRC)/%.c
+$(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_111_SUFFIX).o:$(PERF_SRC)/%.c init_task
 	$(CC) $(OSSL_111_CFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_MASTER_SUFFIX).o:$(PERF_SRC)/%.c
+$(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_MASTER_SUFFIX).o:$(PERF_SRC)/%.c init_task
 	$(CC) $(OSSL_MASTER_CFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/$(TEST_OPENSSL_DIR)/%.o:$(TEST_OPENSSL_DIR)/%.c
+$(OBJ_DIR)/$(TEST_OPENSSL_DIR)/%.o:$(TEST_OPENSSL_DIR)/%.c init_task
 	$(CC) $(OSSL_111_CFLAGS) $(TEST_OPENSSL_CFLAGS) -c $< -o $@
 
 # Sample Binaries
