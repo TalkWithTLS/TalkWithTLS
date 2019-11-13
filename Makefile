@@ -243,6 +243,8 @@ $(OSSL_111_LIBS):
 
 $(OSSL_MASTER_LIBS):
 	@echo "Building $(OSSL_MASTER_DIR)..."
+	@if [ ! -f $(OSSL_MASTER_DIR)/.gitignore ]; then \
+		cd $(DEPENDENCY_DIR) && tar -zcvf $(OPENSSL_MASTER).tar.gz > /dev/null; fi
 	@cd $(OSSL_MASTER_DIR) && export CC=$(OSSL_MASTER_CC) && ./config -d $(OSSL_SANFLAGS) > /dev/null
 	@cd $(OSSL_MASTER_DIR) && make > /dev/null
 	@echo ""
@@ -251,6 +253,8 @@ WOLFSSL_CONF_ARGS=--enable-tls13 --enable-harden --enable-debug
 
 $(WOLFSSL_LIBS):
 	@echo "Building $(WOLFSSL_DIR)..."
+	@if [ ! -f $(WOLFSSL_DIR)/.gitignore ]; then \
+		cd $(DEPENDENCY_DIR) && tar -zcvf $(WOLFSSL_MASTER).tar.gz > /dev/null; fi
 	@cd $(WOLFSSL_DIR) && autoreconf -i > /dev/null
 	@cd $(WOLFSSL_DIR) && ./configure $(WOLFSSL_CONF_ARGS) > /dev/null
 	@cd $(WOLFSSL_DIR) && make
