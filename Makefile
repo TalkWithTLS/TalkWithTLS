@@ -210,24 +210,6 @@ all : init_task $(TARGET)
 
 test : init_task $(TEST_BIN)
 
-$(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c
-	$(CC) $(COMMON_CFLAGS) -c $< -o $@
-
-$(OBJ_DIR)/$(SAMPLE_SRC)/$(OPENSSL)%.o:$(SAMPLE_SRC)/$(OPENSSL)%.c
-	$(CC) $(OSSL_111_CFLAGS) -c $< -o $@
-
-$(OBJ_DIR)/$(SAMPLE_SRC)/$(WOLFSSL)%.o:$(SAMPLE_SRC)/$(WOLFSSL)%.c
-	$(CC) $(WOLFSSL_CFLAGS) -c $< -o $@
-
-$(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_111_SUFFIX).o:$(PERF_SRC)/%.c
-	$(CC) $(OSSL_111_CFLAGS) -c $< -o $@
-
-$(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_MASTER_SUFFIX).o:$(PERF_SRC)/%.c
-	$(CC) $(OSSL_MASTER_CFLAGS) -c $< -o $@
-
-$(OBJ_DIR)/$(TEST_OPENSSL_DIR)/%.o:$(TEST_OPENSSL_DIR)/%.c
-	$(CC) $(OSSL_111_CFLAGS) $(TEST_OPENSSL_CFLAGS) -c $< -o $@
-
 build_dependency:$(DEPENDENCY)
 
 #TODO Generate exes from different openssl version
@@ -244,7 +226,7 @@ $(OSSL_111_LIBS):
 $(OSSL_MASTER_LIBS):
 	@echo "Building $(OSSL_MASTER_DIR)..."
 	@if [ ! -f $(OSSL_MASTER_DIR)/.gitignore ]; then \
-		cd $(DEPENDENCY_DIR) && tar -zcvf $(OPENSSL_MASTER).tar.gz > /dev/null; fi
+		cd $(DEPENDENCY_DIR) && tar -zxvf $(OPENSSL_MASTER).tar.gz > /dev/null; fi
 	@cd $(OSSL_MASTER_DIR) && export CC=$(OSSL_MASTER_CC) && ./config -d $(OSSL_SANFLAGS) > /dev/null
 	@cd $(OSSL_MASTER_DIR) && make > /dev/null
 	@echo ""
@@ -254,7 +236,7 @@ WOLFSSL_CONF_ARGS=--enable-tls13 --enable-harden --enable-debug
 $(WOLFSSL_LIBS):
 	@echo "Building $(WOLFSSL_DIR)..."
 	@if [ ! -f $(WOLFSSL_DIR)/.gitignore ]; then \
-		cd $(DEPENDENCY_DIR) && tar -zcvf $(WOLFSSL_MASTER).tar.gz > /dev/null; fi
+		cd $(DEPENDENCY_DIR) && tar -zxvf $(WOLFSSL_MASTER).tar.gz > /dev/null; fi
 	@cd $(WOLFSSL_DIR) && autoreconf -i > /dev/null
 	@cd $(WOLFSSL_DIR) && ./configure $(WOLFSSL_CONF_ARGS) > /dev/null
 	@cd $(WOLFSSL_DIR) && make
@@ -276,6 +258,24 @@ init_task: build_dependency
 	@mkdir -p $(OBJ_DIR)/$(PERF_SRC)
 	@mkdir -p $(OBJ_DIR)/$(TEST_OPENSSL_DIR)
 	@cp $(WOLFSSL_LIBS)* $(BIN_DIR)
+
+$(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c
+	$(CC) $(COMMON_CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/$(SAMPLE_SRC)/$(OPENSSL)%.o:$(SAMPLE_SRC)/$(OPENSSL)%.c
+	$(CC) $(OSSL_111_CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/$(SAMPLE_SRC)/$(WOLFSSL)%.o:$(SAMPLE_SRC)/$(WOLFSSL)%.c
+	$(CC) $(WOLFSSL_CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_111_SUFFIX).o:$(PERF_SRC)/%.c
+	$(CC) $(OSSL_111_CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_MASTER_SUFFIX).o:$(PERF_SRC)/%.c
+	$(CC) $(OSSL_MASTER_CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/$(TEST_OPENSSL_DIR)/%.o:$(TEST_OPENSSL_DIR)/%.c
+	$(CC) $(OSSL_111_CFLAGS) $(TEST_OPENSSL_CFLAGS) -c $< -o $@
 
 # Sample Binaries
 $(BIN_DIR)/$(OPENSSL_SAMPLE_NB_CLNT):$(OPENSSL_SAMPLE_NB_CLNT_OBJ)
@@ -362,8 +362,11 @@ clean:
 
 clobber: clean
 	@echo "Cleaning $(OPENSSL_1_1_1_DIR)..."
-	@cd $(OPENSSL_1_1_1_DIR) && make clean > /dev/null
+	@if [ -f $(OPENSSL_1_1_1_DIR)/Makefile ]; then \
+		cd $(OPENSSL_1_1_1_DIR) && make clean > /dev/null; fi
 	@echo "Cleaning $(OSSL_MASTER_DIR)..."
-	@cd $(OSSL_MASTER_DIR) && make clean > /dev/null
+	@if [ -f $(OSSL_MASTER_DIR)/Makefile ]; then \
+		cd $(OSSL_MASTER_DIR) && make clean > /dev/null; fi
 	@echo "Cleaning $(WOLFSSL_DIR)..."
-	@cd $(WOLFSSL_DIR) && make clean > /dev/null
+	@if [ -f $(WOLFSSL_DIR)/Makefile ]; then \
+		cd $(WOLFSSL_DIR) && make clean > /dev/null; fi
