@@ -11,7 +11,7 @@ jobs:
                 command: ./get_submodules.sh
             - run:
                 name: Build_All
-                command: make NOSAN=1
+                command: make NOSAN=1 -j 4
             - run:
                 command: |
                     sudo pip install pipenv
