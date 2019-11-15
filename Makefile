@@ -147,7 +147,7 @@ SPEED_OSSL_MASTER_OBJ=$(addprefix $(OBJ_DIR)/,$(SPEED_SRC:.c=$(OSSL_MASTER_SUFFI
 TEST_OPENSSL_OBJ=$(addprefix $(OBJ_DIR)/,$(TEST_OPENSSL_SRC:.c=.o))
 
 DEPENDENCY_DIR=dependency
-OPENSSL_1_1_1=openssl-1.1.1c
+OPENSSL_1_1_1=openssl-1.1.1d
 OPENSSL_MASTER=openssl-master
 
 ifneq ($(OSSL111_PATH),)
