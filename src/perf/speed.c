@@ -7,8 +7,11 @@
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 
-#define ED25519_CERT "certs/ED25519_Certs/rootcert.pem"
-#define ED25519_PRIV "certs/ED25519_Certs/rootkey.pem"
+#define EC256_CERT "./certs/ECC_Prime256_Certs/serv_cert.pem"
+#define EC256_PRIV "./certs/ECC_Prime256_Certs/serv_key_unencrypted.pem"
+
+#define ED25519_CERT "certs/ED25519/rootcert.pem"
+#define ED25519_PRIV "certs/ED25519/rootkey.pem"
 
 #define MAX_SIGN_SIZE 256
 
@@ -79,7 +82,7 @@ int do_sign_verify(int alg_nid, const char *cert_file, const char *priv_file, in
     EVP_PKEY *ed_priv_key;
     int ret_val = -1;
     uint8_t sign[MAX_SIGN_SIZE] = {0};
-    size_t sign_len = sizeof(sign);
+    size_t sign_len;
     char data[] = "abcdefghijabcdefghij";
     long finish_time;
     uint32_t count;
@@ -103,6 +106,7 @@ int do_sign_verify(int alg_nid, const char *cert_file, const char *priv_file, in
 
     finish_time = time(NULL) + secs;
     while (1) {
+        sign_len = sizeof(sign);
         if (finish_time < time(NULL)) {
             break;
         }
@@ -217,6 +221,7 @@ int main(int argc, char *argv[])
 {
     int secs = 10;
     //return do_sign_verify(NID_ED25519, ED25519_CERT, ED25519_PRIV, secs);
-    return do_rand(secs);
+    return do_sign_verify(NID_X9_62_prime256v1, EC256_CERT, EC256_PRIV, secs);
+    //return do_rand(secs);
     //return do_enc_dec(secs, NID_aes_128_ctr);
 }
