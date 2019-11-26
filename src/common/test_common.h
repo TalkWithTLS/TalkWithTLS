@@ -35,6 +35,10 @@ extern "C" {
 
 #define EC256_CURVE_NAME NID_X9_62_prime256v1
 
+#define ED25519_SERVER_CERT_FILE "./certs/ED25519/serv_cert.pem"
+#define ED25519_SERVER_KEY_FILE "./certs/ED25519/serv_key.pem"
+#define ED25519_CAFILE1 "./certs/ED25519/rootcert.pem"
+
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 4433
 
