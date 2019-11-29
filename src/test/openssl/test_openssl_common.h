@@ -20,6 +20,10 @@ int init_psk_params(TC_CONF *conf, const char *psk_id, const char *psk_key);
 
 int do_test_openssl(TC_CONF *conf);
 
+int do_handshake(TC_CONF *conf, SSL *ssl);
+
+int do_data_transfer(TC_CONF *conf, SSL *ssl);
+
 #ifdef __cplusplus
 }
 #endif
