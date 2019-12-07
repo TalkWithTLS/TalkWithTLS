@@ -15,8 +15,8 @@
 
 #include "test_common.h"
 
-#define CAFILE1 EC256_CAFILE1
-#define CAFILE2 RAS2048_PSS_PSS_CAFILE1
+#define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
+#define CAFILE2 "./certs/RSA_PSS_PSS_Certs/rootcert.pem"
 
 int load_ca_cert(SSL_CTX *ctx, const char *ca_file)
 {
@@ -51,7 +51,6 @@ SSL_CTX *create_context()
         return NULL;
     }
 
-    printf("SSL context created\n");
 
     if (load_ca_cert(ctx, CAFILE1) || load_ca_cert(ctx, CAFILE2)) {
         goto err_handler;
@@ -61,18 +60,15 @@ SSL_CTX *create_context()
         printf("Setting TLS1.3 cipher suite failed\n");
         goto err_handler;
     }
-    printf("Setting TLS1.3 cipher suite succeeded\n");
 
     if (SSL_CTX_set_cipher_list(ctx, TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) != 1) {
         printf("Setting TLS1.2 cipher suite failed\n");
         goto err_handler;
     }
-    printf("Setting TLS1.2 cipher suite succeeded\n");
 
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
     SSL_CTX_set_verify_depth(ctx, 5);
 
-    printf("SSL context configurations completed\n");
 
     return ctx;
 err_handler:
@@ -104,8 +100,6 @@ SSL *create_ssl_object(SSL_CTX *ctx)
         goto err_handler;
     }
 
-    printf("SSL object creation finished\n");
-
     return ssl;
 err_handler:
     SSL_free(ssl);
@@ -122,14 +116,12 @@ int do_data_transfer(SSL *ssl)
         printf("SSL_write failed ret=%d\n", ret);
         return -1;
     }
-    printf("SSL_write[%d] sent %s\n", ret, msg);
 
     ret = SSL_read(ssl, buf, sizeof(buf) - 1);
     if (ret <= 0) {
         printf("SSL_read failed ret=%d\n", ret);
         return -1;
     }
-    printf("SSL_read[%d] %s\n", ret, buf);
     return 0;
 }
 
@@ -180,14 +172,11 @@ int do_tls_client()
         }
         goto err_handler;
     }
-    printf("SSL connect succeeded\n");
 
-    printf("Negotiated Cipher suite:%s\n", SSL_CIPHER_get_name(SSL_get_current_cipher(ssl)));
     if (do_data_transfer(ssl)) {
         printf("Data transfer over TLS failed\n");
         goto err_handler;
     }
-    printf("Data transfer over TLS succeeded\n");
     SSL_shutdown(ssl);
     ret_val = 0;
 err_handler:
