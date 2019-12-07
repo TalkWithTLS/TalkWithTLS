@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <errno.h>
 
 #include "openssl/crypto.h"
@@ -134,12 +135,11 @@ void get_error()
     printf("Error reason=%d on [%s:%d]\n", ERR_GET_REASON(error), file, line);
 }
 
-int tls13_server()
+int do_tls_server(int lfd)
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
-    int lfd;
     int ret;
 
     ctx = create_context();
@@ -147,13 +147,7 @@ int tls13_server()
         return -1;
     }
 
-    lfd = do_tcp_listen(SERVER_IP, SERVER_PORT);
-    if (lfd < 0) {
-        goto err_handler;
-    }
-
     ssl = create_ssl_object(ctx, lfd);
-    check_and_close(&lfd);
     if (!ssl) {
         goto err_handler;
     }
@@ -182,14 +176,50 @@ err_handler:
     return ret_val;
 }
 
-int main()
+typedef struct perf_conf_st {
+    uint32_t with_out_tls:1;
+}PERF_CONF;
+
+int init_conf(PERF_CONF *conf)
 {
-    printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION), OpenSSL_version(OPENSSL_BUILT_ON));
-    if (tls13_server()) {
-        printf("TLS12 server connection failed\n");
-        fflush(stdout);
+    return 0;
+}
+
+int parse_arg(int argc, char *argv[], PERF_CONF *conf)
+{
+    return 0;
+}
+
+int do_tls_server_perf(PERF_CONF *conf)
+{
+    int ret_val = -1;
+    int lfd;
+
+    if ((lfd = do_tcp_listen(SERVER_IP, SERVER_PORT)) < 0) {
+        goto err;
+    }
+    do {
+        if (do_tls_server(lfd) != 0) {
+            printf("TLS server connection failed\n");
+            goto err;
+        }
+    } while (1);
+    ret_val = 0;
+err:
+    check_and_close(&lfd);
+    return ret_val;
+}
+
+int main(int argc, char *argv[])
+{
+    PERF_CONF conf = {0};
+    printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION),
+            OpenSSL_version(OPENSSL_BUILT_ON));
+    if (init_conf(&conf) || parse_arg(argc, argv, &conf) != 0) {
+        return -1;
+    }
+    if (do_tls_server_perf(&conf) != 0) {
         return -1;
     }
     return 0;
 }
-

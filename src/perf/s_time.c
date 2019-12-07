@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <errno.h>
+#include <getopt.h>
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -154,7 +155,7 @@ void get_error()
     printf("Error reason=%d on [%s:%d]\n", ERR_GET_REASON(error), file, line);
 }
 
-int tls13_client()
+int do_tls_client()
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
@@ -194,12 +195,86 @@ err_handler:
     return ret_val;
 }
 
-int main()
+typedef struct perf_conf_st {
+    uint32_t time_sec;
+}PERF_CONF;
+
+enum opt_enum {
+    CLI_HELP = 1,
+    CLI_TIME,
+};
+
+struct option lopts[] = {
+    {"help", no_argument, NULL, CLI_HELP},
+    {"time", required_argument, NULL, CLI_TIME},
+};
+
+#define DEFAULT_TIME_SEC 30
+int init_conf(PERF_CONF *conf)
 {
+    conf->time_sec = DEFAULT_TIME_SEC;
+    return 0;
+}
+
+void usage()
+{
+    //TODO help
+    return;
+};
+
+int parse_cli_args(int argc, char *argv[], PERF_CONF *conf) {
+    int opt;
+
+    while ((opt = getopt_long_only(argc, argv, "", lopts, NULL)) != -1) {
+        switch (opt) {
+            case CLI_HELP:
+                usage();
+                return 1;
+            case CLI_TIME:
+                if (atoi(optarg) <= 0) {
+                    printf("Invalid time [%s]\n", optarg);
+                    goto err;
+                }
+                conf->time_sec = (uint32_t)atoi(optarg);
+                break;
+        }
+    }
+    return 0;
+err:
+    return -1;
+}
+
+int do_tls_client_perf(PERF_CONF *conf)
+{
+    time_t finish_time;
+    uint32_t count = 0;
+
+    finish_time = conf->time_sec + time(NULL);
+    do {
+        if (finish_time <= time(NULL)) {
+            break;
+        }
+        if (do_tls_client() != 0) {
+            printf("TLS client connection failed\n");
+            fflush(stdout);
+            return -1;
+        }
+        count++;
+    } while (1);
+    printf("%u TLS connections in %u secs\n", count, conf->time_sec);
+    printf("%u connections/sec\n", count / conf->time_sec); 
+    return 0;
+}
+
+int main(int argc, char *argv[])
+{
+    PERF_CONF conf;
+
     printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION), OpenSSL_version(OPENSSL_BUILT_ON));
-    if (tls13_client()) {
-        printf("TLS12 client connection failed\n");
-        fflush(stdout);
+    if (init_conf(&conf) != 0 || parse_cli_args(argc, argv, &conf) != 0) {
+        return -1;
+    }
+    if (do_tls_client_perf(&conf) != 0) {
         return -1;
     }
     return 0;
