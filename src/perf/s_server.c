@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -13,7 +14,14 @@
 #include "openssl/ssl.h"
 #include "openssl/err.h"
 
-#include "test_common.h"
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 4433
+#define TCP_CON_RETRY_COUNT 20
+#define TCP_CON_RETRY_WAIT_TIME_MS 200
+#define TLS_SOCK_TIMEOUT_MS 8000
+
+#define MAX_BUF_SIZE    1024
+#define MSG_FOR_OPENSSL_SERV    "Hello, This is OpenSSL server"
 
 #define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
@@ -26,6 +34,76 @@ int g_kexch_groups[] = {
     NID_X448                /* x448 */
 };
 
+int do_tcp_listen(const char *server_ip, uint16_t port)
+{
+    struct sockaddr_in addr;
+    int optval = 1;
+    int lfd;
+    int ret;
+
+    lfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (lfd < 0) {
+        printf("Socket creation failed\n");
+        return -1;
+    }
+
+    addr.sin_family = AF_INET;
+    if (inet_aton(server_ip, &addr.sin_addr) == 0) {
+        printf("inet_aton failed\n");
+        goto err_handler;
+    }
+    addr.sin_port = htons(port);
+
+    if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval))) {
+        printf("set sock reuseaddr failed\n");
+    }
+    ret = bind(lfd, (struct sockaddr *)&addr, sizeof(addr));
+    if (ret) {
+        printf("bind failed %s:%d\n", server_ip, port);
+        goto err_handler;
+    }
+
+    printf("TCP listening on %s:%d...\n", server_ip, port);
+    ret = listen(lfd, 5);
+    if (ret) {
+        printf("listen failed\n");
+        goto err_handler;
+    }
+    printf("TCP listen fd=%d\n", lfd);
+    return lfd;
+err_handler:
+    close(lfd);
+    return -1;
+}
+
+int do_tcp_accept(int lfd)
+{
+    struct sockaddr_in peeraddr;
+    socklen_t peerlen = sizeof(peeraddr);
+    int cfd;
+
+    printf("Waiting for TCP connection from client...\n");
+    cfd = accept(lfd, (struct sockaddr *)&peeraddr, &peerlen);
+    if (cfd < 0) {
+        printf("accept failed, errno=%d\n", errno);
+        return -1;
+    }
+
+    printf("TCP connection accepted fd=%d\n", cfd);
+    return cfd;
+}
+
+void check_and_close(int *fd)
+{
+    if (*fd < 0) {
+        return;
+    }
+    if (*fd == 0 || *fd == 1 || *fd == 2) {
+        printf("Trying to close fd=%d, skipping it !!!\n", *fd);
+    }
+    printf("Closing fd=%d\n", *fd);
+    close(*fd);
+}
 SSL_CTX *create_context()
 {
     SSL_CTX *ctx;
@@ -135,17 +213,11 @@ void get_error()
     printf("Error reason=%d on [%s:%d]\n", ERR_GET_REASON(error), file, line);
 }
 
-int do_tls_server(int lfd)
+int do_tls_server(SSL_CTX *ctx, int lfd)
 {
-    SSL_CTX *ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
     int ret;
-
-    ctx = create_context();
-    if (!ctx) {
-        return -1;
-    }
 
     ssl = create_ssl_object(ctx, lfd);
     if (!ssl) {
@@ -172,7 +244,7 @@ int do_tls_server(int lfd)
     SSL_shutdown(ssl);
     ret_val = 0;
 err_handler:
-    do_cleanup(ctx, ssl);
+    do_cleanup(NULL, ssl);
     return ret_val;
 }
 
@@ -192,14 +264,20 @@ int parse_arg(int argc, char *argv[], PERF_CONF *conf)
 
 int do_tls_server_perf(PERF_CONF *conf)
 {
+    SSL_CTX *ctx;
     int ret_val = -1;
     int lfd;
+
+    ctx = create_context();
+    if (!ctx) {
+        return -1;
+    }
 
     if ((lfd = do_tcp_listen(SERVER_IP, SERVER_PORT)) < 0) {
         goto err;
     }
     do {
-        if (do_tls_server(lfd) != 0) {
+        if (do_tls_server(ctx, lfd) != 0) {
             printf("TLS server connection failed\n");
             goto err;
         }
@@ -207,6 +285,7 @@ int do_tls_server_perf(PERF_CONF *conf)
     ret_val = 0;
 err:
     check_and_close(&lfd);
+    do_cleanup(ctx, NULL);
     return ret_val;
 }
 

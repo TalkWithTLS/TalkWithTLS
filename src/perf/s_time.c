@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -13,10 +14,69 @@
 #include "openssl/ssl.h"
 #include "openssl/err.h"
 
-#include "test_common.h"
+#define SERVER_IP "127.0.0.1"
+#define SERVER_PORT 4433
+#define TCP_CON_RETRY_COUNT 20
+#define TCP_CON_RETRY_WAIT_TIME_MS 200
+#define TLS_SOCK_TIMEOUT_MS 8000
+
+#define MAX_BUF_SIZE    1024
+#define MSG_FOR_OPENSSL_CLNT    "Hi, This is OpenSSL client"
 
 #define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
 #define CAFILE2 "./certs/RSA_PSS_PSS_Certs/rootcert.pem"
+
+typedef struct perf_conf_st {
+    uint32_t time_sec;
+}PERF_CONF;
+
+enum opt_enum {
+    CLI_HELP = 1,
+    CLI_TIME,
+};
+
+struct option lopts[] = {
+    {"help", no_argument, NULL, CLI_HELP},
+    {"time", required_argument, NULL, CLI_TIME},
+};
+
+int do_tcp_connection(const char *server_ip, uint16_t port)
+{
+    struct sockaddr_in serv_addr;
+    int count = 0;
+    int fd;
+    int ret;
+
+    fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd < 0) {
+        printf("Socket creation failed\n");
+        return -1;
+    }
+
+    serv_addr.sin_family = AF_INET;
+    if (inet_aton(server_ip, &serv_addr.sin_addr) == 0) {
+        printf("inet_aton failed\n");
+        goto err_handler;
+    }
+    serv_addr.sin_port = htons(port);
+
+    do {
+        ret = connect(fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+        if (ret) {
+            printf("Connect failed, errno=%d\n", errno);
+            goto err_handler;
+        } else {
+            break;
+        }
+        count++;
+        usleep(TCP_CON_RETRY_WAIT_TIME_MS);
+    } while (count < TCP_CON_RETRY_COUNT);
+
+    return fd;
+err_handler:
+    close(fd);
+    return -1;
+}
 
 int load_ca_cert(SSL_CTX *ctx, const char *ca_file)
 {
@@ -29,7 +89,6 @@ int load_ca_cert(SSL_CTX *ctx, const char *ca_file)
         return -1;
     }
 
-    printf("Loaded cert %s on context\n", ca_file);
     return 0;
 }
 
@@ -184,20 +243,6 @@ err_handler:
     return ret_val;
 }
 
-typedef struct perf_conf_st {
-    uint32_t time_sec;
-}PERF_CONF;
-
-enum opt_enum {
-    CLI_HELP = 1,
-    CLI_TIME,
-};
-
-struct option lopts[] = {
-    {"help", no_argument, NULL, CLI_HELP},
-    {"time", required_argument, NULL, CLI_TIME},
-};
-
 #define DEFAULT_TIME_SEC 30
 int init_conf(PERF_CONF *conf)
 {
@@ -237,6 +282,8 @@ int do_tls_client_perf(PERF_CONF *conf)
 {
     time_t finish_time;
     uint32_t count = 0;
+
+    printf("Performing TLS connections...\n");
 
     finish_time = conf->time_sec + time(NULL);
     do {
