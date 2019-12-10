@@ -12,10 +12,10 @@ def tc_setup():
     TWT_set_log_filename(filename)
 
 @pytest.mark.parametrize("d12_app1, d12_app2", [
-    ('openssl_dtls12_server', 'openssl_dtls12_client'),
-    ('openssl_dtls12_server', 'openssl_dtls12_custom_bio_client'),
-    ('openssl_dtls12_nb_server', 'openssl_dtls12_client'),
-    ('openssl_dtls12_nb_server', 'openssl_dtls12_nb_client'),
+    ('sample/openssl_dtls12_server', 'sample/openssl_dtls12_client'),
+    ('sample/openssl_dtls12_server', 'sample/openssl_dtls12_custom_bio_client'),
+    ('sample/openssl_dtls12_nb_server', 'sample/openssl_dtls12_client'),
+    ('sample/openssl_dtls12_nb_server', 'sample/openssl_dtls12_nb_client'),
 ])
 
 def test_dtls12_sample_code(tc_setup, d12_app1, d12_app2):
