@@ -190,6 +190,7 @@ OSSL_MASTER_LIBS=$(OSSL_MASTER_DIR)/libssl.a
 WOLFSSL_MASTER=wolfssl-master
 WOLFSSL_DIR=$(DEPENDENCY_DIR)/$(WOLFSSL_MASTER)
 WOLFSSL_LIBS=$(WOLFSSL_DIR)/src/.libs/libwolfssl.so
+WOLFSSL_LIBS_COPY=$(BIN_DIR)/libwolfssl.so
 
 BSSL_CHROMIUM=boringssl_chromium
 BSSL_CHROMIUM_DIR=$(DEPENDENCY_DIR)/$(BSSL_CHROMIUM)
@@ -264,6 +265,8 @@ $(WOLFSSL_LIBS):
 	@cd $(WOLFSSL_DIR) && ./configure $(WOLFSSL_CONF_ARGS) > /dev/null
 	@cd $(WOLFSSL_DIR) && $(MAKE) > /dev/null
 	@mkdir -p $(BIN_DIR)
+
+$(WOLFSSL_LIBS_COPY):$(WOLFSSL_LIBS)
 	@cp $(WOLFSSL_LIBS)* $(BIN_DIR)
 	@echo ""
 
@@ -289,7 +292,7 @@ $(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c init_task
 $(OBJ_DIR)/$(SAMPLE_SRC)/$(OPENSSL)%.o:$(SAMPLE_SRC)/$(OPENSSL)%.c $(OSSL_111_LIBS)
 	$(CC) $(OSSL_111_CFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/$(SAMPLE_SRC)/$(WOLFSSL)%.o:$(SAMPLE_SRC)/$(WOLFSSL)%.c $(WOLFSSL_LIBS)
+$(OBJ_DIR)/$(SAMPLE_SRC)/$(WOLFSSL)%.o:$(SAMPLE_SRC)/$(WOLFSSL)%.c $(WOLFSSL_LIBS_COPY)
 	$(CC) $(WOLFSSL_CFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_111_SUFFIX).o:$(PERF_SRC)/%.c $(OSSL_111_LIBS)
