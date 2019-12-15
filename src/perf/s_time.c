@@ -21,7 +21,7 @@
 #define TLS_SOCK_TIMEOUT_MS 8000
 
 #define MAX_BUF_SIZE    1024
-#define MSG_FOR_OPENSSL_CLNT    "Hi, This is OpenSSL client"
+#define MSG_FOR_S_TIME "GET /index.html HTTP/1.1\r\nHOST: twt.com\r\n\r\n"
 
 #define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
 #define CAFILE2 "./certs/RSA_PSS_PSS_Certs/rootcert.pem"
@@ -167,15 +167,15 @@ err_handler:
 
 int do_data_transfer(SSL *ssl)
 {
-    const char *msg = MSG_FOR_OPENSSL_CLNT;
+    const char *msg = MSG_FOR_S_TIME;
     char buf[MAX_BUF_SIZE] = {0};
     int ret;
+
     ret = SSL_write(ssl, msg, strlen(msg));
     if (ret <= 0) {
         printf("SSL_write failed ret=%d\n", ret);
         return -1;
     }
-
     ret = SSL_read(ssl, buf, sizeof(buf) - 1);
     if (ret <= 0) {
         printf("SSL_read failed ret=%d\n", ret);

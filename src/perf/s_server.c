@@ -21,7 +21,7 @@
 #define TLS_SOCK_TIMEOUT_MS 8000
 
 #define MAX_BUF_SIZE    1024
-#define MSG_FOR_OPENSSL_SERV    "Hello, This is OpenSSL server"
+#define MSG_FOR_S_SERV    "<html><title>TWT Perf</title><body>TalkWithTLS</body></html>"
 
 #define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
@@ -172,16 +172,16 @@ err_handler:
 
 int do_data_transfer(SSL *ssl)
 {
-    const char *msg = MSG_FOR_OPENSSL_SERV;
+    const char *msg = MSG_FOR_S_SERV;
     char buf[MAX_BUF_SIZE] = {0};
     int ret;
+
     ret = SSL_read(ssl, buf, sizeof(buf) - 1);
     if (ret <= 0) {
         printf("SSL_read failed ret=%d\n", ret);
         return -1;
     }
     printf("SSL_read[%d] %s\n", ret, buf);
-
     ret = SSL_write(ssl, msg, strlen(msg));
     if (ret <= 0) {
         printf("SSL_write failed ret=%d\n", ret);
