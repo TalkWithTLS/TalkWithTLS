@@ -26,6 +26,21 @@
 #define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 
+typedef struct perf_conf_st {
+    int sess_ticket_count;
+    uint32_t with_out_tls:1;
+}PERF_CONF;
+
+enum opt_enum {
+    CLI_HELP = 1,
+    CLI_SESS_TICKET_COUNT
+};
+
+struct option lopts[] = {
+    {"help", no_argument, NULL, CLI_HELP},
+    {"sess-tkt-count", required_argument, NULL, CLI_SESS_TICKET_COUNT},
+};
+
 int g_kexch_groups[] = {
     NID_X9_62_prime256v1,   /* secp256r1 */
     NID_secp384r1,          /* secp384r1 */
@@ -138,7 +153,7 @@ err_handler:
     return NULL;
 }
 
-SSL *create_ssl_object(SSL_CTX *ctx, int lfd)
+SSL *create_ssl_object(SSL_CTX *ctx, int lfd, PERF_CONF *conf)
 {
     SSL *ssl;
     int fd;
@@ -162,6 +177,9 @@ SSL *create_ssl_object(SSL_CTX *ctx, int lfd)
         goto err_handler;
     }
 
+    if (conf->sess_ticket_count > 0) {
+        SSL_set_num_tickets(ssl, (size_t)conf->sess_ticket_count);
+    }
     printf("SSL object creation finished\n");
 
     return ssl;
@@ -213,13 +231,13 @@ void get_error()
     printf("Error reason=%d on [%s:%d]\n", ERR_GET_REASON(error), file, line);
 }
 
-int do_tls_server(SSL_CTX *ctx, int lfd)
+int do_tls_server(SSL_CTX *ctx, int lfd, PERF_CONF *conf)
 {
     SSL *ssl = NULL;
     int ret_val = -1;
     int ret;
 
-    ssl = create_ssl_object(ctx, lfd);
+    ssl = create_ssl_object(ctx, lfd, conf);
     if (!ssl) {
         goto err_handler;
     }
@@ -248,18 +266,40 @@ err_handler:
     return ret_val;
 }
 
-typedef struct perf_conf_st {
-    uint32_t with_out_tls:1;
-}PERF_CONF;
-
+#define DEFAULT_SESS_TKT_COUNT -1
 int init_conf(PERF_CONF *conf)
 {
+    conf->sess_ticket_count = DEFAULT_SESS_TKT_COUNT;
     return 0;
 }
 
-int parse_arg(int argc, char *argv[], PERF_CONF *conf)
+void usage()
 {
+    //TODO help
+    return;
+};
+
+int parse_cli_args(int argc, char *argv[], PERF_CONF *conf) {
+    int opt;
+
+    while ((opt = getopt_long_only(argc, argv, "", lopts, NULL)) != -1) {
+        switch (opt) {
+            case CLI_HELP:
+                usage();
+                return 1;
+            case CLI_SESS_TICKET_COUNT:
+                if (atoi(optarg) < 0) {
+                    printf("Invalid sess ticket count [%s]\n", optarg);
+                    goto err;
+                }
+                conf->sess_ticket_count = (uint32_t)atoi(optarg);
+                printf("Session ticket num %d\n", conf->sess_ticket_count);
+                break;
+        }
+    }
     return 0;
+err:
+    return -1;
 }
 
 int do_tls_server_perf(PERF_CONF *conf)
@@ -277,7 +317,7 @@ int do_tls_server_perf(PERF_CONF *conf)
         goto err;
     }
     do {
-        if (do_tls_server(ctx, lfd) != 0) {
+        if (do_tls_server(ctx, lfd, conf) != 0) {
             printf("TLS server connection failed\n");
             goto err;
         }
@@ -294,7 +334,7 @@ int main(int argc, char *argv[])
     PERF_CONF conf = {0};
     printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION),
             OpenSSL_version(OPENSSL_BUILT_ON));
-    if (init_conf(&conf) || parse_arg(argc, argv, &conf) != 0) {
+    if (init_conf(&conf) || parse_cli_args(argc, argv, &conf) != 0) {
         return -1;
     }
     if (do_tls_server_perf(&conf) != 0) {
