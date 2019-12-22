@@ -16,6 +16,7 @@
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 4433
+#define TCP_MAX_LISTEN_COUNT 200
 #define TCP_CON_RETRY_COUNT 20
 #define TCP_CON_RETRY_WAIT_TIME_MS 200
 #define TLS_SOCK_TIMEOUT_MS 8000
@@ -79,7 +80,7 @@ int do_tcp_listen(const char *server_ip, uint16_t port)
     }
 
     printf("TCP listening on %s:%d...\n", server_ip, port);
-    ret = listen(lfd, 5);
+    ret = listen(lfd, TCP_MAX_LISTEN_COUNT);
     if (ret) {
         printf("listen failed\n");
         goto err_handler;
@@ -97,7 +98,7 @@ int do_tcp_accept(int lfd)
     socklen_t peerlen = sizeof(peeraddr);
     int cfd;
 
-    printf("Waiting for TCP connection from client...\n");
+    printf("\n\n###Waiting for TCP connection from client...\n");
     cfd = accept(lfd, (struct sockaddr *)&peeraddr, &peerlen);
     if (cfd < 0) {
         printf("accept failed, errno=%d\n", errno);
@@ -144,7 +145,6 @@ SSL_CTX *create_context()
     }
 
     printf("Loaded server key %s on context\n", SERVER_KEY_FILE);
-
     printf("SSL context configurations completed\n");
 
     return ctx;
@@ -180,7 +180,6 @@ SSL *create_ssl_object(SSL_CTX *ctx, int lfd, PERF_CONF *conf)
     if (conf->sess_ticket_count > 0) {
         SSL_set_num_tickets(ssl, (size_t)conf->sess_ticket_count);
     }
-    printf("SSL object creation finished\n");
 
     return ssl;
 err_handler:
@@ -252,13 +251,13 @@ int do_tls_server(SSL_CTX *ctx, int lfd, PERF_CONF *conf)
     }
 
     printf("SSL accept succeeded\n");
-    printf("Negotiated Cipher suite:%s\n", SSL_CIPHER_get_name(SSL_get_current_cipher(ssl)));
+    printf("Negotiated Version: %s\n", SSL_get_version(ssl));
+    printf("Negotiated Cipher suite: %s\n", SSL_CIPHER_get_name(SSL_get_current_cipher(ssl)));
 
     if (do_data_transfer(ssl)) {
         printf("Data transfer over TLS failed\n");
         goto err_handler;
     }
-    printf("Data transfer over TLS succeeded\n");
     SSL_shutdown(ssl);
     ret_val = 0;
 err_handler:
