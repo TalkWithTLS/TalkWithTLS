@@ -79,7 +79,7 @@ int do_sign_verify(int alg_nid, const char *cert_file, const char *priv_file, in
 {
     EVP_MD_CTX *ed_sign_ctx = NULL, *ed_veri_ctx = NULL;
     EVP_PKEY *ed_pub_key;
-    EVP_PKEY *ed_priv_key;
+    EVP_PKEY *ed_priv_key = NULL;
     int ret_val = -1;
     uint8_t sign[MAX_SIGN_SIZE] = {0};
     size_t sign_len;
