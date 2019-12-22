@@ -32,6 +32,7 @@
 
 typedef struct perf_conf_st {
     int sess_ticket_count;
+    int proto_version;
     uint32_t with_out_tls:1;
     uint32_t with_client_auth:1;
 }PERF_CONF;
@@ -39,13 +40,21 @@ typedef struct perf_conf_st {
 enum opt_enum {
     CLI_HELP = 1,
     CLI_SESS_TICKET_COUNT,
-    CLI_CLIENT_AUTH
+    CLI_CLIENT_AUTH,
+    CLI_TLS1_0,
+    CLI_TLS1_1,
+    CLI_TLS1_2,
+    CLI_TLS1_3
 };
 
 struct option lopts[] = {
     {"help", no_argument, NULL, CLI_HELP},
     {"sess-tkt-count", required_argument, NULL, CLI_SESS_TICKET_COUNT},
     {"client-auth", no_argument, NULL, CLI_CLIENT_AUTH},
+    {"tls1_0", no_argument, NULL, CLI_TLS1_0},
+    {"tls1_1", no_argument, NULL, CLI_TLS1_1},
+    {"tls1_2", no_argument, NULL, CLI_TLS1_2},
+    {"tls1_3", no_argument, NULL, CLI_TLS1_3},
 };
 
 int do_tcp_listen(const char *server_ip, uint16_t port)
@@ -149,14 +158,11 @@ SSL_CTX *create_context(PERF_CONF *conf)
         printf("Load Server cert %s failed\n", SERVER_CERT_FILE);
         goto err_handler;
     }
-
     printf("Loaded server cert %s on context\n", SERVER_CERT_FILE);
-
     if (SSL_CTX_use_PrivateKey_file(ctx, SERVER_KEY_FILE, SSL_FILETYPE_ASN1) != 1) {
         printf("Load Server key %s failed\n", SERVER_KEY_FILE);
         goto err_handler;
     }
-
     printf("Loaded server key %s on context\n", SERVER_KEY_FILE);
 
     if (conf->with_client_auth == 1) {
@@ -165,6 +171,10 @@ SSL_CTX *create_context(PERF_CONF *conf)
         }
 
         SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+    }
+    if (conf->proto_version != 0) {
+        SSL_CTX_set_min_proto_version(ctx, conf->proto_version);
+        SSL_CTX_set_max_proto_version(ctx, conf->proto_version);
     }
 
     printf("SSL context configurations completed\n");
@@ -302,6 +312,10 @@ void usage()
     printf("-help               Help\n");
     printf("-sess-tkt-count     Number of sess ticket server should issue after handshake\n");
     printf("-client-auth        To perform client authentication\n");
+    printf("-tls1_0             TLS connection with TLSv1.0\n");
+    printf("-tls1_1             TLS connection with TLSv1.1\n");
+    printf("-tls1_2             TLS connection with TLSv1.2\n");
+    printf("-tls1_3             TLS connection with TLSv1.3\n");
     return;
 };
 
@@ -323,6 +337,18 @@ int parse_cli_args(int argc, char *argv[], PERF_CONF *conf) {
                 break;
             case CLI_CLIENT_AUTH:
                 conf->with_client_auth = 1;
+                break;
+            case CLI_TLS1_0:
+                conf->proto_version = TLS1_VERSION;
+                break;
+            case CLI_TLS1_1:
+                conf->proto_version = TLS1_1_VERSION;
+                break;
+            case CLI_TLS1_2:
+                conf->proto_version = TLS1_2_VERSION;
+                break;
+            case CLI_TLS1_3:
+                conf->proto_version = TLS1_3_VERSION;
                 break;
         }
     }

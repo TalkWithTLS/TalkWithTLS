@@ -33,19 +33,28 @@
 
 typedef struct perf_conf_st {
     uint32_t time_sec;
+    int proto_version;
     uint32_t with_client_auth:1;
 }PERF_CONF;
 
 enum opt_enum {
     CLI_HELP = 1,
     CLI_TIME,
-    CLI_CLIENT_AUTH
+    CLI_CLIENT_AUTH,
+    CLI_TLS1_0,
+    CLI_TLS1_1,
+    CLI_TLS1_2,
+    CLI_TLS1_3
 };
 
 struct option lopts[] = {
     {"help", no_argument, NULL, CLI_HELP},
     {"time", required_argument, NULL, CLI_TIME},
     {"client-auth", no_argument, NULL, CLI_CLIENT_AUTH},
+    {"tls1_0", no_argument, NULL, CLI_TLS1_0},
+    {"tls1_1", no_argument, NULL, CLI_TLS1_1},
+    {"tls1_2", no_argument, NULL, CLI_TLS1_2},
+    {"tls1_3", no_argument, NULL, CLI_TLS1_3},
 };
 
 int do_tcp_connection(const char *server_ip, uint16_t port)
@@ -118,7 +127,6 @@ SSL_CTX *create_context(PERF_CONF *conf)
         printf("Setting TLS1.3 cipher suite failed\n");
         goto err_handler;
     }
-
     if (SSL_CTX_set_cipher_list(ctx, TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) != 1) {
         printf("Setting TLS1.2 cipher suite failed\n");
         goto err_handler;
@@ -138,6 +146,10 @@ SSL_CTX *create_context(PERF_CONF *conf)
             goto err_handler;
         }
         printf("Loaded client key %s\n", CLIENT_PRIV_KEY_FILE);
+    }
+    if (conf->proto_version != 0) {
+        SSL_CTX_set_min_proto_version(ctx, conf->proto_version);
+        SSL_CTX_set_max_proto_version(ctx, conf->proto_version);
     }
 
     return ctx;
@@ -252,6 +264,10 @@ void usage()
     printf("-help           Help\n");
     printf("-time           Time to run (in second), default is 30 secs\n");
     printf("-client-auth    To perform client authentication\n");
+    printf("-tls1_0         TLS connection with TLSv1.0\n");
+    printf("-tls1_1         TLS connection with TLSv1.1\n");
+    printf("-tls1_2         TLS connection with TLSv1.2\n");
+    printf("-tls1_3         TLS connection with TLSv1.3\n");
     return;
 };
 
@@ -272,6 +288,18 @@ int parse_cli_args(int argc, char *argv[], PERF_CONF *conf) {
                 break;
             case CLI_CLIENT_AUTH:
                 conf->with_client_auth = 1;
+                break;
+            case CLI_TLS1_0:
+                conf->proto_version = TLS1_VERSION;
+                break;
+            case CLI_TLS1_1:
+                conf->proto_version = TLS1_1_VERSION;
+                break;
+            case CLI_TLS1_2:
+                conf->proto_version = TLS1_2_VERSION;
+                break;
+            case CLI_TLS1_3:
+                conf->proto_version = TLS1_3_VERSION;
                 break;
         }
     }
