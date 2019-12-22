@@ -225,17 +225,11 @@ void get_error()
     printf("Error reason=%d on [%s:%d]\n", ERR_GET_REASON(error), file, line);
 }
 
-int do_tls_client(PERF_CONF *conf)
+int do_tls_client(SSL_CTX *ctx, PERF_CONF *conf)
 {
-    SSL_CTX *ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
     int ret;
-
-    ctx = create_context(conf);
-    if (!ctx) {
-        return -1;
-    }
 
     ssl = create_ssl_object(ctx);
     if (!ssl) {
@@ -258,7 +252,7 @@ int do_tls_client(PERF_CONF *conf)
     SSL_shutdown(ssl);
     ret_val = 0;
 err_handler:
-    do_cleanup(ctx, ssl);
+    do_cleanup(NULL, ssl);
     return ret_val;
 }
 
@@ -304,26 +298,34 @@ err:
 
 int do_tls_client_perf(PERF_CONF *conf)
 {
+    SSL_CTX *ctx;
     time_t finish_time;
     uint32_t count = 0;
+    int ret_val = -1;
 
+    ctx = create_context(conf);
+    if (!ctx) {
+        return -1;
+    }
     printf("Performing TLS connections...\n");
-
     finish_time = conf->time_sec + time(NULL);
     do {
         if (finish_time <= time(NULL)) {
             break;
         }
-        if (do_tls_client(conf) != 0) {
+        if (do_tls_client(ctx, conf) != 0) {
             printf("TLS client connection failed\n");
             fflush(stdout);
-            return -1;
+            goto err;
         }
         count++;
     } while (1);
     printf("%u TLS connections in %u secs\n", count, conf->time_sec);
     printf("%u connections/sec\n", count / conf->time_sec); 
-    return 0;
+    ret_val = 0;
+err:
+    do_cleanup(ctx, NULL);
+    return ret_val;
 }
 
 int main(int argc, char *argv[])
