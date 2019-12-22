@@ -24,22 +24,28 @@
 #define MAX_BUF_SIZE    1024
 #define MSG_FOR_S_SERV    "<html><title>TWT Perf</title><body>TalkWithTLS</body></html>"
 
+#define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
+#define CAFILE2 "./certs/RSA_PSS_PSS_Certs/rootcert.pem"
+
 #define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 
 typedef struct perf_conf_st {
     int sess_ticket_count;
     uint32_t with_out_tls:1;
+    uint32_t with_client_auth:1;
 }PERF_CONF;
 
 enum opt_enum {
     CLI_HELP = 1,
-    CLI_SESS_TICKET_COUNT
+    CLI_SESS_TICKET_COUNT,
+    CLI_CLIENT_AUTH
 };
 
 struct option lopts[] = {
     {"help", no_argument, NULL, CLI_HELP},
     {"sess-tkt-count", required_argument, NULL, CLI_SESS_TICKET_COUNT},
+    {"client-auth", no_argument, NULL, CLI_CLIENT_AUTH},
 };
 
 int g_kexch_groups[] = {
@@ -120,7 +126,22 @@ void check_and_close(int *fd)
     printf("Closing fd=%d\n", *fd);
     close(*fd);
 }
-SSL_CTX *create_context()
+
+int load_ca_cert(SSL_CTX *ctx, const char *ca_file)
+{
+#ifdef WITH_OSSL_111
+    if (SSL_CTX_load_verify_locations(ctx, ca_file, NULL) != 1) {
+#else
+    if (SSL_CTX_load_verify_file(ctx, ca_file) != 1) {
+#endif
+        printf("Load CA cert %s failed\n", ca_file);
+        return -1;
+    }
+
+    return 0;
+}
+
+SSL_CTX *create_context(PERF_CONF *conf)
 {
     SSL_CTX *ctx;
 
@@ -145,6 +166,15 @@ SSL_CTX *create_context()
     }
 
     printf("Loaded server key %s on context\n", SERVER_KEY_FILE);
+
+    if (conf->with_client_auth == 1) {
+        if (load_ca_cert(ctx, CAFILE1) != 0) {
+            goto err_handler;
+        }
+
+        SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+    }
+
     printf("SSL context configurations completed\n");
 
     return ctx;
@@ -241,7 +271,7 @@ int do_tls_server(SSL_CTX *ctx, int lfd, PERF_CONF *conf)
         goto err_handler;
     }
 
-    ret = SSL_accept(ssl); 
+    ret = SSL_accept(ssl);
     if (ret != 1) {
         printf("SSL accept failed%d\n", ret);
         if (SSL_get_error(ssl, ret) == SSL_ERROR_SSL) {
@@ -251,8 +281,19 @@ int do_tls_server(SSL_CTX *ctx, int lfd, PERF_CONF *conf)
     }
 
     printf("SSL accept succeeded\n");
-    printf("Negotiated Version: %s\n", SSL_get_version(ssl));
-    printf("Negotiated Cipher suite: %s\n", SSL_CIPHER_get_name(SSL_get_current_cipher(ssl)));
+    printf("Negotiated\n");
+    printf("    - Version: %s\n", SSL_get_version(ssl));
+    printf("    - Ciphersuite: %s\n", SSL_CIPHER_get_name(SSL_get_current_cipher(ssl)));
+    printf("    - KeyExch Group: %s\n",
+#ifdef WITH_OSSL_111
+            OBJ_nid2sn(SSL_get_shared_group(ssl, 0))
+#elif defined WITH_OSSL_MASTER
+            OBJ_nid2sn(SSL_get_negotiated_group(ssl))
+#endif
+    );
+    if (SSL_get_peer_certificate(ssl) != NULL) {
+        printf("    - Performed client cert auth\n");
+    }
 
     if (do_data_transfer(ssl)) {
         printf("Data transfer over TLS failed\n");
@@ -276,6 +317,7 @@ void usage()
 {
     printf("-help               Help\n");
     printf("-sess-tkt-count     Number of sess ticket server should issue after handshake\n");
+    printf("-client-auth        To perform client authentication\n");
     return;
 };
 
@@ -295,6 +337,9 @@ int parse_cli_args(int argc, char *argv[], PERF_CONF *conf) {
                 conf->sess_ticket_count = (uint32_t)atoi(optarg);
                 printf("Session ticket num %d\n", conf->sess_ticket_count);
                 break;
+            case CLI_CLIENT_AUTH:
+                conf->with_client_auth = 1;
+                break;
         }
     }
     return 0;
@@ -308,7 +353,7 @@ int do_tls_server_perf(PERF_CONF *conf)
     int ret_val = -1;
     int lfd;
 
-    ctx = create_context();
+    ctx = create_context(conf);
     if (!ctx) {
         return -1;
     }

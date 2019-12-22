@@ -26,18 +26,26 @@
 #define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
 #define CAFILE2 "./certs/RSA_PSS_PSS_Certs/rootcert.pem"
 
+#define CLIENT_CERT_FILE "./certs/ECC_Prime256_Certs/client_cert.der"
+#define CLIENT_CERT_TYPE  SSL_FILETYPE_ASN1
+#define CLIENT_PRIV_KEY_FILE "./certs/ECC_Prime256_Certs/client_key.der"
+#define CLIENT_PRIV_KEY_TYPE SSL_FILETYPE_ASN1
+
 typedef struct perf_conf_st {
     uint32_t time_sec;
+    uint32_t with_client_auth:1;
 }PERF_CONF;
 
 enum opt_enum {
     CLI_HELP = 1,
     CLI_TIME,
+    CLI_CLIENT_AUTH
 };
 
 struct option lopts[] = {
     {"help", no_argument, NULL, CLI_HELP},
     {"time", required_argument, NULL, CLI_TIME},
+    {"client-auth", no_argument, NULL, CLI_CLIENT_AUTH},
 };
 
 int do_tcp_connection(const char *server_ip, uint16_t port)
@@ -100,7 +108,7 @@ int g_kexch_groups[] = {
     NID_X448                /* x448 */
 };
 
-SSL_CTX *create_context()
+SSL_CTX *create_context(PERF_CONF *conf)
 {
     SSL_CTX *ctx;
 
@@ -110,8 +118,7 @@ SSL_CTX *create_context()
         return NULL;
     }
 
-
-    if (load_ca_cert(ctx, CAFILE1) || load_ca_cert(ctx, CAFILE2)) {
+    if (load_ca_cert(ctx, CAFILE1) != 0) {
         goto err_handler;
     }
 
@@ -128,6 +135,18 @@ SSL_CTX *create_context()
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
     SSL_CTX_set_verify_depth(ctx, 5);
 
+    if (conf->with_client_auth == 1) {
+        if (SSL_CTX_use_certificate_file(ctx, CLIENT_CERT_FILE, CLIENT_CERT_TYPE) != 1) {
+            printf("Load client cert %s failed\n", CLIENT_CERT_FILE);
+            goto err_handler;
+        }
+        printf("Loaded client cert %s\n", CLIENT_CERT_FILE);
+        if (SSL_CTX_use_PrivateKey_file(ctx, CLIENT_PRIV_KEY_FILE, CLIENT_PRIV_KEY_TYPE) != 1) {
+            printf("Load client key %s failed\n", CLIENT_PRIV_KEY_FILE);
+            goto err_handler;
+        }
+        printf("Loaded client key %s\n", CLIENT_PRIV_KEY_FILE);
+    }
 
     return ctx;
 err_handler:
@@ -206,14 +225,14 @@ void get_error()
     printf("Error reason=%d on [%s:%d]\n", ERR_GET_REASON(error), file, line);
 }
 
-int do_tls_client()
+int do_tls_client(PERF_CONF *conf)
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
     int ret;
 
-    ctx = create_context();
+    ctx = create_context(conf);
     if (!ctx) {
         return -1;
     }
@@ -252,8 +271,9 @@ int init_conf(PERF_CONF *conf)
 
 void usage()
 {
-    printf("-help       Help\n");
-    printf("-time       Time to run (in second). Default is 30 secs.\n");
+    printf("-help           Help\n");
+    printf("-time           Time to run (in second), default is 30 secs\n");
+    printf("-client-auth    To perform client authentication\n");
     return;
 };
 
@@ -271,6 +291,9 @@ int parse_cli_args(int argc, char *argv[], PERF_CONF *conf) {
                     goto err;
                 }
                 conf->time_sec = (uint32_t)atoi(optarg);
+                break;
+            case CLI_CLIENT_AUTH:
+                conf->with_client_auth = 1;
                 break;
         }
     }
@@ -291,7 +314,7 @@ int do_tls_client_perf(PERF_CONF *conf)
         if (finish_time <= time(NULL)) {
             break;
         }
-        if (do_tls_client() != 0) {
+        if (do_tls_client(conf) != 0) {
             printf("TLS client connection failed\n");
             fflush(stdout);
             return -1;
