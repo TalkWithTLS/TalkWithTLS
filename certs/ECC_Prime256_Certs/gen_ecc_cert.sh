@@ -19,4 +19,9 @@ openssl ec -inform PEM -passin pass:123456 -in serv_key.pem -outform DER -out se
 openssl x509 -inform PEM -in client_cert.pem -outform DER -out client_cert.der
 openssl ec -inform PEM -passin pass:123456 -in client_key.pem -outform DER -out client_key.der
 
+# generate unencrypted PEM key file
+openssl ec -inform PEM -passin pass:123456 -in rootkey.pem -outform PEM -out rootkey_unencrypted.pem
+openssl ec -inform PEM -passin pass:123456 -in serv_key.pem -outform PEM -out serv_key_unencrypted.pem
+openssl ec -inform PEM -passin pass:123456 -in client_key.pem -outform PEM -out client_key_unencrypted.pem
+
 rm ec.pem rootreq.pem serv_req.pem client_req.pem

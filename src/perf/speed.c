@@ -7,8 +7,11 @@
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 
-#define ED25519_CERT "certs/ED25519_Certs/rootcert.pem"
-#define ED25519_PRIV "certs/ED25519_Certs/rootkey.pem"
+#define EC256_CERT "./certs/ECC_Prime256_Certs/serv_cert.pem"
+#define EC256_PRIV "./certs/ECC_Prime256_Certs/serv_key_unencrypted.pem"
+
+#define ED25519_CERT "certs/ED25519/rootcert.pem"
+#define ED25519_PRIV "certs/ED25519/rootkey.pem"
 
 #define MAX_SIGN_SIZE 256
 
@@ -79,7 +82,7 @@ int do_sign_verify(int alg_nid, const char *cert_file, const char *priv_file, in
     EVP_PKEY *ed_priv_key;
     int ret_val = -1;
     uint8_t sign[MAX_SIGN_SIZE] = {0};
-    size_t sign_len = sizeof(sign);
+    size_t sign_len;
     char data[] = "abcdefghijabcdefghij";
     long finish_time;
     uint32_t count;
@@ -103,6 +106,7 @@ int do_sign_verify(int alg_nid, const char *cert_file, const char *priv_file, in
 
     finish_time = time(NULL) + secs;
     while (1) {
+        sign_len = sizeof(sign);
         if (finish_time < time(NULL)) {
             break;
         }
@@ -131,7 +135,7 @@ err:
     return ret_val;
 }
 
-#define RAND_SIZE 256
+#define RAND_SIZE 224
 int do_rand(int secs)
 {
     long finish_time;
@@ -163,9 +167,61 @@ err:
     return -1;
 }
 
+#define ENC_DATA_SIZE 256
+#define ENC_KEY_SIZE 16
+int do_enc_dec(int secs, int nid)
+{
+    long finish_time;
+    uint8_t data[ENC_DATA_SIZE] = {0};
+    uint8_t out[ENC_DATA_SIZE] = {0};
+    uint8_t key[ENC_KEY_SIZE] = {0};
+    const EVP_CIPHER *ciph;
+    EVP_CIPHER_CTX *ciph_ctx = NULL;
+    uint32_t count;
+    int ret_val = -1;
+
+    if ((ciph = EVP_get_cipherbynid(nid)) == NULL) {
+        printf("Get cipher by nid failed\n");
+        goto err;
+    }
+
+    if ((ciph_ctx = EVP_CIPHER_CTX_new()) == NULL
+            || EVP_EncryptInit_ex(ciph_ctx, ciph, NULL, key, NULL) != 1) {
+        printf("Cipher ctx init failed\n");
+        goto err;
+    }
+
+    memset(data, 'a', sizeof(data));
+    finish_time = time(NULL) + secs;
+    while (1) {
+        if (finish_time < time(NULL)) {
+            break;
+        }
+        if (EVP_Cipher(ciph_ctx, out, data, sizeof(data)) != 1) {
+            printf("EVP Cipher failed\n");
+            goto err;
+        }
+        //TODO Need to add decrpytion and memcmp also
+        printf("*");
+        count++;
+    }
+    printf("\nEnc/Dec of data %zu bytes performed %u operations in %d secs\n",
+            sizeof(data), count, secs);
+    printf("Enc/Dec of data %zu bytes performed %u operations/secs\n",
+            sizeof(data), count/secs);
+    printf("Enc/Dec performance is %f MB/secs\n",
+            (((float)(sizeof(data) * count)) / secs) / (1024 * 1024));
+    ret_val = 0;
+err:
+    EVP_CIPHER_CTX_free(ciph_ctx);
+    return ret_val;
+}
+
 int main(int argc, char *argv[])
 {
     int secs = 10;
     //return do_sign_verify(NID_ED25519, ED25519_CERT, ED25519_PRIV, secs);
-    return do_rand(secs);
+    return do_sign_verify(NID_X9_62_prime256v1, EC256_CERT, EC256_PRIV, secs);
+    //return do_rand(secs);
+    //return do_enc_dec(secs, NID_aes_128_ctr);
 }
