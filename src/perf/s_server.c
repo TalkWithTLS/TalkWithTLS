@@ -275,7 +275,8 @@ int init_conf(PERF_CONF *conf)
 
 void usage()
 {
-    //TODO help
+    printf("-help               Help\n");
+    printf("-sess-tkt-count     Number of sess ticket server should issue after handshake\n");
     return;
 };
 
@@ -332,11 +333,14 @@ err:
 int main(int argc, char *argv[])
 {
     PERF_CONF conf = {0};
+    int ret;
+    if (init_conf(&conf) != 0 || (ret = parse_cli_args(argc, argv, &conf)) < 0) {
+        return -1;
+    } else if (ret == 1) { /* Print only help */
+        return 0;
+    }
     printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION),
             OpenSSL_version(OPENSSL_BUILT_ON));
-    if (init_conf(&conf) || parse_cli_args(argc, argv, &conf) != 0) {
-        return -1;
-    }
     if (do_tls_server_perf(&conf) != 0) {
         return -1;
     }
