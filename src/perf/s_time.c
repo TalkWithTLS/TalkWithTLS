@@ -123,15 +123,6 @@ SSL_CTX *create_context(PERF_CONF *conf)
         goto err_handler;
     }
 
-    if (SSL_CTX_set_ciphersuites(ctx, TLS1_3_RFC_CHACHA20_POLY1305_SHA256) != 1) {
-        printf("Setting TLS1.3 cipher suite failed\n");
-        goto err_handler;
-    }
-    if (SSL_CTX_set_cipher_list(ctx, TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) != 1) {
-        printf("Setting TLS1.2 cipher suite failed\n");
-        goto err_handler;
-    }
-
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
     SSL_CTX_set_verify_depth(ctx, 5);
 
