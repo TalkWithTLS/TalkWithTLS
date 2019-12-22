@@ -227,14 +227,17 @@ CC = gcc
 CP = cp
 RM = rm
 
-#.PHONY all init_task clean
+#.PHONY all init_task clean clobber test_bin sample_bin perf_bin
 
-all : init_task all_dependency $(TARGET)
+all : init_task $(TARGET)
 
-test : init_task test_dependency $(TEST_BIN)
+test_bin : init_task $(TEST_BIN)
+
+sample_bin : init_task $(SAMPLE_BIN)
+
+perf_bin : init_task $(PERF_BIN)
 
 all_dependency:$(DEPENDENCY)
-test_dependency:$(OSSL_111_LIBS) $(WOLFSSL_LIBS)
 
 #TODO Generate exes from different openssl version
 #TODO Better to avoid using DEPENDENCY_DIR instead use generic way while untaring
@@ -286,7 +289,7 @@ init_task:
 	@mkdir -p $(OBJ_DIR)/$(PERF_SRC)
 	@mkdir -p $(OBJ_DIR)/$(TEST_OPENSSL_DIR)
 
-$(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c init_task
+$(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c
 	$(CC) $(COMMON_CFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/$(SAMPLE_SRC)/$(OPENSSL)%.o:$(SAMPLE_SRC)/$(OPENSSL)%.c $(OSSL_111_LIBS)
