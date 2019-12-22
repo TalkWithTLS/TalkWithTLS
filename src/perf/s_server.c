@@ -177,6 +177,10 @@ SSL_CTX *create_context(PERF_CONF *conf)
         SSL_CTX_set_max_proto_version(ctx, conf->proto_version);
     }
 
+    if (conf->sess_ticket_count > 0) {
+        SSL_CTX_set_num_tickets(ctx, (size_t)conf->sess_ticket_count);
+    }
+
     printf("SSL context configurations completed\n");
 
     return ctx;
@@ -203,10 +207,6 @@ SSL *create_ssl_object(SSL_CTX *ctx, int lfd, PERF_CONF *conf)
     }
 
     SSL_set_fd(ssl, fd);
-
-    if (conf->sess_ticket_count > 0) {
-        SSL_set_num_tickets(ssl, (size_t)conf->sess_ticket_count);
-    }
 
     return ssl;
 }
