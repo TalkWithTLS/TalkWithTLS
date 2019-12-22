@@ -100,14 +100,6 @@ int load_ca_cert(SSL_CTX *ctx, const char *ca_file)
     return 0;
 }
 
-int g_kexch_groups[] = {
-    NID_X9_62_prime256v1,   /* secp256r1 */
-    NID_secp384r1,          /* secp384r1 */
-    NID_secp521r1,          /* secp521r1 */
-    NID_X25519,             /* x25519 */
-    NID_X448                /* x448 */
-};
-
 SSL_CTX *create_context(PERF_CONF *conf)
 {
     SSL_CTX *ctx;
@@ -173,15 +165,7 @@ SSL *create_ssl_object(SSL_CTX *ctx)
 
     SSL_set_fd(ssl, fd);
 
-    if (SSL_set1_groups(ssl, g_kexch_groups, sizeof(g_kexch_groups)/sizeof(g_kexch_groups[0])) != 1) {
-        printf("Set Groups failed\n");
-        goto err_handler;
-    }
-
     return ssl;
-err_handler:
-    SSL_free(ssl);
-    return NULL;
 }
 
 int do_data_transfer(SSL *ssl)
