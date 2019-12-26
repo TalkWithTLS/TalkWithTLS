@@ -280,7 +280,7 @@ perf_bin : init_task $(PERF_BIN)
 
 $(OSSL_111_LIBS_DBG):
 	@echo "Building $(OSSL_1_1_1_DIR)..."
-	@if [ ! -f $(OSSL_1_1_1_DIR)/.gitignore ]; then \
+	@if [ ! -f $(OSSL_1_1_1_DIR)/config ]; then \
 		cd $(DEPENDENCY_DIR) && tar -zxvf $(OSSL_1_1_1).tar.gz > /dev/null; fi
 	@cd $(OSSL_1_1_1_DIR) && export CC=$(OSSL_111_CC_DBG) && ./config -d > /dev/null
 	@cd $(OSSL_1_1_1_DIR) && $(MAKE) > /dev/null
@@ -290,8 +290,9 @@ $(OSSL_111_LIBS_REL):
 	@echo "Building $(OSSL_1_1_1_DIR_REL)..."
 	@if [ ! -d $(OSSL_1_1_1_DIR_REL) ]; then \
 		mkdir -p $(OSSL_1_1_1_DIR_REL); fi
-	@if [ ! -f $(OSSL_1_1_1_DIR_REL)/.gitignore ]; then \
-		cd $(DEPENDENCY_DIR) && tar -zxvf $(OSSL_1_1_1).tar.gz -C $(OSSL_1_1_1_REL) > /dev/null; \
+	@if [ ! -f $(OSSL_1_1_1_DIR_REL)/config ]; then \
+		cd $(DEPENDENCY_DIR) && rm $(OSSL_1_1_1_REL)/*; \
+		tar -zxvf $(OSSL_1_1_1).tar.gz -C $(OSSL_1_1_1_REL) > /dev/null; \
 		mv $(OSSL_1_1_1_REL)/$(OSSL_1_1_1)/* $(OSSL_1_1_1_REL); fi
 	@cd $(OSSL_1_1_1_DIR_REL) && export CC=$(OSSL_111_CC_REL) && ./config > /dev/null
 	@cd $(OSSL_1_1_1_DIR_REL) && $(MAKE) > /dev/null
@@ -299,7 +300,7 @@ $(OSSL_111_LIBS_REL):
 
 $(OSSL_MASTER_LIBS_DBG):
 	@echo "Building $(OSSL_MASTER_DIR)..."
-	@if [ ! -f $(OSSL_MASTER_DIR)/.gitignore ]; then \
+	@if [ ! -f $(OSSL_MASTER_DIR)/config ]; then \
 		cd $(DEPENDENCY_DIR) && tar -zxvf $(OSSL_MASTER).tar.gz > /dev/null; fi
 	@cd $(OSSL_MASTER_DIR) && export CC=$(OSSL_MASTER_CC_DBG) && ./config -d $(OSSL_SANFLAGS) > /dev/null
 	@cd $(OSSL_MASTER_DIR) && $(MAKE) > /dev/null
@@ -309,8 +310,9 @@ $(OSSL_MASTER_LIBS_REL):
 	@echo "Building $(OSSL_MASTER_DIR_REL)..."
 	@if [ ! -d $(OSSL_MASTER_DIR_REL) ]; then \
 		mkdir -p $(OSSL_MASTER_DIR_REL); fi
-	@if [ ! -f $(OSSL_MASTER_DIR_REL)/.gitignore ]; then \
-		cd $(DEPENDENCY_DIR) && tar -zxvf $(OSSL_MASTER).tar.gz -C $(OSSL_MASTER_REL) > /dev/null; \
+	@if [ ! -f $(OSSL_MASTER_DIR_REL)/config ]; then \
+		cd $(DEPENDENCY_DIR) && rm $(OSSL_MASTER_REL)/*; \
+		tar -zxvf $(OSSL_MASTER).tar.gz -C $(OSSL_MASTER_REL) > /dev/null; \
 		mv $(OSSL_MASTER_REL)/$(OSSL_MASTER)/* $(OSSL_MASTER_REL); fi
 	@cd $(OSSL_MASTER_DIR_REL) && export CC=$(OSSL_MASTER_CC_REL) && ./config > /dev/null
 	@cd $(OSSL_MASTER_DIR_REL) && $(MAKE) > /dev/null
