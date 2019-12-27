@@ -6,9 +6,9 @@ jobs:
             enabled: true
         steps:
             - checkout
-            - run:
-                name: Get_Submodules
-                command: ./get_submodules.sh
+            #- run:
+              #  name: Get_Submodules
+              #  command: ./get_submodules.sh
             - run:
                 name: Build_All
                 command: make NOSAN=1 -j 4
