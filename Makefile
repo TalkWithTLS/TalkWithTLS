@@ -1,6 +1,18 @@
+####################################################################################################
+# Configuration variables are
+# - BIN_PATH
+# - OSSL111_PATH
+# - OSSL111_PATH_REL
+# - OSSLMASTER_PATH
+# - OSSLMASTER_PATH_REL
+####################################################################################################
 SRC_DIR=src
 BIN_DIR=bin
 OBJ_DIR=obj
+
+ifneq ($(BIN_PATH),)
+	BIN_DIR=$(BIN_PATH)
+endif
 
 COMMON_DIR=common
 SAMPLE_DIR=sample
