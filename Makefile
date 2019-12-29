@@ -7,6 +7,12 @@
 # - OSSLMASTER_PATH_REL
 # - NOSAN=1 - To disable address sanitizer in debug builds
 # - EN_GPROF=1 - To enable gprofile flags in debug builds
+# Build mode
+# - sample_bin - To build sample bins
+# - test_bin - To build test bins
+# - perf_bin - To build both release and debug bin of perf
+# - perf_bin_dbg - To build only debug bins of perf
+# - perf_bin_rel - To build only release bins of perf
 ####################################################################################################
 SRC_DIR=src
 BIN_DIR=bin
@@ -97,18 +103,19 @@ S_TIME_OSSL_111_REL = $(PERF_BIN_DIR)/$(S_TIME)$(OSSL_111_SUFFIX)$(REL)
 S_SERVER_OSSL_MASTER_REL = $(PERF_BIN_DIR)/$(S_SERVER)$(OSSL_MASTER_SUFFIX)$(REL)
 S_TIME_OSSL_MASTER_REL = $(PERF_BIN_DIR)/$(S_TIME)$(OSSL_MASTER_SUFFIX)$(REL)
 
-PERF_BIN = $(SPEED_OSSL_111_DBG) \
+PERF_BIN_DBG = $(SPEED_OSSL_111_DBG) \
 		   $(SPEED_OSSL_MASTER_DBG) \
 		   $(S_SERVER_OSSL_111_DBG) \
 		   $(S_TIME_OSSL_111_DBG) \
 		   $(S_SERVER_OSSL_MASTER_DBG) \
-		   $(S_TIME_OSSL_MASTER_DBG) \
-		   $(SPEED_OSSL_111_REL) \
+		   $(S_TIME_OSSL_MASTER_DBG)
+PERF_BIN_REL = $(SPEED_OSSL_111_REL) \
 		   $(SPEED_OSSL_MASTER_REL) \
 		   $(S_SERVER_OSSL_111_REL) \
 		   $(S_TIME_OSSL_111_REL) \
 		   $(S_SERVER_OSSL_MASTER_REL) \
 		   $(S_TIME_OSSL_MASTER_REL)
+PERF_BIN = $(PERF_BIN_DBG) $(PERF_BIN_REL)
 
 # Test binaries
 TEST_OPENSSL = test_openssl
@@ -295,6 +302,10 @@ test_bin : init_task $(TEST_BIN)
 sample_bin : init_task $(SAMPLE_BIN)
 
 perf_bin : init_task $(PERF_BIN)
+
+perf_bin_dbg : init_task $(PERF_BIN_DBG)
+
+perf_bin_rel : init_task $(PERF_BIN_REL)
 
 #TODO Generate test exes from different openssl version, so that interop (111 vs master) is possible
 #TODO Better to avoid using DEPENDENCY_DIR instead use generic way while untaring
