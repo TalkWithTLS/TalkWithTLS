@@ -5,6 +5,8 @@
 # - OSSL111_PATH_REL
 # - OSSLMASTER_PATH
 # - OSSLMASTER_PATH_REL
+# - NOSAN=1 - To disable address sanitizer in debug builds
+# - EN_GPROF=1 - To enable gprofile flags in debug builds
 ####################################################################################################
 SRC_DIR=src
 BIN_DIR=bin
@@ -236,15 +238,21 @@ BSSL_CHROMIUM=boringssl_chromium
 BSSL_CHROMIUM_DIR=$(DEPENDENCY_DIR)/$(BSSL_CHROMIUM)
 BSSL_CHROMIUM_LIBS=$(BSSL_CHROMIUM)/build/ssl/libssl.a
 
+# Address Sanitizer flags
 SANFLAGS = -fsanitize=address -static-libasan
 OSSL_SANFLAGS = enable-asan
-
 ifeq ($(NOSAN),1)
 	SANFLAGS =
 	OSSL_SANFLAGS =
 endif
 
-CFLAGS_DBG = -g -ggdb -O0 -Wall -Werror -fstack-protector-all $(SANFLAGS) -I $(COMMON_SRC)
+# Gprofile flags
+GPROF_FLAGS =
+ifeq ($(EN_GPROF),1)
+	GPROF_FLAGS = -p
+endif
+
+CFLAGS_DBG = -g $(GPROF_FLAGS) -ggdb -O0 -Wall -Werror -fstack-protector-all $(SANFLAGS) -I $(COMMON_SRC)
 CFLAGS_REL = -O3 -Wall -Werror -I $(COMMON_SRC)
 COMMON_CFLAGS = $(CFLAGS_DBG)
 OSSL_111_CFLAGS_DBG = $(CFLAGS_DBG) -I $(OSSL_1_1_1_DIR)/include -DWITH_OSSL -DWITH_OSSL_111
@@ -254,21 +262,22 @@ OSSL_MASTER_CFLAGS_REL = $(CFLAGS_REL) -I $(OSSL_MASTER_DIR_REL)/include -DWITH_
 WOLFSSL_CFLAGS = $(CFLAGS_DBG) -I $(WOLFSSL_DIR)
 #TEST_OPENSSL_CFLAGS = -I $(TEST_OPENSSL_DIR)
 
+LDFLAGS_DBG = $(GPROF_FLAGS)
 OSSL_LDFLAGS = -lpthread -ldl
-OSSL_111_LDFLAGS_DBG = $(OSSL_1_1_1_DIR)/libssl.a $(OSSL_1_1_1_DIR)/libcrypto.a \
+OSSL_111_LDFLAGS_DBG = $(LDFLAGS_DBG) $(OSSL_1_1_1_DIR)/libssl.a $(OSSL_1_1_1_DIR)/libcrypto.a \
 					   $(OSSL_LDFLAGS) $(SANFLAGS)
 OSSL_111_LDFLAGS_REL = $(OSSL_1_1_1_DIR_REL)/libssl.a $(OSSL_1_1_1_DIR_REL)/libcrypto.a \
 					   $(OSSL_LDFLAGS)
-OSSL_MASTER_LDFLAGS_DBG = $(OSSL_MASTER_DIR)/libssl.a $(OSSL_MASTER_DIR)/libcrypto.a \
+OSSL_MASTER_LDFLAGS_DBG = $(LDFLAGS_DBG) $(OSSL_MASTER_DIR)/libssl.a $(OSSL_MASTER_DIR)/libcrypto.a \
 						  $(OSSL_LDFLAGS) $(SANFLAGS)
 OSSL_MASTER_LDFLAGS_REL = $(OSSL_MASTER_DIR_REL)/libssl.a $(OSSL_MASTER_DIR_REL)/libcrypto.a \
 						  $(OSSL_LDFLAGS)
 
 WOLFSSL_LDFLAGS = -L $(BIN_DIR) -lwolfssl $(SANFLAGS)
 
-OSSL_111_CC_DBG="gcc -Wall -Werror -fstack-protector-all $(SANFLAGS)"
+OSSL_111_CC_DBG="gcc -g $(GPROF_FLAGS) -ggdb -Wall -Werror -fstack-protector-all $(SANFLAGS)"
 OSSL_111_CC_REL="gcc -Wall -Werror"
-OSSL_MASTER_CC_DBG="gcc -Wall -Werror -fstack-protector-all"
+OSSL_MASTER_CC_DBG="gcc -g $(GPROF_FLAGS) -ggdb -Wall -Werror -fstack-protector-all"
 OSSL_MASTER_CC_REL="gcc -Wall -Werror"
 
 CC = gcc
