@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <errno.h>
+#include <signal.h>
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -384,10 +385,20 @@ err:
     return ret_val;
 }
 
+void sig_handler(int signum)
+{
+    printf("Received signal [%d]\n", signum);
+    exit(0);
+}
+
 int main(int argc, char *argv[])
 {
     PERF_CONF conf = {0};
     int ret;
+
+    signal(SIGTERM, sig_handler);
+    signal(SIGINT, sig_handler);
+    signal(SIGABRT, sig_handler);
     if (init_conf(&conf) != 0 || (ret = parse_cli_args(argc, argv, &conf)) < 0) {
         return -1;
     } else if (ret == 1) { /* Print only help */
