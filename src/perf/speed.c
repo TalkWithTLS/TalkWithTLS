@@ -15,6 +15,24 @@
 
 #define MAX_SIGN_SIZE 256
 
+typedef struct speed_timer_st {
+    int secs;
+    long finish_time;
+}SPEED_TIMER;
+
+void init_timer(SPEED_TIMER *timer, int secs)
+{
+    timer->finish_time = time(NULL) + secs;
+}
+
+int is_timer_expired(SPEED_TIMER *timer)
+{
+    if (timer->finish_time < time(NULL)) {
+        return 1;
+    }
+    return 0;
+}
+
 BIO *convert_file_2_bio(const char *file_name)
 {
     BIO *bio_file;
@@ -168,12 +186,14 @@ err:
 }
 
 #define ENC_DATA_SIZE 256
+#define ENC_BLOCK_SIZE 16
 #define ENC_KEY_SIZE 16
+
 int do_enc_dec(int secs, int nid)
 {
-    long finish_time;
+    SPEED_TIMER timer = {0};
     uint8_t data[ENC_DATA_SIZE] = {0};
-    uint8_t out[ENC_DATA_SIZE] = {0};
+    uint8_t out[ENC_DATA_SIZE + ENC_BLOCK_SIZE] = {0};
     uint8_t key[ENC_KEY_SIZE] = {0};
     const EVP_CIPHER *ciph;
     EVP_CIPHER_CTX *ciph_ctx = NULL;
@@ -192,9 +212,9 @@ int do_enc_dec(int secs, int nid)
     }
 
     memset(data, 'a', sizeof(data));
-    finish_time = time(NULL) + secs;
+    init_timer(&timer, secs);
     while (1) {
-        if (finish_time < time(NULL)) {
+        if (is_timer_expired(&timer) == 1) {
             break;
         }
         if (EVP_Cipher(ciph_ctx, out, data, sizeof(data)) != 1) {
@@ -221,7 +241,8 @@ int main(int argc, char *argv[])
 {
     int secs = 10;
     //return do_sign_verify(NID_ED25519, ED25519_CERT, ED25519_PRIV, secs);
-    return do_sign_verify(NID_X9_62_prime256v1, EC256_CERT, EC256_PRIV, secs);
+    //return do_sign_verify(NID_X9_62_prime256v1, EC256_CERT, EC256_PRIV, secs);
     //return do_rand(secs);
     //return do_enc_dec(secs, NID_aes_128_ctr);
+    return do_enc_dec(secs, NID_aes_128_cbc);
 }
