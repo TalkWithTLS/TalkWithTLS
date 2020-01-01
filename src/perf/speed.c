@@ -189,20 +189,24 @@ err:
 #define ENC_BLOCK_SIZE 16
 #define ENC_KEY_SIZE 16
 
-int do_enc_dec(int secs, int nid)
+typedef struct speed_conf_enc_st {
+    int nid;
+    uint32_t mode;
+}SPEED_CONF_ENC;
+
+typedef struct speed_conf_st {
+    SPEED_CONF_ENC enc_dec;
+    int secs;
+}SPEED_CONF;
+
+void *init_enc_ctx_ossl(SPEED_CONF *conf, uint8_t *key, uint32_t key_size)
 {
-    SPEED_TIMER timer = {0};
-    uint8_t data[ENC_DATA_SIZE] = {0};
-    uint8_t out[ENC_DATA_SIZE + ENC_BLOCK_SIZE] = {0};
-    uint8_t key[ENC_KEY_SIZE] = {0};
     const EVP_CIPHER *ciph;
     EVP_CIPHER_CTX *ciph_ctx = NULL;
-    uint32_t count;
-    int ret_val = -1;
 
-    if ((ciph = EVP_get_cipherbynid(nid)) == NULL) {
+    if ((ciph = EVP_get_cipherbynid(conf->enc_dec.nid)) == NULL) {
         printf("Get cipher by nid failed\n");
-        goto err;
+        return NULL;
     }
 
     if ((ciph_ctx = EVP_CIPHER_CTX_new()) == NULL
@@ -211,14 +215,62 @@ int do_enc_dec(int secs, int nid)
         goto err;
     }
 
+    return ciph_ctx;
+err:
+    EVP_CIPHER_CTX_free(ciph_ctx);
+    return NULL;
+}
+
+void *init_enc_ctx(SPEED_CONF *conf, uint8_t *key, uint32_t key_size)
+{
+    return init_enc_ctx_ossl(conf, key, key_size);
+}
+
+void fini_enc_ctx_ossl(SPEED_CONF *conf, void *enc_ctx)
+{
+    EVP_CIPHER_CTX_free(enc_ctx);
+}
+
+void fini_enc_ctx(SPEED_CONF *conf, void *enc_ctx)
+{
+    fini_enc_ctx_ossl(conf, enc_ctx);
+}
+
+int do_enc_ossl(void *ciph_ctx, uint8_t *out, uint32_t out_size, uint8_t *in, uint32_t in_size)
+{
+    if (EVP_Cipher(ciph_ctx, out, in, in_size) < 1) { //TODO Raise PR to openssl master
+        printf("EVP_Cipher failed\n");
+        return -1;
+    }
+    return 0;
+}
+
+int do_enc(void *ciph_ctx, uint8_t *out, uint32_t out_size, uint8_t *in, uint32_t in_size)
+{
+    return do_enc_ossl(ciph_ctx, out, out_size, in, in_size);
+}
+
+int do_enc_dec(SPEED_CONF *conf)
+{
+    SPEED_TIMER timer = {0};
+    uint8_t data[ENC_DATA_SIZE] = {0};
+    uint8_t out[ENC_DATA_SIZE + ENC_BLOCK_SIZE] = {0};
+    uint8_t key[ENC_KEY_SIZE] = {0};
+    void *enc_ctx = NULL;
+    uint32_t count;
+    int ret_val = -1;
+
+    if ((enc_ctx = init_enc_ctx(conf, key, sizeof(key))) == NULL) {
+        return -1;
+    }
     memset(data, 'a', sizeof(data));
-    init_timer(&timer, secs);
+    init_timer(&timer, conf->secs);
     while (1) {
         if (is_timer_expired(&timer) == 1) {
             break;
         }
-        if (EVP_Cipher(ciph_ctx, out, data, sizeof(data)) != 1) {
-            printf("EVP Cipher failed\n");
+        if (do_enc(enc_ctx, out, sizeof(out), data, sizeof(data)) != 0) {
+            printf("Enc failed\n");
             goto err;
         }
         //TODO Need to add decrpytion and memcmp also
@@ -226,23 +278,24 @@ int do_enc_dec(int secs, int nid)
         count++;
     }
     printf("\nEnc/Dec of data %zu bytes performed %u operations in %d secs\n",
-            sizeof(data), count, secs);
+            sizeof(data), count, conf->secs);
     printf("Enc/Dec of data %zu bytes performed %u operations/secs\n",
-            sizeof(data), count/secs);
+            sizeof(data), count/conf->secs);
     printf("Enc/Dec performance is %f MB/secs\n",
-            (((float)(sizeof(data) * count)) / secs) / (1024 * 1024));
+            (((float)(sizeof(data) * count)) / conf->secs) / (1024 * 1024));
     ret_val = 0;
 err:
-    EVP_CIPHER_CTX_free(ciph_ctx);
+    fini_enc_ctx(conf, enc_ctx);
     return ret_val;
 }
 
 int main(int argc, char *argv[])
 {
-    int secs = 10;
+    SPEED_CONF conf = {0};
     //return do_sign_verify(NID_ED25519, ED25519_CERT, ED25519_PRIV, secs);
     //return do_sign_verify(NID_X9_62_prime256v1, EC256_CERT, EC256_PRIV, secs);
     //return do_rand(secs);
-    //return do_enc_dec(secs, NID_aes_128_ctr);
-    return do_enc_dec(secs, NID_aes_128_cbc);
+    conf.secs = 10;
+    conf.enc_dec.nid = NID_aes_128_cbc;
+    return do_enc_dec(&conf);
 }
