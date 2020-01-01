@@ -15,6 +15,7 @@ echo ""
 DEPENDENCY_DIR=dependency
 
 declare -a dep_modules=('openssl-master'
+                        'openssl-master-rel'
                         'wolfssl-master')
 
 for module in "${dep_modules[@]}"
