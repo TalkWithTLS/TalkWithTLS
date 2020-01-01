@@ -4,16 +4,18 @@ Sample Code for TLS usage and a lot more than that.
 - And it has a python based automated test framework using Pytest to test OpenSSL
 - Finally a perf script to test various TLS implementations.
 
-# 1. Dependencies
-Testframe depends on python2.7. Installing dependency packages from `apt` on Ubuntu are given
-below.
+## 1. Installing Dependencies
 ```
 sudo apt install make gcc python python-pip
-```
-
-## 1.1 Python Dependencies
-Python module dependencies are `pytest` and `pytest-html`. Command to install python dependencies
-are given below.
-```
 pip install --user pytest pytest-html
 ```
+
+## 2. Building
+```
+make
+```
+
+### 2.1 Building only specific binaries
+- `make sample_bin` To build only Sample binaries
+- `make test_bin` To build only Test binaries
+- `make perf_bin` To build only Performance script binaries
