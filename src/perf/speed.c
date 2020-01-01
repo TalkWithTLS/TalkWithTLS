@@ -274,7 +274,6 @@ int do_enc_dec(SPEED_CONF *conf)
             goto err;
         }
         //TODO Need to add decrpytion and memcmp also
-        printf("*");
         count++;
     }
     printf("\nEnc/Dec of data %zu bytes performed %u operations in %d secs\n",
