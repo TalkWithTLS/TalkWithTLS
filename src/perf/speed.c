@@ -195,9 +195,10 @@ err:
 
 typedef struct speed_conf_sym_st {
     int nid;
+    const char *nid_str;
     uint32_t cli_mode; /* Enabled based on CLI args */
     uint32_t op_mode; /* Current mode which is in operation */
-    const char *op; /* String for logging purpose */
+    const char *op_str; /* String for logging purpose */
 }SPEED_CONF_SYM;
 
 typedef struct speed_conf_st {
@@ -295,10 +296,10 @@ int speed_sym_alg_op(SPEED_CONF *conf)
     uint8_t iv[ENC_KEY_SIZE] = {0};
     void *enc_ctx = NULL;
     void *dec_ctx = NULL;
-    uint32_t count;
+    uint32_t count = 0;
     int ret_val = -1;
 
-    printf("Performing %s... ", conf->sym.op);
+    printf("Performing %s %s... ", conf->sym.nid_str, conf->sym.op_str);
     fflush(stdout);
     memset(data, 'a', sizeof(data));
     init_timer(&timer, conf->secs);
@@ -309,15 +310,16 @@ int speed_sym_alg_op(SPEED_CONF *conf)
         if ((enc_ctx = get_ciph_ctx(conf, key, sizeof(key), iv, sizeof(iv), 1)) == NULL) {
             return -1;
         }
-        if ((conf->sym.op_mode & SPEED_SYM_ALG_MODE_WITH_DEC)
-                && (dec_ctx = get_ciph_ctx(conf, key, sizeof(key), iv, sizeof(iv), 0)) == NULL) {
-            return -1;
-        }
         if (do_enc(enc_ctx, out, sizeof(out), data, sizeof(data)) != 0) {
             goto err;
         }
-        if (do_dec(dec_ctx, out, sizeof(out), data, sizeof(data)) != 0) {
-            goto err;
+        if (conf->sym.op_mode & SPEED_SYM_ALG_MODE_WITH_DEC) {
+            if ((dec_ctx = get_ciph_ctx(conf, key, sizeof(key), iv, sizeof(iv), 0)) == NULL) {
+                return -1;
+            }
+            if (do_dec(dec_ctx, out, sizeof(out), data, sizeof(data)) != 0) {
+                goto err;
+            }
         }
         free_ciph_ctx(conf, enc_ctx, dec_ctx);
         enc_ctx = dec_ctx = NULL;
@@ -333,7 +335,7 @@ err:
 int speed_sym_alg(SPEED_CONF *conf)
 {
     conf->sym.op_mode = SPEED_SYM_ALG_MODE_WITH_DEC;
-    conf->sym.op = "Sym Enc/Dec";
+    conf->sym.op_str = "Sym Enc/Dec";
     return speed_sym_alg_op(conf);
 }
 
@@ -345,5 +347,6 @@ int main(int argc, char *argv[])
     //return do_rand(secs);
     conf.secs = 10;
     conf.sym.nid = NID_aes_128_cbc;
+    conf.sym.nid_str = "AES_128_CBC";
     return speed_sym_alg(&conf);
 }
