@@ -6,7 +6,7 @@
 # - OSSLMASTER_PATH
 # - OSSLMASTER_PATH_REL
 # - NOSAN=1 - To disable address sanitizer in debug builds
-# - EN_GPROF=1 - To enable gprofile flags in debug builds
+# - ENGPROF=1 - To enable gprofile flags in debug builds
 # Build mode
 # - sample_bin - To build sample bins
 # - test_bin - To build test bins
@@ -245,18 +245,19 @@ BSSL_CHROMIUM=boringssl_chromium
 BSSL_CHROMIUM_DIR=$(DEPENDENCY_DIR)/$(BSSL_CHROMIUM)
 BSSL_CHROMIUM_LIBS=$(BSSL_CHROMIUM)/build/ssl/libssl.a
 
+# Gprofile flags
+GPROF_FLAGS =
+ifeq ($(ENGPROF),1)
+	GPROF_FLAGS = -p
+	NOSAN=1
+endif
+
 # Address Sanitizer flags
 SANFLAGS = -fsanitize=address -static-libasan
 OSSL_SANFLAGS = enable-asan
 ifeq ($(NOSAN),1)
 	SANFLAGS =
 	OSSL_SANFLAGS =
-endif
-
-# Gprofile flags
-GPROF_FLAGS =
-ifeq ($(EN_GPROF),1)
-	GPROF_FLAGS = -p
 endif
 
 CFLAGS_DBG = -g $(GPROF_FLAGS) -ggdb -O0 -Wall -Werror -fstack-protector-all $(SANFLAGS) -I $(COMMON_SRC)
@@ -282,14 +283,17 @@ OSSL_MASTER_LDFLAGS_REL = $(OSSL_MASTER_DIR_REL)/libssl.a $(OSSL_MASTER_DIR_REL)
 
 WOLFSSL_LDFLAGS = -L $(BIN_DIR) -lwolfssl $(SANFLAGS)
 
-OSSL_111_CC_DBG="gcc -g $(GPROF_FLAGS) -ggdb -Wall -Werror -fstack-protector-all $(SANFLAGS)"
-OSSL_111_CC_REL="gcc -Wall -Werror"
-OSSL_MASTER_CC_DBG="gcc -g $(GPROF_FLAGS) -ggdb -Wall -Werror -fstack-protector-all"
-OSSL_MASTER_CC_REL="gcc -Wall -Werror"
+ifeq ($(CC),cc)
+	CC=gcc
+endif
 
-CC = gcc
 CP = cp
 RM = rm
+
+OSSL_111_CC_DBG="$(CC) -g $(GPROF_FLAGS) -ggdb -Wall -Werror -fstack-protector-all $(SANFLAGS)"
+OSSL_111_CC_REL="$(CC) -Wall -Werror"
+OSSL_MASTER_CC_DBG="$(CC) -g $(GPROF_FLAGS) -ggdb -Wall -Werror -fstack-protector-all"
+OSSL_MASTER_CC_REL="$(CC) -Wall -Werror"
 
 TARGET=$(SAMPLE_BIN) $(PERF_BIN) $(TEST_BIN)
 
