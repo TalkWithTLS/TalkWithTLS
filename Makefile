@@ -6,7 +6,7 @@
 # - OSSLMASTER_PATH
 # - OSSLMASTER_PATH_REL
 # - NOSAN=1 - To disable address sanitizer in debug builds
-# - ENGPROF=1 - To enable gprofile flags in debug builds
+# - GPROF=1 - To enable gprofile flags in debug builds
 # Build mode
 # - sample_bin - To build sample bins
 # - test_bin - To build test bins
@@ -247,7 +247,7 @@ BSSL_CHROMIUM_LIBS=$(BSSL_CHROMIUM)/build/ssl/libssl.a
 
 # Gprofile flags
 GPROF_FLAGS =
-ifeq ($(ENGPROF),1)
+ifeq ($(GPROF),1)
 	GPROF_FLAGS = -p
 	NOSAN=1
 endif
