@@ -335,7 +335,7 @@ int do_tls_client_perf(PERF_CONF *conf)
     if (!ctx) {
         return -1;
     }
-    printf("Performing TLS connections...\n");
+    printf("Performing TLS connections for %d secs...\n", conf->time_sec);
     finish_time = conf->time_sec + time(NULL);
     do {
         if (finish_time <= time(NULL)) {
