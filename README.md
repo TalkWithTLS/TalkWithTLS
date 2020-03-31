@@ -36,8 +36,11 @@ code accesses `certs` folder present on root directory.
 ```
 
 ### 3.3 Running Perf Binaries
+- Perf binaries available are
 ```
 ./bin/perf/s_server_openssl_master_rel
 ./bin/perf/s_time_openssl_master_rel
 ./bin/perf/speed_openssl_master_rel
 ```
+- `s_server_xxx` and s_time_xxx` can be executed on virtual interface of type `veth` in a
+network namespace using the script `scripts/create_netns.sh`
