@@ -55,7 +55,7 @@ void print_content_type(int write_p, int version, int content_type, const void *
 {
     const char *op = (write_p ? "Sent" : "Received");
     const char *cont_type = "Unknown msg";
-    const char *handshake_type;
+    const char *handshake_type = NULL;
     int first_byte_val = -1;
     if (len >= 1) {
         first_byte_val = *((char*)buf);
