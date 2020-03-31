@@ -31,7 +31,10 @@
 #define CLIENT_PRIV_KEY_FILE "./certs/ECC_Prime256_Certs/client_key.der"
 #define CLIENT_PRIV_KEY_TYPE SSL_FILETYPE_ASN1
 
+#define MAX_IP_ADDR 32
 typedef struct perf_conf_st {
+    char ip[MAX_IP_ADDR];
+    uint16_t port;
     uint32_t time_sec;
     int proto_version;
     uint32_t with_client_auth:1;
@@ -39,6 +42,8 @@ typedef struct perf_conf_st {
 
 enum opt_enum {
     CLI_HELP = 1,
+    CLI_IP,
+    CLI_PORT,
     CLI_TIME,
     CLI_CLIENT_AUTH,
     CLI_TLS1_0,
@@ -49,6 +54,8 @@ enum opt_enum {
 
 struct option lopts[] = {
     {"help", no_argument, NULL, CLI_HELP},
+    {"ip", required_argument, NULL, CLI_IP},
+    {"port", required_argument, NULL, CLI_PORT},
     {"time", required_argument, NULL, CLI_TIME},
     {"client-auth", no_argument, NULL, CLI_CLIENT_AUTH},
     {"tls1_0", no_argument, NULL, CLI_TLS1_0},
@@ -149,12 +156,12 @@ err_handler:
     return NULL;
 }
 
-SSL *create_ssl_object(SSL_CTX *ctx)
+SSL *create_ssl_object(SSL_CTX *ctx, PERF_CONF *conf)
 {
     SSL *ssl;
     int fd;
 
-    fd = do_tcp_connection(SERVER_IP, SERVER_PORT);
+    fd = do_tcp_connection(conf->ip, conf->port);
     if (fd < 0) {
         printf("TCP connection establishment failed\n");
         return NULL;
@@ -218,7 +225,7 @@ int do_tls_client(SSL_CTX *ctx, PERF_CONF *conf)
     int ret_val = -1;
     int ret;
 
-    ssl = create_ssl_object(ctx);
+    ssl = create_ssl_object(ctx, conf);
     if (!ssl) {
         goto err_handler;
     }
@@ -246,6 +253,12 @@ err_handler:
 #define DEFAULT_TIME_SEC 30
 int init_conf(PERF_CONF *conf)
 {
+    if (sizeof(conf->ip) <= strlen(SERVER_IP)) {
+        printf("Size of conf->ip is small [%zu]\n", sizeof(conf->ip));
+        return -1;
+    }
+    strcpy(conf->ip, SERVER_IP);
+    conf->port = SERVER_PORT;
     conf->time_sec = DEFAULT_TIME_SEC;
     return 0;
 }
@@ -253,6 +266,8 @@ int init_conf(PERF_CONF *conf)
 void usage()
 {
     printf("-help           Help\n");
+    printf("-ip             IP address to connect\n");
+    printf("-port           Port number to connect\n");
     printf("-time           Time to run (in second), default is 30 secs\n");
     printf("-client-auth    To perform client authentication\n");
     printf("-tls1_0         TLS connection with TLSv1.0\n");
@@ -270,6 +285,16 @@ int parse_cli_args(int argc, char *argv[], PERF_CONF *conf) {
             case CLI_HELP:
                 usage();
                 return 1;
+            case CLI_IP:
+                if (sizeof(conf->ip) <= strlen(optarg)) {
+                    printf("Size of IP passed [%zu] is much bigger\n", strlen(optarg));
+                    return -1;
+                }
+                strcpy(conf->ip, optarg);
+                break;
+            case CLI_PORT:
+                conf->port = (uint16_t)atoi(optarg);
+                break;
             case CLI_TIME:
                 if (atoi(optarg) <= 0) {
                     printf("Invalid time [%s]\n", optarg);

@@ -31,7 +31,10 @@
 #define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
 
+#define MAX_IP_ADDR 32
 typedef struct perf_conf_st {
+    char ip[MAX_IP_ADDR];
+    uint16_t port;
     int sess_ticket_count;
     int proto_version;
     uint32_t with_out_tls:1;
@@ -40,6 +43,8 @@ typedef struct perf_conf_st {
 
 enum opt_enum {
     CLI_HELP = 1,
+    CLI_IP,
+    CLI_PORT,
     CLI_SESS_TICKET_COUNT,
     CLI_CLIENT_AUTH,
     CLI_TLS1_0,
@@ -50,6 +55,8 @@ enum opt_enum {
 
 struct option lopts[] = {
     {"help", no_argument, NULL, CLI_HELP},
+    {"ip", required_argument, NULL, CLI_IP},
+    {"port", required_argument, NULL, CLI_PORT},
     {"sess-tkt-count", required_argument, NULL, CLI_SESS_TICKET_COUNT},
     {"client-auth", no_argument, NULL, CLI_CLIENT_AUTH},
     {"tls1_0", no_argument, NULL, CLI_TLS1_0},
@@ -304,6 +311,12 @@ err_handler:
 #define DEFAULT_SESS_TKT_COUNT -1
 int init_conf(PERF_CONF *conf)
 {
+    if (sizeof(conf->ip) <= strlen(SERVER_IP)) {
+        printf("Size of conf->ip is small [%zu]\n", sizeof(conf->ip));
+        return -1;
+    }
+    strcpy(conf->ip, SERVER_IP);
+    conf->port = SERVER_PORT;
     conf->sess_ticket_count = DEFAULT_SESS_TKT_COUNT;
     return 0;
 }
@@ -311,6 +324,8 @@ int init_conf(PERF_CONF *conf)
 void usage()
 {
     printf("-help               Help\n");
+    printf("-ip                 IP address to bind\n");
+    printf("-port               Port number to bind\n");
     printf("-sess-tkt-count     Number of sess ticket server should issue after handshake\n");
     printf("-client-auth        To perform client authentication\n");
     printf("-tls1_0             TLS connection with TLSv1.0\n");
@@ -328,6 +343,16 @@ int parse_cli_args(int argc, char *argv[], PERF_CONF *conf) {
             case CLI_HELP:
                 usage();
                 return 1;
+            case CLI_IP:
+                if (sizeof(conf->ip) <= strlen(optarg)) {
+                    printf("Size of IP passed [%zu] is much bigger\n", strlen(optarg));
+                    return -1;
+                }
+                strcpy(conf->ip, optarg);
+                break;
+            case CLI_PORT:
+                conf->port = (uint16_t)atoi(optarg);
+                break;
             case CLI_SESS_TICKET_COUNT:
                 if (atoi(optarg) < 0) {
                     printf("Invalid sess ticket count [%s]\n", optarg);
@@ -369,7 +394,7 @@ int do_tls_server_perf(PERF_CONF *conf)
         return -1;
     }
 
-    if ((lfd = do_tcp_listen(SERVER_IP, SERVER_PORT)) < 0) {
+    if ((lfd = do_tcp_listen(conf->ip, conf->port)) < 0) {
         goto err;
     }
     do {
