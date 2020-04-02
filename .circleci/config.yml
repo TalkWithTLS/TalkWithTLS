@@ -10,15 +10,20 @@ jobs:
               #  name: Get_Submodules
               #  command: ./get_submodules.sh
             - run:
-                name: Build_All
-                command: make NOSAN=1 -j 4
-            - run:
+                name: Install Prerequisites
                 command: |
-                    sudo apt install python3 python3-pip
+                    sudo apt update
+                    sudo apt install python3 python3-setuptools
+                    # sudo easy_install3 pip
+                    # Ubuntu 16.04 does not have python3-pip on apt
+                    # sudo apt install python3-pip
                     sudo pip3 install pipenv
                     pipenv install pytest
                     pipenv install pytest-html
                     #sudo apt install libunwind-dev golang-go
+            - run:
+                name: Build_All
+                command: make NOSAN=1 -j 4
             - run:
                 name: Run_Test
                 command: pipenv run ./run_test.sh
@@ -29,4 +34,3 @@ workflows:
     Run_TalkWithTLS:
         jobs:
             - build_and_test
-
