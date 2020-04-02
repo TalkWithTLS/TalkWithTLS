@@ -14,7 +14,8 @@ jobs:
                 command: make NOSAN=1 -j 4
             - run:
                 command: |
-                    sudo pip install pipenv
+                    sudo apt install python3 python3-pip
+                    sudo pip3 install pipenv
                     pipenv install pytest
                     pipenv install pytest-html
                     #sudo apt install libunwind-dev golang-go

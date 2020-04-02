@@ -6,8 +6,8 @@ Sample Code for TLS usage and a lot more than that.
 
 ## 1. Installing Dependencies
 ```
-sudo apt install make gcc python python-pip
-pip install --user pytest pytest-html
+sudo apt install make gcc python3 python3-pip
+pip3 install --user pytest pytest-html
 ```
 
 ## 2. Building
