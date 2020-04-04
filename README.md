@@ -1,7 +1,7 @@
 # TalkWithTLS
-Sample Code for TLS usage and a lot more than that.
-- It has sample code to use OpenSSL and wolfSSL.
-- And it has a python based automated test framework using Pytest to test OpenSSL
+Sample Code for [D]TLS usage and a lot more than that.
+- It has sample code to use TLS and DTLS from OpenSSL and wolfSSL.
+- And it has a python based automated test framework using Pytest to test OpenSSL.
 - Finally a perf script to test various TLS implementations.
 
 ## 1. Installing Dependencies
@@ -42,5 +42,5 @@ code accesses `certs` folder present on root directory.
 ./bin/perf/s_time_openssl_master_rel
 ./bin/perf/speed_openssl_master_rel
 ```
-- `s_server_xxx` and s_time_xxx` can be executed on virtual interface of type `veth` in a
+- `s_server_xxx` and `s_time_xxx` can be executed on virtual interface of type `veth` in a
 network namespace using the script `scripts/create_netns.sh`
