@@ -11,11 +11,18 @@ extern "C" {
 
 #define MAX_BUF_SIZE    1024
 
-#define MSG_FOR_OPENSSL_CLNT    "Hi, This is OpenSSL client"
-#define MSG_FOR_OPENSSL_SERV    "Hello, This is OpenSSL server"
+#define MSG1_REQ "GET /index.html HTTP/1.1\r\nHOST: twt.com\r\n\r\n"
+#define MSG1_RES "<html>" \
+                 "<title>TWT Perf</title>" \
+                 "<body><H1>TalkWithTLS<H1>This is index.html</body>" \
+                 "</html>"
+#define MSG2_REQ "GET /main.html HTTP/1.1\r\nHOST: twt.com\r\n\r\n"
+#define MSG2_RES "<html>" \
+                 "<title>TWT Perf</title>" \
+                 "<body><H1>TalkWithTLS<H1>This is main.html</body>" \
+                 "</html>"
+
 #define EARLY_DATA_MSG_FOR_OPENSSL_CLNT "Hi, This is an early data from OpenSSL Client"
-#define MSG_FOR_WOLFSSL_CLNT    "Hi, This is wolfSSL client"
-#define MSG_FOR_WOLFSSL_SERV    "Hello, This is wolfSSL server"
 
 #define MAX_EARLY_DATA_MSG  4098
 
@@ -43,7 +50,7 @@ extern "C" {
 #define SERVER_PORT 4433
 
 #define TCP_CON_RETRY_COUNT 20
-#define TCP_CON_RETRY_WAIT_TIME_MS 200
+#define TCP_CON_RETRY_WAIT_TIME_MS 2
 
 #define TLS_SOCK_TIMEOUT_MS 8000
 

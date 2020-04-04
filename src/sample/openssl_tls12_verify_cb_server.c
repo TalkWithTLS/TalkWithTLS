@@ -90,6 +90,31 @@ err_handler:
     return NULL;
 }
 
+int do_data_transfer(SSL *ssl)
+{
+    const char *msg_res[] = {MSG1_RES, MSG2_RES};
+    const char *res;
+    char buf[MAX_BUF_SIZE] = {0};
+    int ret, i;
+    for (i = 0; i < sizeof(msg_res)/sizeof(msg_res[0]); i++) {
+        res = msg_res[i];
+        ret = SSL_read(ssl, buf, sizeof(buf) - 1);
+        if (ret <= 0) {
+            printf("SSL_read failed ret=%d\n", ret);
+            return -1;
+        }
+        printf("SSL_read[%d] %s\n", ret, buf);
+
+        ret = SSL_write(ssl, res, strlen(res));
+        if (ret <= 0) {
+            printf("SSL_write failed ret=%d\n", ret);
+            return -1;
+        }
+        printf("SSL_write[%d] sent %s\n", ret, res);
+    }
+    return 0;
+}
+
 int tls12_server()
 {
     SSL_CTX *ctx;
@@ -121,8 +146,12 @@ int tls12_server()
         printf("SSL accept failed%d\n", ret);
         goto err_handler;
     }
-
     printf("SSL accept succeeded\n");
+    if (do_data_transfer(ssl)) {
+        printf("Data transfer over TLS failed\n");
+        goto err_handler;
+    }
+    printf("Data transfer over TLS succeeded\n");
     SSL_shutdown(ssl);
     ret_val = 0;
 err_handler:

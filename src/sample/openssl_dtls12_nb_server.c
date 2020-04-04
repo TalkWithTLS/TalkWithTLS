@@ -300,34 +300,38 @@ int handle_data_transfer_failure(SSL *ssl, int ret)
 
 int do_data_transfer(SSL *ssl)
 {
-    const char *msg = MSG_FOR_OPENSSL_SERV;
+    const char *msg_res[] = {MSG1_RES, MSG2_RES};
+    const char *res;
     char buf[MAX_BUF_SIZE] = {0};
-    int ret;
-    do {
-        ret = SSL_read(ssl, buf, sizeof(buf) - 1);
-        if (ret > 1) {
-            break;
-        }
-        printf("Check and going to wait for sock failure in DTLS read\n");
-        if (handle_data_transfer_failure(ssl, ret)) {
-            printf("DTLS read failed\n");
-            return -1;
-        }
-    } while(1);
-    printf("SSL_read[%d] %s\n", ret, buf);
+    int ret, i;
+    for (i = 0; i < sizeof(msg_res)/sizeof(msg_res[0]); i++) {
+        res = msg_res[i];
+        do {
+            ret = SSL_read(ssl, buf, sizeof(buf) - 1);
+            if (ret > 1) {
+                break;
+            }
+            printf("Check and going to wait for sock failure in DTLS read\n");
+            if (handle_data_transfer_failure(ssl, ret)) {
+                printf("DTLS read failed\n");
+                return -1;
+            }
+        } while(1);
+        printf("SSL_read[%d] %s\n", ret, buf);
 
-    do {
-        ret = SSL_write(ssl, msg, strlen(msg));
-        if (ret == strlen(msg)) {
-            break;
-        }
-        printf("Check and going to wait for sock failure in DTLS write\n");
-        if (handle_data_transfer_failure(ssl, ret)) {
-            printf("DTLS write failed\n");
-            return -1;
-        }
-    } while (1);
-    printf("SSL_write[%d] sent %s\n", ret, msg);
+        do {
+            ret = SSL_write(ssl, res, strlen(res));
+            if (ret == strlen(res)) {
+                break;
+            }
+            printf("Check and going to wait for sock failure in DTLS write\n");
+            if (handle_data_transfer_failure(ssl, ret)) {
+                printf("DTLS write failed\n");
+                return -1;
+            }
+        } while (1);
+        printf("SSL_write[%d] sent %s\n", ret, res);
+    }
     return 0;
 }
 

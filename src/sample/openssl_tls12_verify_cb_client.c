@@ -75,6 +75,31 @@ SSL *create_ssl_object(SSL_CTX *ctx)
     return ssl;
 }
 
+int do_data_transfer(SSL *ssl)
+{
+    const char *msg_req[] = {MSG1_REQ, MSG2_REQ};
+    const char *req;
+    char buf[MAX_BUF_SIZE] = {0};
+    int ret, i;
+    for (i = 0; i < sizeof(msg_req)/sizeof(msg_req[0]); i++) {
+        req = msg_req[i];
+        ret = SSL_write(ssl, req, strlen(req));
+        if (ret <= 0) {
+            printf("SSL_write failed ret=%d\n", ret);
+            return -1;
+        }
+        printf("SSL_write[%d] sent %s\n", ret, req);
+
+        ret = SSL_read(ssl, buf, sizeof(buf) - 1);
+        if (ret <= 0) {
+            printf("SSL_read failed ret=%d\n", ret);
+            return -1;
+        }
+        printf("SSL_read[%d] %s\n", ret, buf);
+    }
+    return 0;
+}
+
 int tls12_client()
 {
     SSL_CTX *ctx;
@@ -99,8 +124,12 @@ int tls12_client()
         printf("SSL connect failed%d\n", ret);
         goto err_handler;
     }
-
     printf("SSL connect succeeded\n");
+    if (do_data_transfer(ssl)) {
+        printf("Data transfer over TLS failed\n");
+        goto err_handler;
+    }
+    printf("Data transfer over TLS succeeded\n");
     SSL_shutdown(ssl);
     SSL_free(ssl);
     SSL_CTX_free(ctx);

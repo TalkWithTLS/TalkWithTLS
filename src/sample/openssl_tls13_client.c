@@ -109,22 +109,26 @@ err_handler:
 
 int do_data_transfer(SSL *ssl)
 {
-    const char *msg = MSG_FOR_OPENSSL_CLNT;
+    const char *msg_req[] = {MSG1_REQ, MSG2_REQ};
+    const char *req;
     char buf[MAX_BUF_SIZE] = {0};
-    int ret;
-    ret = SSL_write(ssl, msg, strlen(msg));
-    if (ret <= 0) {
-        printf("SSL_write failed ret=%d\n", ret);
-        return -1;
-    }
-    printf("SSL_write[%d] sent %s\n", ret, msg);
+    int ret, i;
+    for (i = 0; i < sizeof(msg_req)/sizeof(msg_req[0]); i++) {
+        req = msg_req[i];
+        ret = SSL_write(ssl, req, strlen(req));
+        if (ret <= 0) {
+            printf("SSL_write failed ret=%d\n", ret);
+            return -1;
+        }
+        printf("SSL_write[%d] sent %s\n", ret, req);
 
-    ret = SSL_read(ssl, buf, sizeof(buf) - 1);
-    if (ret <= 0) {
-        printf("SSL_read failed ret=%d\n", ret);
-        return -1;
+        ret = SSL_read(ssl, buf, sizeof(buf) - 1);
+        if (ret <= 0) {
+            printf("SSL_read failed ret=%d\n", ret);
+            return -1;
+        }
+        printf("SSL_read[%d] %s\n", ret, buf);
     }
-    printf("SSL_read[%d] %s\n", ret, buf);
     return 0;
 }
 

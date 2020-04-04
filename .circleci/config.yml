@@ -10,14 +10,18 @@ jobs:
               #  name: Get_Submodules
               #  command: ./get_submodules.sh
             - run:
-                name: Build_All
-                command: make NOSAN=1 -j 4
-            - run:
+                name: Install Prerequisites
                 command: |
+                    sudo apt update
+                    sudo apt install python python-pip
+                    sudo pip install -U pip
                     sudo pip install pipenv
                     pipenv install pytest
                     pipenv install pytest-html
                     #sudo apt install libunwind-dev golang-go
+            - run:
+                name: Build_All
+                command: make NOSAN=1 -j 4
             - run:
                 name: Run_Test
                 command: pipenv run ./run_test.sh
@@ -28,4 +32,3 @@ workflows:
     Run_TalkWithTLS:
         jobs:
             - build_and_test
-

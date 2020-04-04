@@ -104,23 +104,27 @@ err_handler:
 
 int do_data_transfer(void *ssl_in)
 {
-    const char *msg = MSG_FOR_WOLFSSL_CLNT;
     WOLFSSL *ssl = (WOLFSSL *)ssl_in;
+    const char *msg_req[] = {MSG1_REQ, MSG2_REQ};
+    const char *req;
     char buf[MAX_BUF_SIZE] = {0};
-    int ret;
-    ret = wolfSSL_write(ssl, msg, strlen(msg));
-    if (ret <= 0) {
-        printf("wolfSSL_write failed ret=%d\n", ret);
-        return -1;
-    }
-    printf("wolfSSL_write[%d] sent %s\n", ret, msg);
+    int ret, i;
+    for (i = 0; i < sizeof(msg_req)/sizeof(msg_req[0]); i++) {
+        req = msg_req[i];
+        ret = wolfSSL_write(ssl, req, strlen(req));
+        if (ret <= 0) {
+            printf("wolfSSL_write failed ret=%d\n", ret);
+            return -1;
+        }
+        printf("wolfSSL_write[%d] sent %s\n", ret, req);
 
-    ret = wolfSSL_read(ssl, buf, sizeof(buf) - 1);
-    if (ret <= 0) {
-        printf("wolfSSL_read failed ret=%d\n", ret);
-        return -1;
+        ret = wolfSSL_read(ssl, buf, sizeof(buf) - 1);
+        if (ret <= 0) {
+            printf("wolfSSL_read failed ret=%d\n", ret);
+            return -1;
+        }
+        printf("wolfSSL_read[%d] %s\n", ret, buf);
     }
-    printf("wolfSSL_read[%d] %s\n", ret, buf);
     return 0;
 }
 

@@ -208,8 +208,8 @@ S_TIME_OSSL_MASTER_OBJ_REL=$(addprefix $(OBJ_DIR)/,$(S_TIME_SRC:.c=$(OSSL_MASTER
 TEST_OPENSSL_OBJ=$(addprefix $(OBJ_DIR)/,$(TEST_OPENSSL_SRC:.c=.o))
 
 DEPENDENCY_DIR=dependency
-OSSL_1_1_1=openssl-1.1.1d
-OSSL_1_1_1_REL=openssl-1.1.1d-rel
+OSSL_1_1_1=openssl-1.1.1f
+OSSL_1_1_1_REL=openssl-1.1.1f-rel
 OSSL_MASTER=openssl-master
 OSSL_MASTER_REL=openssl-master-rel
 

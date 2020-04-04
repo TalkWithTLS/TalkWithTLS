@@ -259,34 +259,38 @@ int handle_data_transfer_failure(SSL *ssl, int ret)
 
 int do_data_transfer(SSL *ssl)
 {
-    const char *msg = MSG_FOR_OPENSSL_CLNT;
+    const char *msg_req[] = {MSG1_REQ, MSG2_REQ};
+    const char *req;
     char buf[MAX_BUF_SIZE] = {0};
-    int ret;
-    do {
-        ret = SSL_write(ssl, msg, strlen(msg));
-        if (ret == strlen(msg)) {
-            break;
-        }
-        printf("Check and going to wait for sock failure in DTLS write\n");
-        if (handle_data_transfer_failure(ssl, ret)) {
-            printf("DTLS write failed\n");
-            return -1;
-        }
-    } while (1);
-    printf("SSL_write[%d] sent %s\n", ret, msg);
+    int ret, i;
+    for (i = 0; i < sizeof(msg_req)/sizeof(msg_req[0]); i++) {
+        req = msg_req[i];
+        do {
+            ret = SSL_write(ssl, req, strlen(req));
+            if (ret == strlen(req)) {
+                break;
+            }
+            printf("Check and going to wait for sock failure in DTLS write\n");
+            if (handle_data_transfer_failure(ssl, ret)) {
+                printf("DTLS write failed\n");
+                return -1;
+            }
+        } while (1);
+        printf("SSL_write[%d] sent %s\n", ret, req);
 
-    do {
-        ret = SSL_read(ssl, buf, sizeof(buf) - 1);
-        if (ret > 1) {
-            break;
-        }
-        printf("Check and going to wait for sock failure in DTLS read\n");
-        if (handle_data_transfer_failure(ssl, ret)) {
-            printf("DTLS read failed\n");
-            return -1;
-        }
-    } while(1);
-    printf("SSL_read[%d] %s\n", ret, buf);
+        do {
+            ret = SSL_read(ssl, buf, sizeof(buf) - 1);
+            if (ret > 1) {
+                break;
+            }
+            printf("Check and going to wait for sock failure in DTLS read\n");
+            if (handle_data_transfer_failure(ssl, ret)) {
+                printf("DTLS read failed\n");
+                return -1;
+            }
+        } while(1);
+        printf("SSL_read[%d] %s\n", ret, buf);
+    }
     return 0;
 }
 

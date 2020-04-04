@@ -358,13 +358,13 @@ int do_ssl_handshake(TC_CONF *conf, SSL *ssl)
     return do_after_handshake_validation(conf, ssl);
 }
 
-int do_ssl_read(TC_CONF *conf, SSL *ssl)
+int do_ssl_read(TC_CONF *conf, SSL *ssl, const char *req, const char *res)
 {
     char buf[MAX_BUF_SIZE] = {0};
     const char *msg_for_cmp;
     int ret;
 
-    msg_for_cmp = conf->server ? MSG_FOR_OPENSSL_CLNT : MSG_FOR_OPENSSL_SERV;
+    msg_for_cmp = conf->server ? req : res;
     do {
         ret = SSL_read(ssl, buf, sizeof(buf) - 1);
         if (ret > 0) {
@@ -382,12 +382,12 @@ int do_ssl_read(TC_CONF *conf, SSL *ssl)
     return 0;
 }
 
-int do_ssl_write(TC_CONF *conf, SSL *ssl)
+int do_ssl_write(TC_CONF *conf, SSL *ssl, const char* req, const char *res)
 {
     const char *msg;
     int ret;
 
-    msg = conf->server ? MSG_FOR_OPENSSL_SERV : MSG_FOR_OPENSSL_CLNT;
+    msg = conf->server ? res : req;
     do {
         ret = SSL_write(ssl, msg, strlen(msg));
         if (ret == strlen(msg)) {
@@ -404,20 +404,30 @@ int do_ssl_write(TC_CONF *conf, SSL *ssl)
 
 int do_data_transfer_client(TC_CONF *conf, SSL *ssl)
 {
-    if ((do_ssl_write(conf, ssl) != 0)
-            || (do_ssl_read(conf, ssl) != 0)) {
-        printf("Data transfer failed\n");
-        return -1;
+    const char *msg_req[] = {MSG1_REQ, MSG2_REQ};
+    const char *msg_res[] = {MSG1_RES, MSG2_RES};
+    int i;
+    for (i = 0; i < sizeof(msg_req)/sizeof(msg_req[0]); i++) {
+        if ((do_ssl_write(conf, ssl, msg_req[i], msg_res[i]) != 0)
+                || (do_ssl_read(conf, ssl, msg_req[i], msg_res[i]) != 0)) {
+            printf("Data transfer failed\n");
+            return -1;
+        }
     }
     return 0;
 }
 
 int do_data_transfer_server(TC_CONF *conf, SSL *ssl)
 {
-    if ((do_ssl_read(conf, ssl) != 0)
-            || (do_ssl_write(conf, ssl) != 0)) {
-        printf("Data transfer failed\n");
-        return -1;
+    const char *msg_req[] = {MSG1_REQ, MSG2_REQ};
+    const char *msg_res[] = {MSG1_RES, MSG2_RES};
+    int i;
+    for (i = 0; i < sizeof(msg_req)/sizeof(msg_req[0]); i++) {
+        if ((do_ssl_read(conf, ssl, msg_req[i], msg_res[i]) != 0)
+                || (do_ssl_write(conf, ssl, msg_req[i], msg_res[i]) != 0)) {
+            printf("Data transfer failed\n");
+            return -1;
+        }
     }
     return 0;
 }
