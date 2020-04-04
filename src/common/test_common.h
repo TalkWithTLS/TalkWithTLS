@@ -17,6 +17,17 @@ extern "C" {
 #define MSG_FOR_WOLFSSL_CLNT    "Hi, This is wolfSSL client"
 #define MSG_FOR_WOLFSSL_SERV    "Hello, This is wolfSSL server"
 
+#define MSG1_REQ "GET /index.html HTTP/1.1\r\nHOST: twt.com\r\n\r\n"
+#define MSG1_RES "<html>" \
+                 "<title>TWT Perf</title>" \
+                 "<body><H1>TalkWithTLS<H1>This is index.html</body>" \
+                 "</html>"
+#define MSG2_REQ "GET /main.html HTTP/1.1\r\nHOST: twt.com\r\n\r\n"
+#define MSG2_RES "<html>" \
+                 "<title>TWT Perf</title>" \
+                 "<body><H1>TalkWithTLS<H1>This is main.html</body>" \
+                 "</html>"
+
 #define MAX_EARLY_DATA_MSG  4098
 
 #define RSA2048_SERVER_CERT_FILE "./certs/RSA_Certs/serv_cert.pem"
@@ -43,7 +54,7 @@ extern "C" {
 #define SERVER_PORT 4433
 
 #define TCP_CON_RETRY_COUNT 20
-#define TCP_CON_RETRY_WAIT_TIME_MS 200
+#define TCP_CON_RETRY_WAIT_TIME_MS 2
 
 #define TLS_SOCK_TIMEOUT_MS 8000
 
