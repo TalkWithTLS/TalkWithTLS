@@ -32,40 +32,18 @@ void do_openssl_fini(TC_CONF *conf)
     return;
 }
 
-int init_psk_params(TC_CONF *conf, const char *psk_id, const char *psk_key)
+void fini_tc_conf_for_openssl(TC_CONF *conf)
 {
-    if ((strlen(psk_id) >= sizeof(conf->res.psk_id))
-            || (strlen(psk_key) >= sizeof(conf->res.psk_key))) {
-        printf("Insufficient space in TC_CONF for storing PSK\n");
-        return -1;
-    }
-    strcpy(conf->res.psk_id, psk_id);
-    conf->res.psk_id_len = strlen(psk_id);
-    strcpy(conf->res.psk_key, psk_key);
-    conf->res.psk_key_len = strlen(psk_key);
-    return 0;
-}
-
-int init_tc_conf(TC_CONF *conf)
-{
-    memset(conf, 0, sizeof(TC_CONF));
-    conf->tcp_listen_fd = conf->fd = -1;
-    if (init_psk_params(conf, DEFAULT_PSK_ID, DEFAULT_PSK_KEY)) {
-        printf("Initializing psk params failed\n");
-        return -1;
-    }
-    return 0;
-}
-
-void fini_tc_conf(TC_CONF *conf)
-{
-    if (conf->server) {
-        check_and_close(&conf->tcp_listen_fd);
-    }
     if (conf->res.sess) {
         SSL_SESSION_free(conf->res.sess);
         conf->res.sess = NULL;
     }
+}
+
+int init_tc_conf_for_openssl(TC_CONF *conf)
+{
+    conf->fini = fini_tc_conf_for_openssl;
+    return 0;
 }
 
 SSL_CTX *create_context_openssl(TC_CONF *conf)

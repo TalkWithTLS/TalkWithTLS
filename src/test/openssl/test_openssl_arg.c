@@ -98,6 +98,10 @@ struct option lopts[] = {
     {"relbuf", required_argument, NULL, OPT_RELBUF},
 };
 
+/* Parses CLI argument and updates values to TC_CONF
+ * return : Returns 0 in case of successfully parsing or else -1
+ *          Special value of 1 is returned for bind based test automation
+ *          And 2 is returned for help */
 int parse_arg(int argc, char *argv[], TC_CONF *conf)
 {
     int opt;
@@ -108,7 +112,11 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
         switch (opt) {
             case OPT_HELP:
                 usage();
-                return 1;
+                return TWT_CLI_HELP;
+            case OPT_BIND:
+                conf->test_automation = 1;
+                return TWT_START_AUTOMATION;
+            /* TODO Need to do OPT_BIND_ADDR */
             case OPT_SERV:
                 conf->server = 1;
                 break;

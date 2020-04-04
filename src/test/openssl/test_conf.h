@@ -1,9 +1,24 @@
-#ifndef _TEST_OPENSSL_CONF_H_
-#define _TEST_OPENSSL_CONF_H_
+#ifndef _TEST_CONF_H_
+#define _TEST_CONF_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+
+#include "test_common.h"
+
+/* Return values used in test scripts */
+#define TWT_SUCCESS     0
+#define TWT_FAILURE     -1
+
+/* CLI arg parsed return values */
+#define TWT_START_AUTOMATION    1
+#define TWT_CLI_HELP            2
 
 #define SSL_SESS_ID_CTX "TalkWithTLS"
 
@@ -43,6 +58,16 @@ extern "C" {
 #define TC_CONF_SERV_T12_CLNT_T13_VERSION       1213
 
 #define MAX_CA_FILE_LOAD    5
+
+#define MAX_IP_ADDR_STR     64
+
+#define DEFAULT_TEST_IP "0.0.0.0"
+#define DEFAULT_TEST_PORT 25100
+
+typedef struct test_sockaddr_st {
+    char ip[MAX_IP_ADDR_STR];
+    uint16_t port;
+}TC_SOCK_ADDR;
 
 #if 0
 typedef struct test_mem_debug_st {
@@ -96,11 +121,18 @@ typedef struct test_key_update_st {
     uint8_t key_update_test;
 }TC_CONF_KEY_UPDATE;
 
-typedef struct test_case_conf_st {
-    uint8_t server;
-    uint32_t dtls:1;
+typedef struct test_case_conf_st TC_CONF;
+
+typedef void (*fini_fp)(TC_CONF *conf);
+
+struct test_case_conf_st {
+    uint32_t test_automation:1; /* Test automation keep listens on test_fd for Test cases */
+    TC_SOCK_ADDR bind_addr;
+    fini_fp fini; /* Specific fini function */
     int tcp_listen_fd;
     int fd;
+    uint8_t server;
+    uint32_t dtls:1;
     uint8_t nb_sock;
     uint8_t auth;
     const char *cafiles[MAX_CA_FILE_LOAD];
@@ -118,7 +150,13 @@ typedef struct test_case_conf_st {
     TC_CONF_CB cb;
     TC_CONF_KEY_UPDATE ku;
     TC_CONF_SSL_MODE ssl_mode;
-}TC_CONF;
+};
+
+typedef struct test_automation_st {
+    int test_lfd; /* Test TCP FDs */
+    int test_fd;
+    TC_SOCK_ADDR bind_addr;
+}TC_AUTOMATION;
 
 #ifdef __cplusplus
 }
