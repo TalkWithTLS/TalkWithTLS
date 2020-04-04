@@ -13,11 +13,9 @@ jobs:
                 name: Install Prerequisites
                 command: |
                     sudo apt update
-                    sudo apt install python3 python3-setuptools
-                    # sudo easy_install3 pip
-                    # Ubuntu 16.04 does not have python3-pip on apt
-                    # sudo apt install python3-pip
-                    sudo pip3 install pipenv
+                    sudo apt install python python-pip
+                    sudo pip install -U pip
+                    sudo pip install pipenv
                     pipenv install pytest
                     pipenv install pytest-html
                     #sudo apt install libunwind-dev golang-go

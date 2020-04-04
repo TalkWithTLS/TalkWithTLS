@@ -14,4 +14,4 @@ else
     TS=${TEST_DIR}
 fi
 
-python3 -m pytest ${TS} -v --html=${REPORT_DIR}/TalkWithTLS.html
+python -m pytest ${TS} -v --html=${REPORT_DIR}/TalkWithTLS.html
