@@ -21,6 +21,8 @@ int create_tc_automation_sock(TC_AUTOMATION *ta);
 
 int accept_tc_automation_con(TC_AUTOMATION *ta);
 
+void close_tc_automation_con(TC_AUTOMATION *ta);
+
 void fini_tc_automation(TC_AUTOMATION *ta);
 
 #ifdef __cplusplus

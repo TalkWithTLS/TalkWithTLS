@@ -54,28 +54,35 @@ void fini_tc_conf(TC_CONF *conf)
 int init_tc_automation(TC_AUTOMATION *ta)
 {
     ta->test_lfd = ta->test_fd = -1;
-    return 0;
+    return TWT_SUCCESS;
 }
 
 int create_tc_automation_sock(TC_AUTOMATION *ta)
 {
     if ((ta->test_lfd = do_tcp_listen(ta->bind_addr.ip, ta->bind_addr.port)) < 0) {
         printf("Initializing Test FD failed\n");
-        return -1;
+        return TWT_FAILURE;
     }
-    return 0;
+    return TWT_SUCCESS;
 }
 
 int accept_tc_automation_con(TC_AUTOMATION *ta)
 {
     if ((ta->test_fd = do_tcp_accept(ta->test_lfd)) < 0) {
         printf("TCP accept failed\n");
-        return -1;
+        return TWT_FAILURE;
     }
-    return 0;
+    printf("Test con created, fd=%d\n", ta->test_fd);
+    return TWT_SUCCESS;
+}
+
+void close_tc_automation_con(TC_AUTOMATION *ta)
+{
+    check_and_close(&ta->test_fd);
 }
 
 void fini_tc_automation(TC_AUTOMATION *ta)
 {
     check_and_close(&ta->test_fd);
+    check_and_close(&ta->test_lfd);
 }

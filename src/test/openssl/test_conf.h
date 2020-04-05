@@ -61,7 +61,7 @@ extern "C" {
 
 #define MAX_IP_ADDR_STR     64
 
-#define DEFAULT_TEST_IP "0.0.0.0"
+#define DEFAULT_TEST_IP "127.0.0.1"
 #define DEFAULT_TEST_PORT 25100
 
 typedef struct test_sockaddr_st {

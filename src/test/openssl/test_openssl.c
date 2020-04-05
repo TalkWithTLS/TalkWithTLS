@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <errno.h>
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
 
 #include "test_conf.h"
 #include "test_init.h"
+#include "test_cmd.h"
 #include "test_openssl_common.h"
 #include "test_openssl_arg.h"
 #include "test_openssl_kexch.h"
@@ -78,22 +80,28 @@ end:
 #define MAX_TC_MSG 1024
 int start_test_automation(TC_AUTOMATION *ta)
 {
-    //uint8_t buf[MAX_TC_MSG];
+    uint8_t buf[MAX_TC_MSG];
     int ret_val = TWT_FAILURE;
-    if (create_tc_automation_sock(ta) != 0
-            || accept_tc_automation_con(ta) != 0) {
-        printf("TC socket creation failed\n");
+    if (create_tc_automation_sock(ta) != TWT_SUCCESS) {
+        printf("TC socket creation failed, errno=%d\n", errno);
         goto err;
     }
-    /* TODO Accept has to be done for every TC */
     /* TODO Need to implement receive msg and call start_test_case */
-    /*do {
-        memset(buf, 0, sizeof(buf));
-        if (receive_testcase(ta, buf, sizeof(buf)) != 0) {
-            printf("Receive testcase failed\n");
-            goto err;
+    do {
+        if (accept_tc_automation_con(ta) != TWT_SUCCESS) {
+            printf("TC socket accept failed, errno=%d\n", errno);
+            close_tc_automation_con(ta);
+            continue;
         }
-    } while (1);*/
+        memset(buf, 0, sizeof(buf));
+        if (receive_tc(ta, buf, sizeof(buf)) != TWT_SUCCESS) {
+            printf("Receive testcase failed\n");
+            close_tc_automation_con(ta);
+            continue;
+        }
+        printf("received tc [%s]\n", buf);
+        close_tc_automation_con(ta);
+    } while (1);
 err:
     return ret_val;
 }
