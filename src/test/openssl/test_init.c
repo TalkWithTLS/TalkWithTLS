@@ -15,7 +15,7 @@ int init_psk_params(TC_CONF *conf, const char *psk_id, const char *psk_key)
     return 0;
 }
 
-int init_sock_addr(TC_CONF *conf, const char *ip, uint16_t port)
+int init_test_sock_addr(TC_CONF *conf, const char *ip, uint16_t port)
 {
     if (strlen(ip) >= sizeof(conf->bind_addr.ip)) {
         printf("Insufficient space in TC_CONF for storing bind addr IP\n");
@@ -31,7 +31,7 @@ int init_tc_conf(TC_CONF *conf)
 {
     memset(conf, 0, sizeof(TC_CONF));
     conf->tcp_listen_fd = conf->fd = -1;
-    if (init_sock_addr(conf, DEFAULT_TEST_IP, DEFAULT_TEST_PORT) != 0) {
+    if (init_test_sock_addr(conf, DEFAULT_TEST_IP, DEFAULT_TEST_PORT) != 0) {
         return -1;
     }
     if (init_psk_params(conf, DEFAULT_PSK_ID, DEFAULT_PSK_KEY) != 0) {

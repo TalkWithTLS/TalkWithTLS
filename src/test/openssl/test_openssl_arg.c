@@ -115,6 +115,9 @@ int parse_arg(int argc, char *argv[], TC_CONF *conf)
                 return TWT_CLI_HELP;
             case OPT_BIND:
                 conf->test_automation = 1;
+                if (optarg != NULL) {
+                    conf->bind_addr.port += atoi(optarg);
+                }
                 return TWT_START_AUTOMATION;
             /* TODO Need to do OPT_BIND_ADDR */
             case OPT_SERV:
