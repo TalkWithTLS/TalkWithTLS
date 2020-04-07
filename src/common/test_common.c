@@ -163,4 +163,5 @@ void check_and_close(int *fd)
     }
     printf("Closing fd=%d\n", *fd);
     close(*fd);
+    *fd = -1;
 }
