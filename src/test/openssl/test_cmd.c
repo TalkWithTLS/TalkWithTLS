@@ -6,6 +6,9 @@
 
 #include "test_cmd.h"
 
+#define TWT_TC_SUCCESS "success"
+#define TWT_TC_FAILURE "failure"
+
 int receive_tc(TC_AUTOMATION *ta, uint8_t *buf, size_t buf_size)
 {
     int ret;
@@ -18,10 +21,12 @@ int receive_tc(TC_AUTOMATION *ta, uint8_t *buf, size_t buf_size)
     return TWT_SUCCESS;
 }
 
-int send_tc_result(TC_AUTOMATION *ta, uint8_t *buf, size_t buf_size)
+int send_tc_result(TC_AUTOMATION *ta, int result)
 {
     int ret;
-    if ((ret = send(ta->test_fd, "success", strlen("success"), 0)) <= 0) {
+    const char *result_str;
+    result_str = (result == TWT_SUCCESS) ? TWT_TC_SUCCESS : TWT_TC_FAILURE;
+    if ((ret = send(ta->test_fd, result_str, strlen(result_str), 0)) <= 0) {
         printf("Send Test result failed, ret=%d, errno=%d\n", ret, errno);
         return TWT_FAILURE;
     }

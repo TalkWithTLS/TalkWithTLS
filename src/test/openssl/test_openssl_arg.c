@@ -83,7 +83,8 @@ struct option lopts[] = {
     {"help", no_argument, NULL, OPT_HELP},
     {"bind", optional_argument, NULL, OPT_BIND},
     {"bind-addr", required_argument, NULL, OPT_BIND_ADDR},
-    {"serv", optional_argument, NULL, OPT_SERV},
+    {"serv", no_argument, NULL, OPT_SERV},
+    /*TODO Need to take cauth arg to use type of certs */
     {"cauth", optional_argument, NULL, OPT_CAUTH},
     {"kex", required_argument, NULL, OPT_KEX},
     {"nbsock", optional_argument, NULL, OPT_NBSOCK},

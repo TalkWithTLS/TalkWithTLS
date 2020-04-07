@@ -13,12 +13,20 @@ extern "C" {
 #include "test_common.h"
 
 /* Return values used in test scripts */
-#define TWT_SUCCESS     0
+
+/* Success and Failure return value */
 #define TWT_FAILURE     -1
+#define TWT_SUCCESS     0
 
 /* CLI arg parsed return values */
 #define TWT_START_AUTOMATION    1
 #define TWT_CLI_HELP            2
+
+/* TC Automation break return value */
+#define TWT_STOP_AUTOMATION     3
+
+/* Strings */
+#define TWT_STOP_TC_AUTOMATION_STR "STOP_TC_AUTOMATION"
 
 #define SSL_SESS_ID_CTX "TalkWithTLS"
 

@@ -78,32 +78,48 @@ end:
 }
 
 #define MAX_TC_MSG 1024
+int do_test_automation(TC_AUTOMATION *ta)
+{
+    int ret_val = TWT_SUCCESS;
+    int tc_result;
+    uint8_t buf[MAX_TC_MSG];
+    if (accept_tc_automation_con(ta) != TWT_SUCCESS) {
+        goto finish;
+    }
+    memset(buf, 0, sizeof(buf));
+    if (receive_tc(ta, buf, sizeof(buf)) != TWT_SUCCESS) {
+        goto finish;
+    }
+    if (strcmp((char *)buf, TWT_STOP_TC_AUTOMATION_STR) == 0) {
+        ret_val = TWT_STOP_AUTOMATION;
+    }
+    printf("received tc [%s]\n", buf);
+    /* TODO Do test */
+    tc_result = TWT_SUCCESS;
+    if (send_tc_result(ta, tc_result) != TWT_SUCCESS) {
+        goto finish;
+    }
+finish:
+    close_tc_automation_con(ta);
+    return ret_val;
+}
+
 int start_test_automation(TC_AUTOMATION *ta)
 {
-    uint8_t buf[MAX_TC_MSG];
-    int ret_val = TWT_FAILURE;
     if (create_tc_automation_sock(ta) != TWT_SUCCESS) {
         printf("TC socket creation failed, errno=%d\n", errno);
         goto err;
     }
     /* TODO Need to implement receive msg and call start_test_case */
     do {
-        if (accept_tc_automation_con(ta) != TWT_SUCCESS) {
-            printf("TC socket accept failed, errno=%d\n", errno);
-            close_tc_automation_con(ta);
-            continue;
+        if (do_test_automation(ta) == TWT_STOP_AUTOMATION) {
+            printf("Received Stop Automation msg");
+            break;
         }
-        memset(buf, 0, sizeof(buf));
-        if (receive_tc(ta, buf, sizeof(buf)) != TWT_SUCCESS) {
-            printf("Receive testcase failed\n");
-            close_tc_automation_con(ta);
-            continue;
-        }
-        printf("received tc [%s]\n", buf);
-        close_tc_automation_con(ta);
     } while (1);
+    return TWT_SUCCESS;
 err:
-    return ret_val;
+    return TWT_FAILURE;
 }
 
 int main(int argc, char *argv[])
