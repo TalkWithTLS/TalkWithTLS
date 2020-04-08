@@ -9,24 +9,75 @@
 #define TWT_TC_SUCCESS "success"
 #define TWT_TC_FAILURE "failure"
 
-int receive_tc(TC_AUTOMATION *ta, char *buf, size_t buf_size)
+/* TC cmds are in below format
+ * +------+--------------+-------------------~~------+
+ * | type |      len     |          Payload          |
+ * +------+--------------+-------------------~~------+
+ */
+
+enum tc_cmd_type {
+    TC = 1,
+    TC_RESULT
+};
+
+#pragma pack(1)
+
+typedef struct tc_cmd_hdr_st {
+    uint8_t type;
+    uint16_t len;
+}TC_CMD_HDR;
+
+typedef struct tc_cmd_result_st {
+    TC_CMD_HDR hdr;
+    uint8_t result;
+}TC_CMD_RESULT;
+
+#pragma pack()
+
+/* Description: Reads data from socket of buf_size
+ *
+ * @return: TWT_SUCCESS or TWT_FAILURE */
+int receive_n(int test_fd, char *buf, size_t buf_size)
 {
     int ret;
-    if (((ret = recv(ta->test_fd, buf, buf_size - 1, 0)) <= 0)
-            || (ret >= buf_size)) {
-        printf("Test FD receive failed, ret=%d, errno=%d\n", ret, errno);
-        return TWT_FAILURE;
-    }
-    buf[ret] = '\0';
+    int off = 0; /* received */
+    do {
+        if ((ret = recv(test_fd, buf + off, buf_size - off, 0)) <= 0) {
+            printf("Test FD receive failed, ret=%d, errno=%d\n", ret, errno);
+            return TWT_FAILURE;
+        }
+        off += ret;
+    } while (off < buf_size);
     return TWT_SUCCESS;
 }
 
-int send_tc_result(TC_AUTOMATION *ta, int result)
+int receive_tc(TC_AUTOMATION *ta, char *buf, size_t buf_size)
 {
+    TC_CMD_HDR hdr = {0};
+    size_t payload_len;
+    if (receive_n(ta->test_fd, (char *)&hdr, sizeof(hdr)) != TWT_SUCCESS) {
+        return TWT_FAILURE;
+    }
+    payload_len = ntohs(hdr.len);
+    if (payload_len > (buf_size - 1)) {
+        printf("Insufficient buffer for size=%zu\n", payload_len);
+        return TWT_FAILURE;
+    }
+    if (receive_n(ta->test_fd, buf, payload_len) != TWT_SUCCESS) {
+        return TWT_FAILURE;
+    }
+    buf[payload_len] = '\0';
+    return TWT_SUCCESS;
+}
+
+int send_tc_result(TC_AUTOMATION *ta, int result_val)
+{
+    TC_CMD_RESULT result = {0};
     int ret;
-    const char *result_str;
-    result_str = (result == TWT_SUCCESS) ? TWT_TC_SUCCESS : TWT_TC_FAILURE;
-    if ((ret = send(ta->test_fd, result_str, strlen(result_str), 0)) <= 0) {
+    result.hdr.type = TC_RESULT;
+    result.hdr.len = htons(1);
+    result.result = (result_val == TWT_SUCCESS) ? 0 : 1;
+    if ((ret = send(ta->test_fd, &result, sizeof(result), 0)) <= 0) {
         printf("Send Test result failed, ret=%d, errno=%d\n", ret, errno);
         return TWT_FAILURE;
     }
