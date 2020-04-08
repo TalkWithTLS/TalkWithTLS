@@ -7,15 +7,12 @@ void usage()
 {
     printf("-help\n");
     printf("    - Help\n");
-    printf("-bind [<arg>]\n");
+    printf("-tc-automation[=<arg>]\n");
     printf("    - Listens for test command on a TCP socket on a default address [0.0.0.0:25100]\n");
-    printf("    - Arg is optional, requires if bind address should be changed\n");
-    printf("    - Arg should be an integer which is added to default port 25100 for binding\n");
-    printf("    - If -bind or -bind-addr is used, then all other option gets ignored and "\
-                  "directly listens on TCP socket\n");
-    printf("    - goes for receiving test cmds via TCP socket\n");
-    printf("-bind-addr <arg>\n");
-    printf("    - Different bind address in the format of <0.0.0.0:25100>\n");
+    printf("    - arg is optional, requires if bind port should be changed\n");
+    printf("    - arg should be an integer which is added to default port 25100 for binding\n");
+    printf("    - If -tc-automation is used, then all other option gets ignored and "\
+                  "directly listens on Test TCP socket\n");
     printf("-serv\n");
     printf("    - Run as [D]TLS server\n");
     printf("-cauth\n");
@@ -62,8 +59,7 @@ void usage()
 
 enum cmd_opt_id {
     OPT_HELP = 1,
-    OPT_BIND,
-    OPT_BIND_ADDR,
+    OPT_TC_AUTOMATION,
     OPT_SERV,
     OPT_CAUTH,
     OPT_KEX,
@@ -81,8 +77,7 @@ enum cmd_opt_id {
 
 struct option lopts[] = {
     {"help", no_argument, NULL, OPT_HELP},
-    {"bind", optional_argument, NULL, OPT_BIND},
-    {"bind-addr", required_argument, NULL, OPT_BIND_ADDR},
+    {"tc-automation", optional_argument, NULL, OPT_TC_AUTOMATION},
     {"serv", no_argument, NULL, OPT_SERV},
     /*TODO Need to take cauth arg to use type of certs */
     {"cauth", optional_argument, NULL, OPT_CAUTH},
@@ -101,13 +96,15 @@ struct option lopts[] = {
 
 /* Parses CLI argument and updates values to TC_CONF
  * return : Returns 0 in case of successfully parsing or else -1
- *          Special value of 1 is returned for bind based test automation
+ *          Special value of 1 is returned for test automation
  *          And 2 is returned for help */
 int parse_arg(int argc, char **argv, TC_CONF *conf)
 {
     int opt;
     int count = 0;
 
+    /* optind should be resetted to 1 for repeatitive calls to getoptxxx with
+     * different argv list */
     optind = 1;
     while ((opt = getopt_long_only(argc, argv, "", lopts, NULL)) != -1) {
         count++;
@@ -115,7 +112,7 @@ int parse_arg(int argc, char **argv, TC_CONF *conf)
             case OPT_HELP:
                 usage();
                 return TWT_CLI_HELP;
-            case OPT_BIND:
+            case OPT_TC_AUTOMATION:
                 conf->test_automation = 1;
                 if (optarg != NULL) {
                     conf->bind_addr.port += atoi(optarg);
