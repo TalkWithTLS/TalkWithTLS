@@ -51,9 +51,10 @@ void fini_tc_conf(TC_CONF *conf)
     }
 }
 
-int init_tc_automation(TC_AUTOMATION *ta)
+int init_tc_automation(TC_AUTOMATION *ta, const char *argv1)
 {
     ta->test_lfd = ta->test_fd = -1;
+    ta->argv1 = strdup(argv1);
     return TWT_SUCCESS;
 }
 
@@ -85,4 +86,5 @@ void fini_tc_automation(TC_AUTOMATION *ta)
 {
     check_and_close(&ta->test_fd);
     check_and_close(&ta->test_lfd);
+    free(ta->argv1);
 }

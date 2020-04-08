@@ -103,11 +103,12 @@ struct option lopts[] = {
  * return : Returns 0 in case of successfully parsing or else -1
  *          Special value of 1 is returned for bind based test automation
  *          And 2 is returned for help */
-int parse_arg(int argc, char *argv[], TC_CONF *conf)
+int parse_arg(int argc, char **argv, TC_CONF *conf)
 {
     int opt;
     int count = 0;
 
+    optind = 1;
     while ((opt = getopt_long_only(argc, argv, "", lopts, NULL)) != -1) {
         count++;
         switch (opt) {

@@ -36,7 +36,7 @@ int tc_conf_update(TC_CONF *conf)
     return 0;
 }
 
-int start_test_case(int argc, char *argv[], TC_AUTOMATION *ta)
+int start_test_case(int argc, char **argv, TC_AUTOMATION *ta)
 {
     TC_CONF conf = {0};
     int ret_val = -1;
@@ -77,12 +77,89 @@ end:
     return ret_val;
 }
 
+#define ARGV_BUCKET_FACTOR 4
+int update_args(int *argc_out, char ***argv_out, char *token)
+{
+    char *token_dup;
+    char **argv;
+    int i;
+    if ((*argc_out % ARGV_BUCKET_FACTOR) == 0) {
+        printf("Expanding argv bucket size from %d\n", *argc_out);
+        if ((argv = (char **)malloc(sizeof(char *) * (*argc_out + ARGV_BUCKET_FACTOR))) == NULL) {
+            printf("Expanding argv failed for len=%d\n", *argc_out + ARGV_BUCKET_FACTOR);
+            return TWT_FAILURE;
+        }
+        memset(argv, 0, sizeof(char *) * (*argc_out + ARGV_BUCKET_FACTOR));
+        for (i = 0; i < *argc_out; i++) {
+            argv[i] = *((*argv_out) + i);
+        }
+        free(*argv_out);
+        *argv_out = argv;
+    }
+    if (token != NULL) {
+        if ((token_dup = strdup(token)) == NULL) {
+            return TWT_FAILURE;
+        }
+        *((*argv_out) + *argc_out) = token_dup;
+    }
+    *argc_out += 1;
+    return TWT_SUCCESS;
+}
+
+void free_args(int argc, char ***argv)
+{
+    int i;
+    for (i = 0; i < argc; i++) {
+        free(*((*argv) + i));
+    }
+    free(*argv);
+    *argv = NULL;
+}
+
+void print_args(int argc, char **argv)
+{
+    int i;
+    for (i = 0; i < argc; i++) {
+        printf("%s\n", argv[i]);
+    }
+}
+
+int split_args(TC_AUTOMATION *ta, char *buf, int *argc_out, char ***argv_out)
+{
+    char *token;
+    char *rest = buf;
+    /* Keep exe name as 1st entry in argv */
+    update_args(argc_out, argv_out, ta->argv1);
+    while ((token = strtok_r(rest, " ", &rest)) != NULL) {
+        if (update_args(argc_out, argv_out, token) == TWT_FAILURE) {
+            return TWT_FAILURE;
+        }
+    }
+    update_args(argc_out, argv_out, NULL);
+    *argc_out -= 1; /* Dont count NULL pointer at last */
+    return TWT_SUCCESS;
+}
+
+int do_test(TC_AUTOMATION *ta, char *tc_cmd)
+{
+    int argc = 0, ret_val = TWT_FAILURE;
+    char **argv = NULL;
+    if (split_args(ta, tc_cmd, &argc, &argv) == TWT_FAILURE) {
+        goto finish;
+    }
+    print_args(argc, argv);
+    ret_val = start_test_case(argc, argv, NULL);
+finish:
+    free_args(argc, &argv);
+    return ret_val;
+}
+
 #define MAX_TC_MSG 1024
 int do_test_automation(TC_AUTOMATION *ta)
 {
     int ret_val = TWT_SUCCESS;
     int tc_result;
-    uint8_t buf[MAX_TC_MSG];
+    char buf[MAX_TC_MSG];
     if (accept_tc_automation_con(ta) != TWT_SUCCESS) {
         goto finish;
     }
@@ -90,12 +167,12 @@ int do_test_automation(TC_AUTOMATION *ta)
     if (receive_tc(ta, buf, sizeof(buf)) != TWT_SUCCESS) {
         goto finish;
     }
-    if (strcmp((char *)buf, TWT_STOP_TC_AUTOMATION_STR) == 0) {
+    if (strcmp(buf, TWT_STOP_TC_AUTOMATION_STR) == 0) {
         ret_val = TWT_STOP_AUTOMATION;
     }
     printf("received tc [%s]\n", buf);
     /* TODO Do test */
-    tc_result = TWT_SUCCESS;
+    tc_result = do_test(ta, buf);
     if (send_tc_result(ta, tc_result) != TWT_SUCCESS) {
         goto finish;
     }
@@ -110,7 +187,6 @@ int start_test_automation(TC_AUTOMATION *ta)
         printf("TC socket creation failed, errno=%d\n", errno);
         goto err;
     }
-    /* TODO Need to implement receive msg and call start_test_case */
     do {
         if (do_test_automation(ta) == TWT_STOP_AUTOMATION) {
             printf("Received Stop Automation msg");
@@ -122,17 +198,17 @@ err:
     return TWT_FAILURE;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
     TC_AUTOMATION ta = {0};
     int ret;
 
-    if (init_tc_automation(&ta) != 0) {
+    if (init_tc_automation(&ta, argv[0]) != 0) {
         return TWT_FAILURE;
     }
     if ((ret = start_test_case(argc, argv, &ta)) == TWT_START_AUTOMATION) {
         ret = start_test_automation(&ta);
-        fini_tc_automation(&ta);
     }
+    fini_tc_automation(&ta);
     return ret;
 }

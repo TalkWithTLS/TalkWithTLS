@@ -9,7 +9,7 @@
 #define TWT_TC_SUCCESS "success"
 #define TWT_TC_FAILURE "failure"
 
-int receive_tc(TC_AUTOMATION *ta, uint8_t *buf, size_t buf_size)
+int receive_tc(TC_AUTOMATION *ta, char *buf, size_t buf_size)
 {
     int ret;
     if (((ret = recv(ta->test_fd, buf, buf_size - 1, 0)) <= 0)

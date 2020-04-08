@@ -161,6 +161,7 @@ struct test_case_conf_st {
 };
 
 typedef struct test_automation_st {
+    char *argv1; /* 1st entry in argv, that is exe name */
     int test_lfd; /* Test TCP FDs */
     int test_fd;
     TC_SOCK_ADDR bind_addr;

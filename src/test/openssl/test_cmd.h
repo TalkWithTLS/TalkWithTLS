@@ -7,7 +7,7 @@ extern "C" {
 
 #include "test_conf.h"
 
-int receive_tc(TC_AUTOMATION *ta, uint8_t *buf, size_t buf_size);
+int receive_tc(TC_AUTOMATION *ta, char *buf, size_t buf_size);
 
 int send_tc_result(TC_AUTOMATION *ta, int result);
 
