@@ -12,8 +12,16 @@ pip install --user pytest pytest-html
 
 ## 2. Building
 ```
+./get_submodules.sh
 make
 ```
+
+- Here `get_submodules.sh` executes
+[git-submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) commands to fetch latest code
+of OpenSSL and wolfSSL master for its github repositories.
+- This fails if you are behind HTTPS proxy. In that case `get_submodules.sh` execution can
+be ignored so that `make` uses the pre archived master branch of OpenSSL and wolfSSL in `dependency`
+directory.
 
 ### 2.1 Building only specific binaries
 - `make sample_bin` To build only Sample binaries
@@ -21,8 +29,8 @@ make
 - `make perf_bin` To build only Performance script binaries
 
 ## 3. Running
-All binaries needs to run with current working directory as root directory of this repo. As all
-code accesses `certs` folder present on root directory.
+**All binaries needs to run with current working directory as root directory of this repo**.
+Because binary accesses `certs` folder present on root directory.
 
 ### 3.1 Running Sample Binaries
 ```
