@@ -198,7 +198,6 @@ int start_test_automation(TC_AUTOMATION *ta)
     }
     do {
         if (do_test_automation(ta) == TWT_STOP_AUTOMATION) {
-            printf("Received Stop Automation msg");
             break;
         }
     } while (1);
