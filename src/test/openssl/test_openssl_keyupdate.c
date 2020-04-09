@@ -2,21 +2,21 @@
 
 int do_key_update(TC_CONF *conf, SSL *ssl, int type)
 {
-    printf("### Doing Key update\n");
+    DBG("### Doing Key update\n");
     if (SSL_version(ssl) != TLS1_3_VERSION) {
-        printf("Key update for non TLS13 version=%#x\n", SSL_version(ssl));
+        ERR("Key update for non TLS13 version=%#x\n", SSL_version(ssl));
         return -1;
     }
     if (SSL_key_update(ssl, type) != 1) {
-        printf("Key update failed\n");
+        ERR("Key update failed\n");
         return -1;
     }
     if (do_handshake(conf, ssl)) {
-        printf("Do handshake after key update failed\n");
+        ERR("Do handshake after key update failed\n");
         return -1;
     }
-    printf("Do handshake after key update succeeded\n");
-    printf("Key update Request (type=%d) done\n", type);
+    DBG("Do handshake after key update succeeded\n");
+    DBG("Key update Request (type=%d) done\n", type);
     return 0;
 }
 
@@ -42,7 +42,7 @@ int check_and_do_key_update(TC_CONF *conf, SSL *ssl)
     }
     if (key_update) {
         if (do_key_update(conf, ssl, key_update_type)) {
-            printf("Keyupdate failed\n");
+            ERR("Keyupdate failed\n");
             return -1;
         }
     }
@@ -56,11 +56,11 @@ int do_key_update_test(TC_CONF *conf, SSL *ssl)
         return 0;
     }
     if (check_and_do_key_update(conf, ssl)) {
-        printf("Checking and doing key update failed\n");
+        ERR("Checking and doing key update failed\n");
         return -1;
     }
     if (do_data_transfer(conf, ssl)) {
-        printf("Data transfer failed\n");
+        ERR("Data transfer failed\n");
         return -1;
     }
     return 0;

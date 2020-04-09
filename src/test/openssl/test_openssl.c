@@ -25,11 +25,11 @@ void tc_conf_dtls(TC_CONF *conf)
 int tc_conf_update(TC_CONF *conf)
 {
     if (tc_conf_kexch(conf)) {
-        printf("TC conf for kexch failed\n");
+        ERR("TC conf for kexch failed\n");
         return -1;
     }
     if (tc_conf_auth(conf)) {
-        printf("TC conf for authentication failed\n");
+        ERR("TC conf for authentication failed\n");
         return -1;
     }
     tc_conf_dtls(conf);
@@ -44,7 +44,7 @@ int start_test_case(int argc, char **argv, TC_AUTOMATION *ta)
 
     if (init_tc_conf(&conf) != 0
             || init_tc_conf_for_openssl(&conf) != 0) {
-        printf("TC conf failed\n");
+        ERR("TC conf failed\n");
         goto end;
     }
 
@@ -58,7 +58,7 @@ int start_test_case(int argc, char **argv, TC_AUTOMATION *ta)
         ret_val = 0;
         goto end;
     } else if (ret == TWT_FAILURE) {
-        printf("Parsing arg failed\n");
+        ERR("Parsing arg failed\n");
         goto end;
     }
 
@@ -85,7 +85,7 @@ int update_args(int *argc_out, char ***argv_out, char *token)
     int i;
     if ((*argc_out % ARGV_BUCKET_FACTOR) == 0) {
         if ((argv = (char **)malloc(sizeof(char *) * (*argc_out + ARGV_BUCKET_FACTOR))) == NULL) {
-            printf("Expanding argv failed for len=%d\n", *argc_out + ARGV_BUCKET_FACTOR);
+            ERR("Expanding argv failed for len=%d\n", *argc_out + ARGV_BUCKET_FACTOR);
             return TWT_FAILURE;
         }
         memset(argv, 0, sizeof(char *) * (*argc_out + ARGV_BUCKET_FACTOR));
@@ -118,9 +118,9 @@ void free_args(int argc, char ***argv)
 void print_args(int argc, char **argv)
 {
     int i;
-    printf("argv list -\n");
+    DBG("argv list -\n");
     for (i = 0; i < argc; i++) {
-        printf("%s\n", argv[i]);
+        DBG("%s\n", argv[i]);
     }
 }
 
@@ -168,17 +168,17 @@ int do_test_automation(TC_AUTOMATION *ta)
     if ((ret = receive_tc(ta, buf, sizeof(buf))) != TWT_SUCCESS) {
         if (ret == TWT_STOP_AUTOMATION) {
             ret_val = TWT_STOP_AUTOMATION;
-            printf("Stopping TC Automation...\n");
+            DBG("Stopping TC Automation...\n");
         }
         goto finish;
     }
-    printf("TC [%s]\n", buf);
+    DBG("TC [%s]\n", buf);
     /* 2. Receive TC args */
     memset(buf, 0, sizeof(buf));
     if ((ret = receive_tc(ta, buf, sizeof(buf))) != TWT_SUCCESS) {
         goto finish;
     }
-    printf("received tc [%s]\n", buf);
+    DBG("received tc [%s]\n", buf);
     tc_result = do_test(ta, buf);
     /* 3. Send TC result */
     if (send_tc_result(ta, tc_result) != TWT_SUCCESS) {
@@ -193,7 +193,7 @@ finish:
 int start_test_automation(TC_AUTOMATION *ta)
 {
     if (create_tc_automation_sock(ta) != TWT_SUCCESS) {
-        printf("TC socket creation failed, errno=%d\n", errno);
+        ERR("TC socket creation failed, errno=%d\n", errno);
         goto err;
     }
     do {

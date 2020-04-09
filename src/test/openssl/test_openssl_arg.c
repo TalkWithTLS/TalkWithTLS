@@ -171,6 +171,6 @@ int parse_arg(int argc, char **argv, TC_CONF *conf)
         }
     }
 
-    printf("Processed %d arguments successfully\n", count);
+    DBG("Processed %d arguments successfully\n", count);
     return 0;
 }

@@ -45,7 +45,7 @@ int receive_n(int test_fd, char *buf, size_t buf_size)
     int off = 0; /* received */
     do {
         if ((ret = recv(test_fd, buf + off, buf_size - off, 0)) <= 0) {
-            printf("Test FD receive failed, ret=%d, errno=%d\n", ret, errno);
+            ERR("Test FD receive failed, ret=%d, errno=%d\n", ret, errno);
             return TWT_FAILURE;
         }
         off += ret;
@@ -61,12 +61,12 @@ int receive_tc(TC_AUTOMATION *ta, char *buf, size_t buf_size)
         return TWT_FAILURE;
     }
     if (hdr.type == TC_STOP) {
-        printf("Received TC_STOP msg\n");
+        DBG("Received TC_STOP msg\n");
         return TWT_STOP_AUTOMATION;
     }
     payload_len = ntohs(hdr.len);
     if (payload_len > (buf_size - 1)) {
-        printf("Insufficient buffer for size=%zu\n", payload_len);
+        ERR("Insufficient buffer for size=%zu\n", payload_len);
         return TWT_FAILURE;
     }
     if (receive_n(ta->test_fd, buf, payload_len) != TWT_SUCCESS) {
@@ -84,14 +84,14 @@ int send_tc_result(TC_AUTOMATION *ta, int result_val)
     result.hdr.len = htons(1);
     if (result_val == TWT_SUCCESS) {
         result.result = 0;
-        printf("TC Success\n");
+        DBG("TC Success\n");
     } else {
         result.result = 1;
-        printf("TC Failure\n");
+        ERR("TC Failure\n");
     }
     result.result = (result_val == TWT_SUCCESS) ? 0 : 1;
     if ((ret = send(ta->test_fd, &result, sizeof(result), 0)) <= 0) {
-        printf("Send Test result failed, ret=%d, errno=%d\n", ret, errno);
+        ERR("Send Test result failed, ret=%d, errno=%d\n", ret, errno);
         return TWT_FAILURE;
     }
     return TWT_SUCCESS;

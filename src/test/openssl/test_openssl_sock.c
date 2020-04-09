@@ -34,7 +34,7 @@ int create_sock_connection(TC_CONF *conf)
         /* No need to create any fd at this place for DTLS
          * As already created in above function */
         if (conf->fd < 0) {
-            printf("TCP/UDP connection establishment failed\n");
+            ERR("TCP/UDP connection establishment failed\n");
             return -1;
         }
     } else {
@@ -44,7 +44,7 @@ int create_sock_connection(TC_CONF *conf)
             conf->fd = create_udp_sock();
         }
         if (conf->fd < 0) {
-            printf("TCP/UDP connection establishment failed\n");
+            ERR("TCP/UDP connection establishment failed\n");
             return -1;
         }
     }

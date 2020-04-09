@@ -4,18 +4,18 @@ int ssl_kexch_config(TC_CONF *conf, SSL *ssl)
 {
     if (conf->kexch.kexch_groups_count) {
         if (SSL_set1_groups(ssl, conf->kexch.kexch_groups, conf->kexch.kexch_groups_count) != 1) {
-            printf("Set Groups failed\n");
+            ERR("Set Groups failed\n");
             return -1;
         }
-        printf("Configured kexchange groups of count=%d\n", conf->kexch.kexch_groups_count);
+        DBG("Configured kexchange groups of count=%d\n", conf->kexch.kexch_groups_count);
     }
 
     if (strlen(conf->kexch.kexch_groups_str)) {
         if (SSL_set1_groups_list(ssl, conf->kexch.kexch_groups_str) != 1) {
-            printf("Set groups list failed\n");
+            ERR("Set groups list failed\n");
             return -1;
         }
-        printf("Configured kexchange groups str=%s\n", conf->kexch.kexch_groups_str);
+        DBG("Configured kexchange groups str=%s\n", conf->kexch.kexch_groups_str);
     }
 
     return 0;
@@ -26,9 +26,9 @@ int do_negotiated_kexch_validation(TC_CONF *conf, SSL *ssl)
     int kexch_group;
     if (conf->server) {
         kexch_group = SSL_get_shared_group(ssl, 0);
-        printf("Kexch group=%x\n", kexch_group);
+        DBG("Kexch group=%x\n", kexch_group);
         if (kexch_group != conf->kexch.kexch_should_neg) {
-            printf("Expected kexch group is %x\n", conf->kexch.kexch_should_neg);
+            ERR("Expected kexch group is %x\n", conf->kexch.kexch_should_neg);
             return -1;
         }
     }
@@ -47,7 +47,7 @@ int tc_conf_all_ffdhe_kexch_group(TC_CONF *conf)
     conf->kexch.kexch_groups_count = sizeof(dhe_kexch_groups)/sizeof(dhe_kexch_groups[0]);
     memcpy(conf->kexch.kexch_groups, dhe_kexch_groups, sizeof(dhe_kexch_groups));
     conf->kexch.kexch_should_neg = dhe_kexch_groups[0];
-    printf("Use all FFDHE supported groups\n");
+    DBG("Use all FFDHE supported groups\n");
     return 0;
 }
 
@@ -64,7 +64,7 @@ int tc_conf_all_ecc_kexch_group(TC_CONF *conf)
     conf->kexch.kexch_groups_count = sizeof(ec_kexch_groups)/sizeof(ec_kexch_groups[0]);
     memcpy(conf->kexch.kexch_groups, ec_kexch_groups, sizeof(ec_kexch_groups));
     conf->kexch.kexch_should_neg = ec_kexch_groups[0];
-    printf("Use all ECDHE supported groups\n");
+    DBG("Use all ECDHE supported groups\n");
     return 0;
 }
 
