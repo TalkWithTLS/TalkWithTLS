@@ -19,4 +19,4 @@ def tc_setup():
 ])
 
 def test_openssl_dtls_basic(tc_setup, sarg, carg):
-    assert run_test(sarg, carg) == TC_SUCCESS
+    assert run_test(inspect.stack()[0][3], sarg, carg) == TC_SUCCESS

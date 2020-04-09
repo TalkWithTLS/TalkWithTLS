@@ -5,6 +5,7 @@ import os
 import time
 import struct
 import socket
+import inspect
 
 from log import *
 
@@ -38,17 +39,29 @@ def stop_sut(port):
     fd.send(hdr_bytes)
     fd.close()
 
-def do_test(sarg, carg, sport, cport):
+def send_tc_name(tc_name, sfd, cfd):
+    TWT_LOG("TC [" + tc_name + "]\n")
+    hdr_bytes = struct.pack(TC_HDR_FMT, TC_CMD_TYPE_TC_START, len(tc_name))
+    sfd.send(hdr_bytes)
+    sfd.send(str.encode(tc_name))
+    cfd.send(hdr_bytes)
+    cfd.send(str.encode(tc_name))
+
+def do_test(tc_name, sarg, carg, sport, cport):
+    sfd = connect_to_sut(SUT_IP, sport)
+    cfd = connect_to_sut(SUT_IP, cport)
+    # 1. Send TC name
+    send_tc_name(tc_name, sfd, cfd)
+    # 2. Send TC args for client and server
     sarg_bytes = str.encode(sarg.rstrip())
     carg_bytes = str.encode(carg.rstrip())
     shdr_bytes = struct.pack(TC_HDR_FMT, TC_CMD_TYPE_TC_ARG, len(sarg_bytes))
     chdr_bytes = struct.pack(TC_HDR_FMT, TC_CMD_TYPE_TC_ARG, len(carg_bytes))
-    sfd = connect_to_sut(SUT_IP, sport)
-    cfd = connect_to_sut(SUT_IP, cport)
     sfd.send(shdr_bytes)
     sfd.send(sarg_bytes)
     cfd.send(chdr_bytes)
     cfd.send(carg_bytes)
+    # 3. Receive TC result
     sres_bytes = sfd.recv(4)
     cres_bytes = cfd.recv(4)
     sfd.close()
@@ -62,5 +75,5 @@ def do_test(sarg, carg, sport, cport):
     else:
         return TC_SUCCESS
 
-def run_test(sarg, carg, flags=0):
-    return do_test(sarg, carg, TEST_OPENSSL_PORT + 1, TEST_OPENSSL_PORT)
+def run_test(func_name, sarg, carg, flags=0):
+    return do_test(func_name, sarg, carg, TEST_OPENSSL_PORT + 1, TEST_OPENSSL_PORT)

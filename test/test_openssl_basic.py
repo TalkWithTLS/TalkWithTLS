@@ -17,11 +17,11 @@ def tc_setup():
 ])
 
 def test_openssl_basic(tc_setup, sarg, carg):
-    assert run_test(sarg, carg) == TC_SUCCESS
+    assert run_test(inspect.stack()[0][3], sarg, carg) == TC_SUCCESS
 
 @pytest.mark.parametrize("sarg, carg", [
     (' -serv -psk -msgcb ', ' -psk -msgcb '),
 ])
 
 def test_openssl_psk(tc_setup, sarg, carg):
-    assert run_test(sarg, carg) == TC_SUCCESS
+    assert run_test(inspect.stack()[0][3], sarg, carg) == TC_SUCCESS
