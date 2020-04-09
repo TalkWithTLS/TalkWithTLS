@@ -15,6 +15,9 @@ void usage()
                   "directly listens on Test TCP socket\n");
     printf("-serv\n");
     printf("    - Run as [D]TLS server\n");
+    printf("-clnt\n");
+    printf("    - Run as [D]TLS clnt\n");
+    printf("    - Using either -serv or -clnt will be sufficient\n");
     printf("-cauth\n");
     printf("    - Performs Client Cert Authentication\n");
     printf("-kex <arg>\n");
@@ -61,6 +64,7 @@ enum cmd_opt_id {
     OPT_HELP = 1,
     OPT_TC_AUTOMATION,
     OPT_SERV,
+    OPT_CLNT,
     OPT_CAUTH,
     OPT_KEX,
     OPT_NBSOCK,
@@ -79,6 +83,7 @@ struct option lopts[] = {
     {"help", no_argument, NULL, OPT_HELP},
     {"tc-automation", optional_argument, NULL, OPT_TC_AUTOMATION},
     {"serv", no_argument, NULL, OPT_SERV},
+    {"clnt", no_argument, NULL, OPT_CLNT},
     /*TODO Need to take cauth arg to use type of certs */
     {"cauth", optional_argument, NULL, OPT_CAUTH},
     {"kex", required_argument, NULL, OPT_KEX},
@@ -121,6 +126,9 @@ int parse_arg(int argc, char **argv, TC_CONF *conf)
             /* TODO Need to do OPT_BIND_ADDR */
             case OPT_SERV:
                 conf->server = 1;
+                break;
+            case OPT_CLNT:
+                conf->server = 0;
                 break;
             case OPT_CAUTH:
                 conf->auth |= TC_CONF_CLIENT_CERT_AUTH;
