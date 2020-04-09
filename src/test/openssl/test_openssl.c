@@ -84,7 +84,6 @@ int update_args(int *argc_out, char ***argv_out, char *token)
     char **argv;
     int i;
     if ((*argc_out % ARGV_BUCKET_FACTOR) == 0) {
-        printf("Expanding argv bucket size from %d\n", *argc_out);
         if ((argv = (char **)malloc(sizeof(char *) * (*argc_out + ARGV_BUCKET_FACTOR))) == NULL) {
             printf("Expanding argv failed for len=%d\n", *argc_out + ARGV_BUCKET_FACTOR);
             return TWT_FAILURE;
@@ -119,6 +118,7 @@ void free_args(int argc, char ***argv)
 void print_args(int argc, char **argv)
 {
     int i;
+    printf("argv list -\n");
     for (i = 0; i < argc; i++) {
         printf("%s\n", argv[i]);
     }
