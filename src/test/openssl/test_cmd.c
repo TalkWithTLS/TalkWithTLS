@@ -16,8 +16,10 @@
  */
 
 enum tc_cmd_type {
-    TC = 1,
-    TC_RESULT
+    TC_START = 1,
+    TC_ARG,
+    TC_RESULT,
+    TC_STOP
 };
 
 #pragma pack(1)
@@ -58,6 +60,10 @@ int receive_tc(TC_AUTOMATION *ta, char *buf, size_t buf_size)
     if (receive_n(ta->test_fd, (char *)&hdr, sizeof(hdr)) != TWT_SUCCESS) {
         return TWT_FAILURE;
     }
+    if (hdr.type == TC_STOP) {
+        printf("Received TC_STOP msg\n");
+        return TWT_STOP_AUTOMATION;
+    }
     payload_len = ntohs(hdr.len);
     if (payload_len > (buf_size - 1)) {
         printf("Insufficient buffer for size=%zu\n", payload_len);
@@ -76,6 +82,13 @@ int send_tc_result(TC_AUTOMATION *ta, int result_val)
     int ret;
     result.hdr.type = TC_RESULT;
     result.hdr.len = htons(1);
+    if (result_val == TWT_SUCCESS) {
+        result.result = 0;
+        printf("TC Success\n");
+    } else {
+        result.result = 1;
+        printf("TC Failure\n");
+    }
     result.result = (result_val == TWT_SUCCESS) ? 0 : 1;
     if ((ret = send(ta->test_fd, &result, sizeof(result), 0)) <= 0) {
         printf("Send Test result failed, ret=%d, errno=%d\n", ret, errno);

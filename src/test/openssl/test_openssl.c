@@ -157,18 +157,19 @@ finish:
 #define MAX_TC_MSG 1024
 int do_test_automation(TC_AUTOMATION *ta)
 {
-    int ret_val = TWT_SUCCESS;
-    int tc_result;
+    int ret_val = TWT_FAILURE;
+    int tc_result, ret;
     char buf[MAX_TC_MSG];
     if (accept_tc_automation_con(ta) != TWT_SUCCESS) {
         goto finish;
     }
     memset(buf, 0, sizeof(buf));
-    if (receive_tc(ta, buf, sizeof(buf)) != TWT_SUCCESS) {
+    if ((ret = receive_tc(ta, buf, sizeof(buf))) != TWT_SUCCESS) {
+        if (ret == TWT_STOP_AUTOMATION) {
+            ret_val = TWT_STOP_AUTOMATION;
+            printf("Stopping TC Automation...\n");
+        }
         goto finish;
-    }
-    if (strcmp(buf, TWT_STOP_TC_AUTOMATION_STR) == 0) {
-        ret_val = TWT_STOP_AUTOMATION;
     }
     printf("received tc [%s]\n", buf);
     /* TODO Do test */
@@ -176,6 +177,7 @@ int do_test_automation(TC_AUTOMATION *ta)
     if (send_tc_result(ta, tc_result) != TWT_SUCCESS) {
         goto finish;
     }
+    ret_val = TWT_SUCCESS;
 finish:
     close_tc_automation_con(ta);
     return ret_val;

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 BIN_DIR=bin
+TEST_OPENSSL=${BIN_DIR}/test_openssl
 REPORT_DIR=report
 LOG_DIR=report/log
 

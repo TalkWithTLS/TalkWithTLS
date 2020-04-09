@@ -26,8 +26,6 @@ extern "C" {
 #define TWT_STOP_AUTOMATION     3
 
 /* Strings */
-#define TWT_STOP_TC_AUTOMATION_STR "STOP_TC_AUTOMATION"
-
 #define SSL_SESS_ID_CTX "TalkWithTLS"
 
 #define DEFAULT_PSK_ID "clientid1"
