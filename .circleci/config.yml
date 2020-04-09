@@ -21,7 +21,7 @@ jobs:
                     #sudo apt install libunwind-dev golang-go
             - run:
                 name: Build_All
-                command: make NOSAN=1 -j 4
+                command: make NOSAN=1 -j 2 test_bin
             - run:
                 name: Run_Test
                 command: pipenv run ./run_test.sh
