@@ -64,6 +64,7 @@ def do_test(tc_name, sarg, carg, sport, cport):
     # 3. Receive TC result
     sres_bytes = sfd.recv(4)
     cres_bytes = cfd.recv(4)
+    TWT_LOG("sres_bytes" + str(len(sres_bytes)))
     sfd.close()
     cfd.close()
     sres_param = struct.unpack(TC_RESULT_FMT, sres_bytes)
