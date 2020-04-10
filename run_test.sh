@@ -26,6 +26,8 @@ echo "Spawned OpenSSL PIDs=${ossl_pid1}, ${ossl_pid2}"
 python -m pytest ${TS} -v --html=${REPORT_DIR}/TalkWithTLS.html
 python_res=$?
 
+ps -ef | grep ${ossl_pid1}
+ps -ef | grep ${ossl_pid2}
 python test/stop_sut.py ${PORT} 1
 
 echo "Waiting for PIDs=${ossl_pid1}, ${ossl_pid2}"
