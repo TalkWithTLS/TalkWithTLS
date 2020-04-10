@@ -24,8 +24,7 @@ jobs:
                 command: make NOSAN=1 -j 2 test_bin
             - run:
                 name: Run_Test
-                command: |
-                    pipenv run ./run_test.sh test/test_openssl_version.py
+                command: pipenv run ./run_test.sh
             - store_artifacts:
                 path: ./report
 workflows:
