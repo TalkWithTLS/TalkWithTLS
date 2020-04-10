@@ -23,7 +23,7 @@ ossl_pid1=$!
 ossl_pid2=$!
 echo "Spawned OpenSSL PIDs=${ossl_pid1}, ${ossl_pid2}"
 
-python -m pytest ${TS} -v --html=${REPORT_DIR}/TalkWithTLS.html
+python -m pytest ${TS} -v --maxfail=1 --html=${REPORT_DIR}/TalkWithTLS.html
 python_res=$?
 
 ps -ef | grep ${ossl_pid1}
