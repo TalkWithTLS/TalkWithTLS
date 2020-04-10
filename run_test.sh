@@ -24,9 +24,14 @@ ossl_pid2=$!
 echo "Spawned OpenSSL PIDs=${ossl_pid1}, ${ossl_pid2}"
 
 python -m pytest ${TS} -v --html=${REPORT_DIR}/TalkWithTLS.html
+python_res=$?
 
 python test/stop_sut.py ${PORT} 1
 
 echo "Waiting for PIDs=${ossl_pid1}, ${ossl_pid2}"
 wait ${ossl_pid1}
+sut1_res=$?
 wait ${ossl_pid2}
+sut1_res=$?
+[[ ${python_res} -eq 0 ]] && [[ ${sut1_res} -eq 0 ]] && [[ ${sut2_res} -eq 0 ]] && exit 0
+exit -1
