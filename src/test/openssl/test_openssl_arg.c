@@ -108,9 +108,9 @@ int parse_arg(int argc, char **argv, TC_CONF *conf)
     int opt;
     int count = 0;
 
-    /* optind should be resetted to 1 for repeatitive calls to getoptxxx with
+    /* optind should be resetted to 0 for repeatitive calls to getoptxxx with
      * different argv list */
-    optind = 1;
+    optind = 0;
     while ((opt = getopt_long_only(argc, argv, "", lopts, NULL)) != -1) {
         count++;
         switch (opt) {
