@@ -168,6 +168,9 @@ int parse_arg(int argc, char **argv, TC_CONF *conf)
             case OPT_RELBUF:
                 conf->ssl_mode.release_buf = (uint8_t)atoi(optarg);
                 break;
+            default:
+                ERR("Unknown options [%d]\n", opt);
+                break;
         }
     }
 
