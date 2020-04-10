@@ -14,6 +14,12 @@ void fini_tc_conf(TC_CONF *conf);
 
 int init_psk_params(TC_CONF *conf, const char *psk_id, const char *psk_key);
 
+int create_listen_sock(TC_CONF *conf);
+
+int create_sock_connection(TC_CONF *conf);
+
+void close_sock_connection(TEST_CON_STATE *test_con_state);
+
 /* TC Automation init fini functions */
 int init_tc_automation(TC_AUTOMATION *ta, const char *argv1);
 

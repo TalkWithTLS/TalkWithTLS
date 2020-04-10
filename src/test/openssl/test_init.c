@@ -32,7 +32,7 @@ int init_test_sock_addr(TC_CONF *conf, const char *ip, uint16_t port)
 int init_tc_conf(TC_CONF *conf)
 {
     memset(conf, 0, sizeof(TC_CONF));
-    conf->tcp_listen_fd = conf->fd = -1;
+    conf->test_con_state.tcp_listen_fd = conf->test_con_state.con_fd = -1;
     if (init_test_sock_addr(conf, DEFAULT_TEST_IP, DEFAULT_TEST_PORT) != 0) {
         return -1;
     }
@@ -43,10 +43,67 @@ int init_tc_conf(TC_CONF *conf)
     return 0;
 }
 
+int create_listen_sock(TC_CONF *conf)
+{
+    TEST_CON_STATE *test_con_state = &conf->test_con_state;
+    if (conf->server == 1) {
+        if (conf->dtls == 0) {
+            if ((test_con_state->tcp_listen_fd == -1)
+                    && ((test_con_state->tcp_listen_fd = do_tcp_listen(SERVER_IP, SERVER_PORT)) < 0)) {
+                return -1;
+            }
+        } else {
+            if ((test_con_state->con_fd == -1)
+                    && ((test_con_state->con_fd = create_udp_serv_sock(SERVER_IP, SERVER_PORT)) < 0)) {
+                return -1;
+            }
+        }
+    }
+    return 0;
+}
+
+int create_sock_connection(TC_CONF *conf)
+{
+    TEST_CON_STATE *test_con_state = &conf->test_con_state;
+    if (conf->server) {
+        if (conf->dtls == 0) {
+            /* tcp_listen_fd would have already created */
+            test_con_state->con_fd = do_tcp_accept(test_con_state->tcp_listen_fd);
+        }
+        /* No need to create any fd at this place for DTLS
+         * As already created in above function */
+        if (test_con_state->con_fd < 0) {
+            ERR("TCP/UDP connection establishment failed\n");
+            return -1;
+        }
+    } else {
+        if (conf->dtls == 0) {
+            test_con_state->con_fd = do_tcp_connection(SERVER_IP, SERVER_PORT);
+        } else {
+            test_con_state->con_fd = create_udp_sock();
+        }
+        if (test_con_state->con_fd < 0) {
+            ERR("TCP/UDP connection establishment failed\n");
+            return -1;
+        }
+    }
+    return 0;
+}
+
+void close_sock_connection(TEST_CON_STATE *test_con_state)
+{
+    check_and_close(&test_con_state->con_fd);
+}
+
+void close_listen_sock(TEST_CON_STATE *con_state)
+{
+    check_and_close(&con_state->tcp_listen_fd);
+}
+
 void fini_tc_conf(TC_CONF *conf)
 {
     if (conf->server) {
-        check_and_close(&conf->tcp_listen_fd);
+        close_listen_sock(&conf->test_con_state);
     }
     if (conf->fini) {
         conf->fini(conf);

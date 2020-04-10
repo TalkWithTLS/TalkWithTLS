@@ -131,10 +131,16 @@ typedef struct test_case_conf_st TC_CONF;
 
 typedef void (*fini_fp)(TC_CONF *conf);
 
+typedef struct test_con_state_st {
+    int tcp_listen_fd;
+    int con_fd;
+}TEST_CON_STATE;
+
 struct test_case_conf_st {
     uint32_t test_automation:1; /* Test automation keep listens on test_fd for Test cases */
     TC_SOCK_ADDR bind_addr;
     fini_fp fini; /* Specific fini function */
+    TEST_CON_STATE test_con_state;
     int tcp_listen_fd;
     int fd;
     uint8_t server;

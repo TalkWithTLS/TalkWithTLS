@@ -1,5 +1,5 @@
 #include "test_openssl_common.h"
-#include "test_openssl_sock.h"
+#include "test_init.h"
 #include "test_openssl_resumption.h"
 #include "test_openssl_validation.h"
 #include "test_openssl_kexch.h"
@@ -131,7 +131,7 @@ void ssl_info_cb(const SSL *ssl, int type, int val)
 
 int enable_nonblock(TC_CONF *conf)
 {
-    int fd = conf->fd;
+    int fd = conf->test_con_state.con_fd;
     int flags;
     if (conf->nb_sock) {
         flags = fcntl(fd, F_GETFL, 0);
@@ -164,7 +164,7 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
     SSL_set_ex_data(ssl, SSL_EX_DATA_TC_CONF, conf);
 
     if (conf->dtls == 0) {
-        if (SSL_set_fd(ssl, conf->fd) != 1) {
+        if (SSL_set_fd(ssl, conf->test_con_state.con_fd) != 1) {
             goto err;
         }
     } else {
@@ -425,7 +425,7 @@ void do_cleanup_openssl(TC_CONF *conf, SSL_CTX *ctx, SSL *ssl)
     if (ssl) {
         SSL_free(ssl);
     }
-    check_and_close(&conf->fd);
+    close_sock_connection(&conf->test_con_state);
     if (ctx) {
         SSL_CTX_free(ctx);
     }

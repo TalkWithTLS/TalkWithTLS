@@ -10,12 +10,12 @@ int ssl_config_dtls_bio(TC_CONF *conf, SSL *ssl, const char *serv_ip, uint16_t s
     BIO *bio = NULL;
     int ret_val = -1;
 
-    if (conf->fd < 0) {
+    if (conf->test_con_state.con_fd < 0) {
         ERR("Invalid UDP socket\n");
         return -1;
     }
 
-    bio = BIO_new_dgram(conf->fd, BIO_NOCLOSE);
+    bio = BIO_new_dgram(conf->test_con_state.con_fd, BIO_NOCLOSE);
     if (!bio) {
         ERR("BIO new failed\n");
         goto err;
