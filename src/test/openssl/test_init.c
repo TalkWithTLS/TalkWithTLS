@@ -1,6 +1,8 @@
 #include "test_conf.h"
 #include "test_init.h"
 
+#define TC_CMD_RECV_TIMEOUT_SEC 5
+
 int init_psk_params(TC_CONF *conf, const char *psk_id, const char *psk_key)
 {
     if ((strlen(psk_id) >= sizeof(conf->res.psk_id))
@@ -69,8 +71,9 @@ int create_tc_automation_sock(TC_AUTOMATION *ta)
 
 int accept_tc_automation_con(TC_AUTOMATION *ta)
 {
-    if ((ta->test_fd = do_tcp_accept(ta->test_lfd)) < 0) {
-        ERR("TCP accept failed\n");
+    if (((ta->test_fd = do_tcp_accept(ta->test_lfd)) < 0)
+            || (set_receive_to(ta->test_fd, TC_CMD_RECV_TIMEOUT_SEC) != 0)) {
+        ERR("TCP accept or set timeout failed\n");
         return TWT_FAILURE;
     }
     DBG("Test con created, fd=%d\n", ta->test_fd);

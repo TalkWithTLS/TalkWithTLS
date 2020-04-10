@@ -84,6 +84,8 @@ int do_tcp_listen(const char *server_ip, uint16_t port);
 
 int do_tcp_accept(int lfd);
 
+int set_receive_to(int fd, int secs);
+
 void check_and_close(int *fd);
 
 #ifdef __cplusplus

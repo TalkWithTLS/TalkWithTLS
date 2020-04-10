@@ -153,6 +153,19 @@ int do_tcp_accept(int lfd)
     return cfd;
 }
 
+int set_receive_to(int fd, int secs)
+{
+    struct timeval tv;
+    tv.tv_sec = secs;
+    tv.tv_usec = 0;
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv) != 0) {
+        PRINT("Setting receive timeout on fd=%d failed\n", fd);
+        return -1;
+    }
+    PRINT("Set receive timeout=%dsecs on fd=%d\n", secs, fd);
+    return 0;
+}
+
 void check_and_close(int *fd)
 {
     if (*fd < 0) {
