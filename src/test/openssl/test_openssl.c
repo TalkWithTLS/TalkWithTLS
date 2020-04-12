@@ -36,8 +36,9 @@ int tc_conf_update(TC_CONF *conf)
     return 0;
 }
 
-int start_test_case(int argc, char **argv, TC_AUTOMATION *ta)
+int start_test_case(int argc, char **argv, uint16_t *port_off, TEST_SERV_FD *tsfd)
 {
+    TEST_SERV_FD test_serv_fd = {0};
     TC_CONF conf = {0};
     int ret_val = -1;
     int ret;
@@ -47,10 +48,17 @@ int start_test_case(int argc, char **argv, TC_AUTOMATION *ta)
         ERR("TC conf failed\n");
         goto end;
     }
+    if ((conf.test_serv_fd = tsfd) == NULL) {
+        if (init_test_serv_fd(&test_serv_fd) != TWT_SUCCESS) {
+            ERR("Init test serv fd failed before starting test case\n");
+            goto end;
+        }
+        /* Manual test execution case so port offset not needed to add here */
+        conf.test_serv_fd = &test_serv_fd;
+    }
 
-    if (((ret = parse_arg(argc, argv, &conf)) == TWT_START_AUTOMATION) && (ta != NULL)) {
-        ta->bind_addr = conf.bind_addr;
-        fini_tc_conf(&conf);
+    if (((ret = parse_args(argc, argv, &conf)) == TWT_START_AUTOMATION) && (port_off != NULL)) {
+        *port_off = conf.test_serv_fd->test_addr.port_off;
         ret_val = TWT_START_AUTOMATION;
         goto end;
     } else if (ret == TWT_CLI_HELP) {
@@ -70,9 +78,18 @@ int start_test_case(int argc, char **argv, TC_AUTOMATION *ta)
         return -1;
     }
 
+    if (tsfd == NULL) {
+        DBG("Creating Test serv socket fd\n");
+        if (create_test_serv_sock(&conf) != TWT_SUCCESS) {
+            ERR("Create test serv listen fd failed before starting test case\n");
+        }
+    }
     ret_val = do_test_openssl(&conf);
 end:
     fini_tc_conf(&conf);
+    if (tsfd == NULL) {
+        fini_test_serv_fd(&test_serv_fd);
+    }
     fflush(stdout);
     return ret_val;
 }
@@ -140,7 +157,7 @@ int split_args(TC_AUTOMATION *ta, char *buf, int *argc_out, char ***argv_out)
     return TWT_SUCCESS;
 }
 
-int do_test(TC_AUTOMATION *ta, char *tc_cmd)
+int do_test(TC_AUTOMATION *ta, TEST_SERV_FD *tsfd, char *tc_cmd)
 {
     int argc = 0, ret_val = TWT_FAILURE;
     char **argv = NULL;
@@ -148,14 +165,14 @@ int do_test(TC_AUTOMATION *ta, char *tc_cmd)
         goto finish;
     }
     print_args(argc, argv);
-    ret_val = start_test_case(argc, argv, NULL);
+    ret_val = start_test_case(argc, argv, NULL, tsfd);
 finish:
     free_args(argc, &argv);
     return ret_val;
 }
 
 #define MAX_TC_MSG 1024
-int do_test_automation(TC_AUTOMATION *ta)
+int do_test_automation(TC_AUTOMATION *ta, TEST_SERV_FD *tsfd)
 {
     int ret_val = TWT_FAILURE;
     int tc_result, ret;
@@ -179,7 +196,7 @@ int do_test_automation(TC_AUTOMATION *ta)
         goto finish;
     }
     DBG("received tc [%s]\n", buf);
-    tc_result = do_test(ta, buf);
+    tc_result = do_test(ta, tsfd, buf);
     /* 3. Send TC result */
     if (send_tc_result(ta, tc_result) != TWT_SUCCESS) {
         goto finish;
@@ -192,18 +209,34 @@ finish:
 
 int start_test_automation(TC_AUTOMATION *ta)
 {
+    TEST_SERV_FD tsfd;
+    int ret_val = TWT_FAILURE;
+
+    if (init_test_serv_fd(&tsfd) != TWT_SUCCESS) {
+        ERR("TEST_SERV_FD initialization for test automation failed\n");
+        goto err;
+    }
+    tsfd.test_addr.port_off = ta->bind_addr.port_off;
+    tsfd.test_addr.port += ta->bind_addr.port_off;
+    DBG("Creating Test serv socket fds\n");
+    if ((create_tls_test_serv_sock(&tsfd) != TWT_SUCCESS) 
+            || (create_dtls_test_serv_sock(&tsfd) != TWT_SUCCESS)) {
+        ERR("Create test serv listen fd failed for TC Automation\n");
+    }
+    DBG("Creating TC Automation socket fd\n");
     if (create_tc_automation_sock(ta) != TWT_SUCCESS) {
         ERR("TC socket creation failed, errno=%d\n", errno);
         goto err;
     }
     do {
-        if (do_test_automation(ta) == TWT_STOP_AUTOMATION) {
+        if (do_test_automation(ta, &tsfd) == TWT_STOP_AUTOMATION) {
             break;
         }
     } while (1);
-    return TWT_SUCCESS;
+    ret_val = TWT_SUCCESS;
 err:
-    return TWT_FAILURE;
+    fini_test_serv_fd(&tsfd);
+    return ret_val;
 }
 
 int main(int argc, char **argv)
@@ -214,7 +247,8 @@ int main(int argc, char **argv)
     if (init_tc_automation(&ta, argv[0]) != 0) {
         return TWT_FAILURE;
     }
-    if ((ret = start_test_case(argc, argv, &ta)) == TWT_START_AUTOMATION) {
+    if ((ret = start_test_case(argc, argv, &ta.bind_addr.port_off, NULL)) == TWT_START_AUTOMATION) {
+        ta.bind_addr.port += ta.bind_addr.port_off;
         ret = start_test_automation(&ta);
     }
     fini_tc_automation(&ta);

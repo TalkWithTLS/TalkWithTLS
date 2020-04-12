@@ -7,7 +7,7 @@ extern "C" {
 
 #include "test_openssl_common.h"
 
-int parse_arg(int argc, char **argv, TC_CONF *conf);
+int parse_args(int argc, char **argv, TC_CONF *conf);
 
 #ifdef __cplusplus
 }

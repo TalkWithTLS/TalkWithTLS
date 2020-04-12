@@ -98,7 +98,7 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
 
     if ((conf->server == 0) || (conf->auth & TC_CONF_CLIENT_CERT_AUTH)) {
         SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
-        ERR("Configured Verify Peer\n");
+        DBG("Configured Verify Peer\n");
     }
     SSL_CTX_set_verify_depth(ctx, 5);
     /*if (SSL_CTX_set_session_id_context(ctx, SSL_SESS_ID_CTX, strlen(SSL_SESS_ID_CTX)) != 1) {
@@ -131,7 +131,7 @@ void ssl_info_cb(const SSL *ssl, int type, int val)
 
 int enable_nonblock(TC_CONF *conf)
 {
-    int fd = conf->test_con_state.con_fd;
+    int fd = conf->test_con_fd.con_fd;
     int flags;
     if (conf->nb_sock) {
         flags = fcntl(fd, F_GETFL, 0);
@@ -164,7 +164,7 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
     SSL_set_ex_data(ssl, SSL_EX_DATA_TC_CONF, conf);
 
     if (conf->dtls == 0) {
-        if (SSL_set_fd(ssl, conf->test_con_state.con_fd) != 1) {
+        if (SSL_set_fd(ssl, conf->test_con_fd.con_fd) != 1) {
             goto err;
         }
     } else {
@@ -425,7 +425,7 @@ void do_cleanup_openssl(TC_CONF *conf, SSL_CTX *ctx, SSL *ssl)
     if (ssl) {
         SSL_free(ssl);
     }
-    close_sock_connection(&conf->test_con_state);
+    close_sock_connection(&conf->test_con_fd);
     if (ctx) {
         SSL_CTX_free(ctx);
     }
@@ -536,9 +536,6 @@ int do_test_openssl(TC_CONF *conf)
     int ret_val = -1;
 
     DBG("Staring Test OpenSSL\n");
-    if (create_listen_sock(conf)) {
-        return -1;
-    }
     if (do_openssl_init(conf)) {
         ERR("Openssl init failed\n");
         return -1;

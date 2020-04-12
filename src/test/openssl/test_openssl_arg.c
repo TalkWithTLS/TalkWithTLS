@@ -103,7 +103,7 @@ struct option lopts[] = {
  * return : Returns 0 in case of successfully parsing or else -1
  *          Special value of 1 is returned for test automation
  *          And 2 is returned for help */
-int parse_arg(int argc, char **argv, TC_CONF *conf)
+int parse_args(int argc, char **argv, TC_CONF *conf)
 {
     int opt;
     int count = 0;
@@ -120,7 +120,8 @@ int parse_arg(int argc, char **argv, TC_CONF *conf)
             case OPT_TC_AUTOMATION:
                 conf->test_automation = 1;
                 if (optarg != NULL) {
-                    conf->bind_addr.port += atoi(optarg);
+                    conf->test_serv_fd->test_addr.port_off = atoi(optarg);
+                    DBG("Port offset (instance id) %d\n", atoi(optarg));
                 }
                 return TWT_START_AUTOMATION;
             /* TODO Need to do OPT_BIND_ADDR */

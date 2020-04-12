@@ -73,6 +73,7 @@ extern "C" {
 typedef struct test_sockaddr_st {
     char ip[MAX_IP_ADDR_STR];
     uint16_t port;
+    uint16_t port_off;
 }TC_SOCK_ADDR;
 
 #if 0
@@ -131,16 +132,24 @@ typedef struct test_case_conf_st TC_CONF;
 
 typedef void (*fini_fp)(TC_CONF *conf);
 
-typedef struct test_con_state_st {
+typedef struct test_serv_fd_st{
+    TC_SOCK_ADDR test_addr;
     int tcp_listen_fd;
+    /* For DTLS server udp_serv_fd is created and assigned to con_fd */
+    /* For DTLS client con_fd is created directly before starting DTLS connection*/
+    int udp_serv_fd;
+}TEST_SERV_FD;
+
+typedef struct test_con_fd_st {
     int con_fd;
-}TEST_CON_STATE;
+}TEST_CON_FD;
 
 struct test_case_conf_st {
     uint32_t test_automation:1; /* Test automation keep listens on test_fd for Test cases */
-    TC_SOCK_ADDR bind_addr;
     fini_fp fini; /* Specific fini function */
-    TEST_CON_STATE test_con_state;
+    /* TEST_CON_FD and TEST_SERV_FD are created for TEST TLS and DTLS connections */
+    TEST_CON_FD test_con_fd;
+    TEST_SERV_FD *test_serv_fd;
     int tcp_listen_fd;
     int fd;
     uint8_t server;
@@ -169,6 +178,8 @@ typedef struct test_automation_st {
     int test_lfd; /* Test TCP FDs */
     int test_fd;
     TC_SOCK_ADDR bind_addr;
+    /* This stores listen fd and gets copied to TC_CONF for every TC */
+    TEST_SERV_FD test_serv_fd;
 }TC_AUTOMATION;
 
 #ifdef __cplusplus
