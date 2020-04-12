@@ -142,7 +142,7 @@ int do_tcp_accept(int lfd)
     socklen_t peerlen = sizeof(peeraddr);
     int cfd;
 
-    PRINT("Waiting for TCP connection from client...\n");
+    PRINT("Waiting for TCP connection from client on listen fd=%d...\n", lfd);
     cfd = accept(lfd, (struct sockaddr *)&peeraddr, &peerlen);
     if (cfd < 0) {
         PRINT("accept failed, errno=%d\n", errno);

@@ -12,7 +12,7 @@ def tc_setup():
     TWT_set_log_filename(filename)
 
 @pytest.mark.parametrize("sarg, carg", [
-    (' -serv ', '-clnt'),
+    (' -serv ', ' '),
     (' -serv -nbsock ', ' -nbsock '),
 ])
 

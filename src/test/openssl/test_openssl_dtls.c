@@ -2,7 +2,7 @@
 #include <arpa/inet.h>
 #include "test_openssl_dtls.h"
 
-int ssl_config_dtls_bio(TC_CONF *conf, SSL *ssl, const char *serv_ip, uint16_t serv_port)
+int ssl_config_dtls_bio(TC_CONF *conf, SSL *ssl)
 {
     struct timeval recv_to;
     struct in_addr ipv4;
@@ -22,8 +22,8 @@ int ssl_config_dtls_bio(TC_CONF *conf, SSL *ssl, const char *serv_ip, uint16_t s
     }
 
     if (conf->server == 0) {
-        if (inet_aton(serv_ip, &ipv4) != 1) {
-            ERR("Invalid server ip %s\n", serv_ip);
+        if (inet_aton(conf->taddr->peer_addr_to_con.ip, &ipv4) != 1) {
+            ERR("Invalid server ip %s\n", conf->taddr->peer_addr_to_con.ip);
             return -1;
         }
 
@@ -33,7 +33,8 @@ int ssl_config_dtls_bio(TC_CONF *conf, SSL *ssl, const char *serv_ip, uint16_t s
             return -1;
         }
 
-        if (BIO_ADDR_rawmake(peer_addr, AF_INET, &ipv4, sizeof(ipv4), htons(serv_port)) != 1) {
+        if (BIO_ADDR_rawmake(peer_addr, AF_INET, &ipv4, sizeof(ipv4),
+                             htons(conf->taddr->peer_addr_to_con.port)) != 1) {
             ERR("BIO ADDR rawmake failed\n");
             goto err;
         }

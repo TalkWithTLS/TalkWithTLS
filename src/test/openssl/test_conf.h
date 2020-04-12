@@ -67,14 +67,8 @@ extern "C" {
 
 #define MAX_IP_ADDR_STR     64
 
-#define DEFAULT_TEST_IP "0.0.0.0"
-#define DEFAULT_TEST_PORT 25100
-
-typedef struct test_sockaddr_st {
-    char ip[MAX_IP_ADDR_STR];
-    uint16_t port;
-    uint16_t port_off;
-}TC_SOCK_ADDR;
+#define TC_AUTOMATION_IP "0.0.0.0"
+#define TC_AUTOMATION_PORT 25100
 
 #if 0
 typedef struct test_mem_debug_st {
@@ -132,8 +126,19 @@ typedef struct test_case_conf_st TC_CONF;
 
 typedef void (*fini_fp)(TC_CONF *conf);
 
+typedef struct test_sockaddr_st {
+    char ip[MAX_IP_ADDR_STR];
+    uint16_t port;
+}SOCK_ADDR;
+
+typedef struct test_sock_addr_st {
+    SOCK_ADDR tc_automation_addr;
+    SOCK_ADDR test_addr;
+    SOCK_ADDR peer_addr_to_con; /* Peer addr to connect */
+    uint16_t port_off;
+}TEST_SOCK_ADDR;
+
 typedef struct test_serv_fd_st{
-    TC_SOCK_ADDR test_addr;
     int tcp_listen_fd;
     /* For DTLS server udp_serv_fd is created and assigned to con_fd */
     /* For DTLS client con_fd is created directly before starting DTLS connection*/
@@ -145,15 +150,16 @@ typedef struct test_con_fd_st {
 }TEST_CON_FD;
 
 struct test_case_conf_st {
-    uint32_t test_automation:1; /* Test automation keep listens on test_fd for Test cases */
-    fini_fp fini; /* Specific fini function */
-    /* TEST_CON_FD and TEST_SERV_FD are created for TEST TLS and DTLS connections */
+    TEST_SOCK_ADDR *taddr;
     TEST_CON_FD test_con_fd;
     TEST_SERV_FD *test_serv_fd;
-    int tcp_listen_fd;
-    int fd;
+    uint32_t test_automation:1; /* Test automation keep listens on test_fd for Test cases */
     uint8_t server;
     uint32_t dtls:1;
+    fini_fp fini; /* Specific fini function */
+    /* TEST_CON_FD and TEST_SERV_FD are created for TEST TLS and DTLS connections */
+    int tcp_listen_fd;
+    int fd;
     uint8_t nb_sock;
     uint8_t auth;
     const char *cafiles[MAX_CA_FILE_LOAD];
@@ -177,7 +183,6 @@ typedef struct test_automation_st {
     char *argv1; /* 1st entry in argv, that is exe name */
     int test_lfd; /* Test TCP FDs */
     int test_fd;
-    TC_SOCK_ADDR bind_addr;
     /* This stores listen fd and gets copied to TC_CONF for every TC */
     TEST_SERV_FD test_serv_fd;
 }TC_AUTOMATION;

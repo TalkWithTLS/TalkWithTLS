@@ -168,7 +168,7 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
             goto err;
         }
     } else {
-        if (ssl_config_dtls_bio(conf, ssl, SERVER_IP, SERVER_PORT) != 0) {
+        if (ssl_config_dtls_bio(conf, ssl) != 0) {
             goto err;
         }
     }

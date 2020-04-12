@@ -7,7 +7,7 @@ extern "C" {
 
 #include "test_openssl_common.h"
 
-int ssl_config_dtls_bio(TC_CONF *conf, SSL *ssl, const char *server_ip, uint16_t serv_port);
+int ssl_config_dtls_bio(TC_CONF *conf, SSL *ssl);
 
 #ifdef __cplusplus
 }

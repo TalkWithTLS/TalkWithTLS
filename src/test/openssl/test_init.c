@@ -5,6 +5,74 @@
 
 #define TC_CMD_RECV_TIMEOUT_SEC 5
 
+int test_sock_addr_ip(SOCK_ADDR *addr, const char *ip)
+{
+    if (strlen(ip) >= sizeof(addr->ip)) {
+        ERR("Insufficient space for storing bind addr IP\n");
+        return TWT_FAILURE;
+    }
+    strcpy(addr->ip, ip);
+    return TWT_SUCCESS;
+}
+
+int init_test_sock_addr(TEST_SOCK_ADDR *taddr)
+{
+    memset(taddr, 0, sizeof(TEST_SOCK_ADDR));
+    test_sock_addr_ip(&taddr->tc_automation_addr, TC_AUTOMATION_IP);
+    taddr->tc_automation_addr.port = TC_AUTOMATION_PORT;
+    test_sock_addr_ip(&taddr->test_addr, SERVER_IP);
+    taddr->test_addr.port = SERVER_PORT;
+    test_sock_addr_ip(&taddr->peer_addr_to_con, SERVER_IP);
+    taddr->peer_addr_to_con.port = SERVER_PORT;
+    return TWT_SUCCESS;
+}
+
+int test_sock_addr_port_off(TEST_SOCK_ADDR *taddr, uint16_t port_off)
+{
+    taddr->port_off = port_off;
+    taddr->tc_automation_addr.port += port_off;
+    taddr->test_addr.port += port_off;
+    taddr->peer_addr_to_con.port += port_off;
+    return TWT_SUCCESS;
+}
+
+int test_sock_addr_port_to_connect(TEST_SOCK_ADDR *taddr, uint16_t port_to_connect)
+{
+    taddr->peer_addr_to_con.port = port_to_connect + taddr->port_off;
+    return TWT_SUCCESS;
+}
+
+int test_sock_addr_tc_automation(TEST_SOCK_ADDR *taddr, const char *str)
+{
+    char *data, *token, *rest;
+    int idx = 0;
+
+    DBG("TC automation address details [%s]\n", str);
+    if ((data = (char *)malloc(strlen(str) + 1)) == NULL) {
+        printf("Malloc failed\n");
+        return TWT_FAILURE;
+    }
+    strcpy(data, str);
+
+    rest = data;
+    while ((token = strtok_r(rest, ",", &rest)) != NULL) {
+        switch (idx) {
+            case 0:
+                taddr->tc_automation_addr.port = atoi(token);
+                break;
+            case 1:
+                taddr->test_addr.port = atoi(token);
+                break;
+            case 2:
+                test_sock_addr_port_off(taddr, atoi(token));
+                break;
+        }
+        idx++;
+    }
+    free(data);
+    return TWT_SUCCESS;
+}
+
 int init_psk_params(TC_CONF *conf, const char *psk_id, const char *psk_key)
 {
     if ((strlen(psk_id) >= sizeof(conf->res.psk_id))
@@ -31,24 +99,9 @@ int init_tc_conf(TC_CONF *conf)
     return 0;
 }
 
-int init_test_sock_addr(TEST_SERV_FD *test_serv_fd, const char *ip, uint16_t port)
-{
-    if (strlen(ip) >= sizeof(test_serv_fd->test_addr.ip)) {
-        ERR("Insufficient space in TC_CONF for storing test addr IP\n");
-        return -1;
-    }
-    strcpy(test_serv_fd->test_addr.ip, ip);
-    test_serv_fd->test_addr.port = port;
-    return 0;
-}
-
 int init_test_serv_fd(TEST_SERV_FD *test_serv_fd)
 {
     memset(test_serv_fd, 0, sizeof(TEST_SERV_FD));
-    /* PORT gets added later by instance ID */
-    if (init_test_sock_addr(test_serv_fd, SERVER_IP, SERVER_PORT) != 0) {
-        return TWT_FAILURE;
-    }
     test_serv_fd->tcp_listen_fd = test_serv_fd->udp_serv_fd = -1;
     return TWT_SUCCESS;
 }
@@ -59,21 +112,21 @@ void fini_test_serv_fd(TEST_SERV_FD *test_serv_fd)
     check_and_close(&test_serv_fd->udp_serv_fd);
 }
 
-int create_tls_test_serv_sock(TEST_SERV_FD *tsfd)
+int create_tls_test_serv_sock(TEST_SERV_FD *tsfd, TEST_SOCK_ADDR *taddr)
 {
     if ((tsfd->tcp_listen_fd == -1)
-            && ((tsfd->tcp_listen_fd = do_tcp_listen(tsfd->test_addr.ip,
-                                            tsfd->test_addr.port)) < 0)) {
+            && ((tsfd->tcp_listen_fd = do_tcp_listen(taddr->test_addr.ip,
+                                            taddr->test_addr.port)) < 0)) {
         return TWT_FAILURE;
     }
     return TWT_SUCCESS;
 }
 
-int create_dtls_test_serv_sock(TEST_SERV_FD *tsfd)
+int create_dtls_test_serv_sock(TEST_SERV_FD *tsfd, TEST_SOCK_ADDR *taddr)
 {
     if ((tsfd->udp_serv_fd == -1)
-            && ((tsfd->udp_serv_fd = create_udp_serv_sock(tsfd->test_addr.ip,
-                                            tsfd->test_addr.port)) < 0)) {
+            && ((tsfd->udp_serv_fd = create_udp_serv_sock(taddr->test_addr.ip,
+                                            taddr->test_addr.port)) < 0)) {
         return TWT_FAILURE;
     }
     return TWT_SUCCESS;
@@ -83,9 +136,9 @@ int create_test_serv_sock(TC_CONF *conf)
 {
     if (conf->server == 1) {
         if (conf->dtls == 0) {
-            return create_tls_test_serv_sock(conf->test_serv_fd);
+            return create_tls_test_serv_sock(conf->test_serv_fd, conf->taddr);
         } else {
-            return create_dtls_test_serv_sock(conf->test_serv_fd);
+            return create_dtls_test_serv_sock(conf->test_serv_fd, conf->taddr);
         }
     }
     return TWT_SUCCESS;
@@ -108,8 +161,8 @@ int create_sock_connection(TC_CONF *conf)
         }
     } else {
         if (conf->dtls == 0) {
-            test_con_fd->con_fd = do_tcp_connection(conf->test_serv_fd->test_addr.ip,
-                                                       conf->test_serv_fd->test_addr.port);
+            test_con_fd->con_fd = do_tcp_connection(conf->taddr->peer_addr_to_con.ip,
+                                                    conf->taddr->peer_addr_to_con.port);
         } else {
             test_con_fd->con_fd = create_udp_sock();
         }
@@ -134,31 +187,18 @@ void fini_tc_conf(TC_CONF *conf)
     }
 }
 
-int init_tc_automation_sock_addr(TC_AUTOMATION *ta, const char *ip, uint16_t port)
-{
-    if (strlen(ip) >= sizeof(ta->bind_addr.ip)) {
-        ERR("Insufficient space in TC_CONF for storing bind addr IP\n");
-        return -1;
-    }
-    strcpy(ta->bind_addr.ip, ip);
-    ta->bind_addr.port = port;
-    return 0;
-}
-
 int init_tc_automation(TC_AUTOMATION *ta, const char *argv1)
 {
+    memset(ta, 0, sizeof(TC_AUTOMATION));
     ta->test_lfd = ta->test_fd = -1;
     ta->argv1 = strdup(argv1);
-    /* PORT gets added later by instance ID */
-    if (init_tc_automation_sock_addr(ta, DEFAULT_TEST_IP, DEFAULT_TEST_PORT) != 0) {
-        return -1;
-    }
     return TWT_SUCCESS;
 }
 
-int create_tc_automation_sock(TC_AUTOMATION *ta)
+int create_tc_automation_sock(TC_AUTOMATION *ta, TEST_SOCK_ADDR *taddr)
 {
-    if ((ta->test_lfd = do_tcp_listen(ta->bind_addr.ip, ta->bind_addr.port)) < 0) {
+    if ((ta->test_lfd = do_tcp_listen(taddr->tc_automation_addr.ip,
+                                      taddr->tc_automation_addr.port)) < 0) {
         ERR("Initializing Test FD failed\n");
         return TWT_FAILURE;
     }

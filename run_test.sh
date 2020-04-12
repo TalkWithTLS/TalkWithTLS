@@ -17,25 +17,36 @@ fi
 
 PORT=25100
 
-./${TEST_OPENSSL} -tc-automation > ${REPORT_DIR}/test_openssl_0.txt 2>&1 &
-ossl_pid1=$!
-./${TEST_OPENSSL} -tc-automation=1 > ${REPORT_DIR}/test_openssl_1.txt 2>&1 &
-ossl_pid2=$!
-echo "Spawned OpenSSL PIDs=${ossl_pid1}, ${ossl_pid2}"
+ins_id=0 #Instance ID
+pids=()
+echo "Spawning SUTs..."
+./${TEST_OPENSSL} -tc-automation="${OSSL_111_CLNT},${ins_id}" \
+                    > ${REPORT_DIR}/ossl_111_clnt_${ins_id}.txt 2>&1 &
+pids+=($!)
+./${TEST_OPENSSL} -tc-automation="${OSSL_111_SERV},${ins_id}" \
+                    > ${REPORT_DIR}/ossl_111_serv_${ins_id}.txt 2>&1 &
+pids+=($!)
+for pid in "${pids[@]}"
+do
+    echo "Spawned PID ${pid}"
+done
 
 python -m pytest ${TS} -v --maxfail=1 --html=${REPORT_DIR}/TalkWithTLS.html
 python_res=$?
 
-ps -ef | grep ${ossl_pid1}
-ps -ef | grep ${ossl_pid2}
-python test/stop_sut.py ${PORT} 1
+echo "Shutting down SUTs"
+python test/stop_sut.py ${OSSL_111_CLNT_AUTOMATION_PORT} ${ins_id}
+python test/stop_sut.py ${OSSL_111_SERV_AUTOMATION_PORT} ${ins_id}
 
-kill -9 ${ossl_pid1} ${ossl_pid2}
-#echo "Waiting for PIDs=${ossl_pid1}, ${ossl_pid2}"
-#timeout 2 wait ${ossl_pid1}
-#sut1_res=$?
-#timeout 2 wait ${ossl_pid2}
-#sut1_res=$?
-#[[ ${python_res} -eq 0 ]] && [[ ${sut1_res} -eq 0 ]] && [[ ${sut2_res} -eq 0 ]] && exit 0
-#exit -1
-exit ${python_res}
+sut_res=0
+for pid in "${pids[@]}"
+do
+    wait ${pid}
+    if [ $? -ne 0 ]; then
+        sut_res=-1
+    fi
+done
+echo "All SUTs closed"
+
+[[ ${python_res} -eq 0 ]] && [[ ${sut_res} -eq 0 ]] && exit 0
+exit -1

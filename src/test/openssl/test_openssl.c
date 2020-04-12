@@ -36,11 +36,11 @@ int tc_conf_update(TC_CONF *conf)
     return 0;
 }
 
-int start_test_case(int argc, char **argv, uint16_t *port_off, TEST_SERV_FD *tsfd)
+int start_test_case(int argc, char **argv, TEST_SOCK_ADDR *taddr, TEST_SERV_FD *tsfd)
 {
-    TEST_SERV_FD test_serv_fd = {0};
-    TC_CONF conf = {0};
-    int ret_val = -1;
+    TEST_SERV_FD test_serv_fd;
+    TC_CONF conf;
+    int ret_val = TWT_FAILURE;
     int ret;
 
     if (init_tc_conf(&conf) != 0
@@ -48,6 +48,8 @@ int start_test_case(int argc, char **argv, uint16_t *port_off, TEST_SERV_FD *tsf
         ERR("TC conf failed\n");
         goto end;
     }
+    conf.taddr = taddr;
+    /* Note: tsfd will be NULL incase of TC automation */
     if ((conf.test_serv_fd = tsfd) == NULL) {
         if (init_test_serv_fd(&test_serv_fd) != TWT_SUCCESS) {
             ERR("Init test serv fd failed before starting test case\n");
@@ -57,13 +59,17 @@ int start_test_case(int argc, char **argv, uint16_t *port_off, TEST_SERV_FD *tsf
         conf.test_serv_fd = &test_serv_fd;
     }
 
-    if (((ret = parse_args(argc, argv, &conf)) == TWT_START_AUTOMATION) && (port_off != NULL)) {
-        *port_off = conf.test_serv_fd->test_addr.port_off;
-        ret_val = TWT_START_AUTOMATION;
+    if ((ret = parse_args(argc, argv, &conf)) == TWT_START_AUTOMATION) {
+        if (tsfd == NULL) { /* If it is called from main for TC automation */
+            ret_val = TWT_START_AUTOMATION;
+        } else {
+            ERR("For Test case execution invalid option -tc-automation is passed\n");
+            ret_val = TWT_FAILURE;
+        }
         goto end;
     } else if (ret == TWT_CLI_HELP) {
         /* Printed only help */
-        ret_val = 0;
+        ret_val = TWT_SUCCESS;
         goto end;
     } else if (ret == TWT_FAILURE) {
         ERR("Parsing arg failed\n");
@@ -75,13 +81,16 @@ int start_test_case(int argc, char **argv, uint16_t *port_off, TEST_SERV_FD *tsf
     /* Based on CLI arguments does some internal initialization which will be used in further
      * test scripts */
     if (tc_conf_update(&conf) != 0) {
-        return -1;
+        goto end;
     }
 
     if (tsfd == NULL) {
         DBG("Creating Test serv socket fd\n");
+        /* This case is only for independent test execution not for TC automation*/
+        /* Here serv fd gets created only for [D]TLS server */
         if (create_test_serv_sock(&conf) != TWT_SUCCESS) {
             ERR("Create test serv listen fd failed before starting test case\n");
+            goto end;
         }
     }
     ret_val = do_test_openssl(&conf);
@@ -90,7 +99,6 @@ end:
     if (tsfd == NULL) {
         fini_test_serv_fd(&test_serv_fd);
     }
-    fflush(stdout);
     return ret_val;
 }
 
@@ -157,7 +165,7 @@ int split_args(TC_AUTOMATION *ta, char *buf, int *argc_out, char ***argv_out)
     return TWT_SUCCESS;
 }
 
-int do_test(TC_AUTOMATION *ta, TEST_SERV_FD *tsfd, char *tc_cmd)
+int do_test(TC_AUTOMATION *ta, TEST_SOCK_ADDR *taddr, TEST_SERV_FD *tsfd, char *tc_cmd)
 {
     int argc = 0, ret_val = TWT_FAILURE;
     char **argv = NULL;
@@ -165,14 +173,14 @@ int do_test(TC_AUTOMATION *ta, TEST_SERV_FD *tsfd, char *tc_cmd)
         goto finish;
     }
     print_args(argc, argv);
-    ret_val = start_test_case(argc, argv, NULL, tsfd);
+    ret_val = start_test_case(argc, argv, taddr, tsfd);
 finish:
     free_args(argc, &argv);
     return ret_val;
 }
 
 #define MAX_TC_MSG 1024
-int do_test_automation(TC_AUTOMATION *ta, TEST_SERV_FD *tsfd)
+int do_test_automation(TC_AUTOMATION *ta, TEST_SOCK_ADDR *taddr, TEST_SERV_FD *tsfd)
 {
     int ret_val = TWT_FAILURE;
     int tc_result, ret;
@@ -196,7 +204,7 @@ int do_test_automation(TC_AUTOMATION *ta, TEST_SERV_FD *tsfd)
         goto finish;
     }
     DBG("received tc [%s]\n", buf);
-    tc_result = do_test(ta, tsfd, buf);
+    tc_result = do_test(ta, taddr, tsfd, buf);
     /* 3. Send TC result */
     if (send_tc_result(ta, tc_result) != TWT_SUCCESS) {
         goto finish;
@@ -207,7 +215,7 @@ finish:
     return ret_val;
 }
 
-int start_test_automation(TC_AUTOMATION *ta)
+int start_test_automation(TC_AUTOMATION *ta, TEST_SOCK_ADDR *taddr)
 {
     TEST_SERV_FD tsfd;
     int ret_val = TWT_FAILURE;
@@ -216,20 +224,18 @@ int start_test_automation(TC_AUTOMATION *ta)
         ERR("TEST_SERV_FD initialization for test automation failed\n");
         goto err;
     }
-    tsfd.test_addr.port_off = ta->bind_addr.port_off;
-    tsfd.test_addr.port += ta->bind_addr.port_off;
     DBG("Creating Test serv socket fds\n");
-    if ((create_tls_test_serv_sock(&tsfd) != TWT_SUCCESS) 
-            || (create_dtls_test_serv_sock(&tsfd) != TWT_SUCCESS)) {
+    if ((create_tls_test_serv_sock(&tsfd, taddr) != TWT_SUCCESS) 
+            || (create_dtls_test_serv_sock(&tsfd, taddr) != TWT_SUCCESS)) {
         ERR("Create test serv listen fd failed for TC Automation\n");
     }
     DBG("Creating TC Automation socket fd\n");
-    if (create_tc_automation_sock(ta) != TWT_SUCCESS) {
+    if (create_tc_automation_sock(ta, taddr) != TWT_SUCCESS) {
         ERR("TC socket creation failed, errno=%d\n", errno);
         goto err;
     }
     do {
-        if (do_test_automation(ta, &tsfd) == TWT_STOP_AUTOMATION) {
+        if (do_test_automation(ta, taddr, &tsfd) == TWT_STOP_AUTOMATION) {
             break;
         }
     } while (1);
@@ -241,15 +247,15 @@ err:
 
 int main(int argc, char **argv)
 {
-    TC_AUTOMATION ta = {0};
+    TEST_SOCK_ADDR taddr;
+    TC_AUTOMATION ta;
     int ret;
 
-    if (init_tc_automation(&ta, argv[0]) != 0) {
+    if ((init_tc_automation(&ta, argv[0]) != 0) || (init_test_sock_addr(&taddr) != 0)) {
         return TWT_FAILURE;
     }
-    if ((ret = start_test_case(argc, argv, &ta.bind_addr.port_off, NULL)) == TWT_START_AUTOMATION) {
-        ta.bind_addr.port += ta.bind_addr.port_off;
-        ret = start_test_automation(&ta);
+    if ((ret = start_test_case(argc, argv, &taddr, NULL)) == TWT_START_AUTOMATION) {
+        ret = start_test_automation(&ta, &taddr);
     }
     fini_tc_automation(&ta);
     return ret;

@@ -14,11 +14,11 @@ def tc_setup():
 @pytest.mark.parametrize("sarg, carg", [
     #TODO Dont know how to verify whether actually release buffer is getting invoked
     # Enable Release buff mode on SSL Context
-    (' -serv -relbuf 1 ', '-clnt'),
+    (' -serv -relbuf 1 ', ' '),
     (' -serv ', ' -relbuf 1 '),
 
     # Enable Release buff mode on SSL
-    (' -serv -relbuf 2 ', '-clnt'),
+    (' -serv -relbuf 2 ', ' '),
     (' -serv ', ' -relbuf 2 '),
 
     # Enable Release buff mode on SSL

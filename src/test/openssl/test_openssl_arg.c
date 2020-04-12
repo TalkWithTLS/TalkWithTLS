@@ -2,22 +2,23 @@
 #include <getopt.h>
 #include "test_openssl_common.h"
 #include "test_openssl_arg.h"
+#include "test_init.h"
 
 void usage()
 {
     printf("-help\n");
     printf("    - Help\n");
-    printf("-tc-automation[=<arg>]\n");
+    printf("-tc-automation <tc_automation_port,test_port,instance_id>\n");
     printf("    - Listens for test command on a TCP socket on a default address [0.0.0.0:25100]\n");
-    printf("    - arg is optional, requires if bind port should be changed\n");
-    printf("    - arg should be an integer which is added to default port 25100 for binding\n");
+    printf("    - Value is mandatory to this option, should contain tc_automation,\n");
+    printf("      test port and an instance id.\n");
     printf("    - If -tc-automation is used, then all other option gets ignored and "\
-                  "directly listens on Test TCP socket\n");
+                  "directly listens on TC automation TCP socket\n");
     printf("-serv\n");
     printf("    - Run as [D]TLS server\n");
-    printf("-clnt\n");
+    printf("-clnt[=serv_port]\rn");
     printf("    - Run as [D]TLS clnt\n");
-    printf("    - Using either -serv or -clnt will be sufficient\n");
+    printf("    - Value is server port to connect, which is optional\n");
     printf("-cauth\n");
     printf("    - Performs Client Cert Authentication\n");
     printf("-kex <arg>\n");
@@ -81,9 +82,9 @@ enum cmd_opt_id {
 
 struct option lopts[] = {
     {"help", no_argument, NULL, OPT_HELP},
-    {"tc-automation", optional_argument, NULL, OPT_TC_AUTOMATION},
+    {"tc-automation", required_argument, NULL, OPT_TC_AUTOMATION},
     {"serv", no_argument, NULL, OPT_SERV},
-    {"clnt", no_argument, NULL, OPT_CLNT},
+    {"clnt", optional_argument, NULL, OPT_CLNT},
     /*TODO Need to take cauth arg to use type of certs */
     {"cauth", optional_argument, NULL, OPT_CAUTH},
     {"kex", required_argument, NULL, OPT_KEX},
@@ -119,17 +120,14 @@ int parse_args(int argc, char **argv, TC_CONF *conf)
                 return TWT_CLI_HELP;
             case OPT_TC_AUTOMATION:
                 conf->test_automation = 1;
-                if (optarg != NULL) {
-                    conf->test_serv_fd->test_addr.port_off = atoi(optarg);
-                    DBG("Port offset (instance id) %d\n", atoi(optarg));
-                }
+                test_sock_addr_tc_automation(conf->taddr, optarg);
                 return TWT_START_AUTOMATION;
-            /* TODO Need to do OPT_BIND_ADDR */
             case OPT_SERV:
                 conf->server = 1;
                 break;
             case OPT_CLNT:
                 conf->server = 0;
+                test_sock_addr_port_to_connect(conf->taddr, (uint16_t)atoi(optarg));
                 break;
             case OPT_CAUTH:
                 conf->auth |= TC_CONF_CLIENT_CERT_AUTH;

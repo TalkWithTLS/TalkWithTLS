@@ -10,8 +10,10 @@ import inspect
 from log import *
 
 BIN_DIR='./bin'
-TEST_OPENSSL=BIN_DIR + '/test_openssl'
-TEST_OPENSSL_PORT=25100
+ENV_OSSL_111_CLNT_AUTOMATION_PORT=os.environ['OSSL_111_CLNT_AUTOMATION_PORT']
+ENV_OSSL_111_SERV_AUTOMATION_PORT=os.environ['OSSL_111_SERV_AUTOMATION_PORT']
+ENV_OSSL_111_CLNT_PORT=os.environ['OSSL_111_CLNT_PORT']
+ENV_OSSL_111_SERV_PORT=os.environ['OSSL_111_SERV_PORT']
 
 TEST_RESULT_WAIT_TIME_SEC = 5.0
 
@@ -77,4 +79,7 @@ def do_test(tc_name, sarg, carg, sport, cport):
         return TC_SUCCESS
 
 def run_test(func_name, sarg, carg, flags=0):
-    return do_test(func_name, sarg, carg, TEST_OPENSSL_PORT + 1, TEST_OPENSSL_PORT)
+    carg_default = '-clnt=' + ENV_OSSL_111_SERV_PORT + ' '
+    return do_test(func_name, sarg, carg_default + carg,
+                   int(ENV_OSSL_111_SERV_AUTOMATION_PORT),
+                   int(ENV_OSSL_111_CLNT_AUTOMATION_PORT))
