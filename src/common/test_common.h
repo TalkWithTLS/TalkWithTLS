@@ -9,6 +9,24 @@ extern "C" {
 #include <stdint.h>
 #include <string.h>
 
+#define ERR(fmt, ...) \
+    do { \
+        printf("[ERR]:"fmt, ##__VA_ARGS__); \
+        fflush(stdout); \
+    } while (0)
+
+#define DBG(fmt, ...) \
+    do { \
+        printf("[DBG]"fmt, ##__VA_ARGS__); \
+        fflush(stdout); \
+    } while (0)
+
+#define PRINT(fmt, ...) \
+    do { \
+        printf(fmt, ##__VA_ARGS__); \
+        fflush(stdout); \
+    } while (0)
+
 #define MAX_BUF_SIZE    1024
 
 #define MSG1_REQ "GET /index.html HTTP/1.1\r\nHOST: twt.com\r\n\r\n"
@@ -65,6 +83,8 @@ int do_tcp_connection(const char *server_ip, uint16_t port);
 int do_tcp_listen(const char *server_ip, uint16_t port);
 
 int do_tcp_accept(int lfd);
+
+int set_receive_to(int fd, int secs);
 
 void check_and_close(int *fd);
 

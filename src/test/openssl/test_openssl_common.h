@@ -6,17 +6,14 @@ extern "C" {
 #endif
 
 #include "test_common.h"
-#include "test_openssl_conf.h"
+
+#include "test_conf.h"
 
 #include "openssl/crypto.h"
 #include "openssl/rand.h"
 #include "openssl/ssl.h"
 
-int init_tc_conf(TC_CONF *conf);
-
-void fini_tc_conf(TC_CONF *conf);
-
-int init_psk_params(TC_CONF *conf, const char *psk_id, const char *psk_key);
+int init_tc_conf_for_openssl(TC_CONF *conf);
 
 int do_test_openssl(TC_CONF *conf);
 

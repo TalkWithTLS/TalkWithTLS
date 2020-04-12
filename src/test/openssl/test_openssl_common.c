@@ -1,5 +1,5 @@
 #include "test_openssl_common.h"
-#include "test_openssl_sock.h"
+#include "test_init.h"
 #include "test_openssl_resumption.h"
 #include "test_openssl_validation.h"
 #include "test_openssl_kexch.h"
@@ -19,7 +19,7 @@
 int do_openssl_init(TC_CONF *conf)
 {
     (void)conf;
-    printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION),
+    DBG("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION),
             OpenSSL_version(OPENSSL_BUILT_ON));
     if (conf->cb.crypto_mem_cb != 0) {
         CRYPTO_set_mem_functions(TWT_malloc, TWT_realloc, TWT_free);
@@ -32,40 +32,18 @@ void do_openssl_fini(TC_CONF *conf)
     return;
 }
 
-int init_psk_params(TC_CONF *conf, const char *psk_id, const char *psk_key)
+void fini_tc_conf_for_openssl(TC_CONF *conf)
 {
-    if ((strlen(psk_id) >= sizeof(conf->res.psk_id))
-            || (strlen(psk_key) >= sizeof(conf->res.psk_key))) {
-        printf("Insufficient space in TC_CONF for storing PSK\n");
-        return -1;
-    }
-    strcpy(conf->res.psk_id, psk_id);
-    conf->res.psk_id_len = strlen(psk_id);
-    strcpy(conf->res.psk_key, psk_key);
-    conf->res.psk_key_len = strlen(psk_key);
-    return 0;
-}
-
-int init_tc_conf(TC_CONF *conf)
-{
-    memset(conf, 0, sizeof(TC_CONF));
-    conf->tcp_listen_fd = conf->fd = -1;
-    if (init_psk_params(conf, DEFAULT_PSK_ID, DEFAULT_PSK_KEY)) {
-        printf("Initializing psk params failed\n");
-        return -1;
-    }
-    return 0;
-}
-
-void fini_tc_conf(TC_CONF *conf)
-{
-    if (conf->server) {
-        check_and_close(&conf->tcp_listen_fd);
-    }
     if (conf->res.sess) {
         SSL_SESSION_free(conf->res.sess);
         conf->res.sess = NULL;
     }
+}
+
+int init_tc_conf_for_openssl(TC_CONF *conf)
+{
+    conf->fini = fini_tc_conf_for_openssl;
+    return 0;
 }
 
 SSL_CTX *create_context_openssl(TC_CONF *conf)
@@ -80,56 +58,56 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
 
     ctx = SSL_CTX_new(meth);
     if (!ctx) {
-        printf("SSL ctx new failed\n");
+        ERR("SSL ctx new failed\n");
         return NULL;
     }
 
-    printf("SSL context created\n");
+    DBG("SSL context created\n");
 
     if (ssl_ctx_version_conf(conf, ctx)) {
-        printf("Version conf failed\n");
+        ERR("Version conf failed\n");
         goto err;
     }
 
     if (conf->cafiles_count) {
         for (i = 0; i < conf->cafiles_count; i++) {
             if (SSL_CTX_load_verify_locations(ctx, conf->cafiles[i], NULL) != 1) {
-                printf("Load CA cert [%s] failed\n", conf->cafiles[i]);
+                ERR("Load CA cert [%s] failed\n", conf->cafiles[i]);
                 goto err;
             }
-            printf("Loaded cert %s on context\n", conf->cafiles[i]);
+            DBG("Loaded cert %s on context\n", conf->cafiles[i]);
         }
     }
     if (conf->cert) {
         if (SSL_CTX_use_certificate_file(ctx, conf->cert, conf->cert_type) != 1) {
-            printf("Load Server cert %s failed\n", conf->cert);
+            ERR("Load Server cert %s failed\n", conf->cert);
             goto err;
         }
 
-        printf("Loaded server cert %s on context\n", conf->cert);
+        DBG("Loaded server cert %s on context\n", conf->cert);
     }
 
     if (conf->priv_key) {
         if (SSL_CTX_use_PrivateKey_file(ctx, conf->priv_key, conf->priv_key_type) != 1) {
-            printf("Load Server key %s failed\n", conf->priv_key);
+            ERR("Load Server key %s failed\n", conf->priv_key);
             goto err;
         }
 
-        printf("Loaded server key %s on context\n", conf->priv_key);
+        DBG("Loaded server key %s on context\n", conf->priv_key);
     }
 
     if ((conf->server == 0) || (conf->auth & TC_CONF_CLIENT_CERT_AUTH)) {
         SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
-        printf("Configured Verify Peer\n");
+        DBG("Configured Verify Peer\n");
     }
     SSL_CTX_set_verify_depth(ctx, 5);
     /*if (SSL_CTX_set_session_id_context(ctx, SSL_SESS_ID_CTX, strlen(SSL_SESS_ID_CTX)) != 1) {
-        printf("Set sess id ctx failed\n");
+        ERR("Set sess id ctx failed\n");
         goto err;
     }*/
 
     if ((conf->res.psk) && (initialize_resumption_params(conf, ctx) != 0)) {
-        printf("Initializing resumption params failed\n");
+        ERR("Initializing resumption params failed\n");
         goto err;
     }
     if ((conf->res.early_data) && (conf->server)) {
@@ -138,7 +116,7 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
     if (ssl_ctx_mode_config(conf, ctx) != 0) {
         goto err;
     }
-    printf("SSL context configurations completed\n");
+    DBG("SSL context configurations completed\n");
 
     return ctx;
 err:
@@ -148,22 +126,22 @@ err:
 
 void ssl_info_cb(const SSL *ssl, int type, int val)
 {
-    printf("SSL Info cb: type=%d, val=%d\n", type, val);
+    DBG("SSL Info cb: type=%d, val=%d\n", type, val);
 }
 
 int enable_nonblock(TC_CONF *conf)
 {
-    int fd = conf->fd;
+    int fd = conf->test_con_fd.con_fd;
     int flags;
     if (conf->nb_sock) {
         flags = fcntl(fd, F_GETFL, 0);
         if (flags == -1) {
-            printf("Get flag failed for fcntl");
+            ERR("Get flag failed for fcntl");
             return -1;
         }
         flags |= O_NONBLOCK;
         if (fcntl(fd, F_SETFL, flags) != 0) {
-            printf("Set nonblock flags on fcntl failed\n");
+            ERR("Set nonblock flags on fcntl failed\n");
             return -1;
         }
     }
@@ -180,28 +158,28 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
 
     ssl = SSL_new(ctx);
     if (!ssl) {
-        printf("SSL object creation failed\n");
+        ERR("SSL object creation failed\n");
         return NULL; 
     }
     SSL_set_ex_data(ssl, SSL_EX_DATA_TC_CONF, conf);
 
     if (conf->dtls == 0) {
-        if (SSL_set_fd(ssl, conf->fd) != 1) {
+        if (SSL_set_fd(ssl, conf->test_con_fd.con_fd) != 1) {
             goto err;
         }
     } else {
-        if (ssl_config_dtls_bio(conf, ssl, SERVER_IP, SERVER_PORT) != 0) {
+        if (ssl_config_dtls_bio(conf, ssl) != 0) {
             goto err;
         }
     }
 
     if (ssl_kexch_config(conf, ssl)) {
-        printf("SSL kexch conf failed\n");
+        ERR("SSL kexch conf failed\n");
         goto err;
     }
 
     if (enable_nonblock(conf)) {
-        printf("Enable non block failed");
+        ERR("Enable non block failed");
         goto err;
     }
     if (conf->cb.info_cb) {
@@ -213,7 +191,7 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
     if (ssl_mode_config(conf, ssl) != 0) {
         goto err;
     }
-    printf("SSL object creation finished\n");
+    DBG("SSL object creation finished\n");
 
     return ssl;
 err:
@@ -229,7 +207,7 @@ void print_ssl_err()
     int line_num = 0;
     error = ERR_peek_error_line(&file, &line_num);
     ERR_error_string_n(error, err_buf, sizeof(err_buf));
-    printf("SSL error[%lu][%s] on [%s:%d]\n", error, err_buf, file, line_num);
+    ERR("SSL error[%lu][%s] on [%s:%d]\n", error, err_buf, file, line_num);
 }
 
 int wait_for_sock_io(SSL *ssl, int ret, const char *op)
@@ -246,15 +224,15 @@ int wait_for_sock_io(SSL *ssl, int ret, const char *op)
     err = SSL_get_error(ssl, ret);
     switch (err) {
         case SSL_ERROR_WANT_READ:
-            printf("SSL want read occured for %s\n", op);
+            DBG("SSL want read occured for %s\n", op);
             FD_SET(fd, &readfds);
             break;
         case SSL_ERROR_WANT_WRITE:
-            printf("SSL want write occured for %s\n", op);
+            DBG("SSL want write occured for %s\n", op);
             FD_SET(fd, &writefds);
             break;
         default:
-            printf("%s failed with err=%d\n", op, err);
+            DBG("%s failed with err=%d\n", op, err);
             if (err == SSL_ERROR_SSL) {
                 print_ssl_err();
             }
@@ -263,10 +241,10 @@ int wait_for_sock_io(SSL *ssl, int ret, const char *op)
     timeout.tv_sec = TLS_SOCK_TIMEOUT_MS / 1000;
     timeout.tv_usec = (TLS_SOCK_TIMEOUT_MS % 1000) * 1000;
     if (select(fd + 1, &readfds, &writefds, NULL, &timeout) < 1) {
-        printf("select timed out, ret=%d\n", ret);
+        ERR("select timed out, ret=%d\n", ret);
         return -1;
     }
-    printf("Time spent on select %ldsecs and %ldusecs\n", timeout.tv_sec, timeout.tv_usec);
+    DBG("Time spent on select %ldsecs and %ldusecs\n", timeout.tv_sec, timeout.tv_usec);
     return 0;
 }
 
@@ -276,20 +254,20 @@ int do_ssl_accept(TC_CONF *conf, SSL *ssl)
     do {
         ret = SSL_accept(ssl);
         if (ret == 1) {
-            printf("SSL accept succeeded\n");
+            DBG("SSL accept succeeded\n");
             break;
         }
         if (wait_for_sock_io(ssl, ret, "SSL_accept")) {
-            printf("SSL accept failed\n");
+            ERR("SSL accept failed\n");
             return -1;
         }
-        printf("Continue SSL accept\n");
+        DBG("Continue SSL accept\n");
     } while (1);
     if (conf->res.resumption) { //TODO Need to improve this check for TLS1.2 resumption also
         if (SSL_session_reused(ssl)) {
-            printf("SSL session reused\n");
+            DBG("SSL session reused\n");
         } else {
-            printf("SSL session not reused\n");
+            DBG("SSL session not reused\n");
             return -1;
         }
     }
@@ -303,7 +281,7 @@ int do_ssl_write_early_data(TC_CONF *conf, SSL *ssl)
     int ret = 0;
     if ((conf->res.early_data != 1) && (conf->res.early_data_sent == 0)) {
         ret = SSL_write_early_data(ssl, msg, strlen(msg), &sent);
-        printf("write early data ret=%d\n", ret);
+        DBG("write early data ret=%d\n", ret);
     }
     return ret > 0 ? 0 : -1;
 }
@@ -315,14 +293,14 @@ int do_ssl_connect(TC_CONF *conf, SSL *ssl)
     do {
         ret = SSL_connect(ssl);
         if (ret == 1) {
-            printf("SSL connect succeeded\n");
+            DBG("SSL connect succeeded\n");
             break;
         }
         if (wait_for_sock_io(ssl, ret, "SSL_connect")) {
-            printf("SSL connect failed\n");
+            ERR("SSL connect failed\n");
             return -1;
         }
-        printf("Continue SSL connection\n");
+        DBG("Continue SSL connection\n");
     } while (1);
     return 0;
 }
@@ -333,21 +311,21 @@ int do_handshake(TC_CONF *conf, SSL *ssl)
     do {
         ret = SSL_do_handshake(ssl);
         if (ret == 1) {
-            printf("SSL handshake succeeded\n");
+            DBG("SSL handshake succeeded\n");
             break;
         }
         if (wait_for_sock_io(ssl, ret, "SSL_do_handshake")) {
-            printf("SSL handshake failed\n");
+            ERR("SSL handshake failed\n");
             return -1;
         }
-        printf("Continue SSL_handshake\n");
+        DBG("Continue SSL_handshake\n");
     } while (1);
     return 0;
 }
 
 int do_ssl_handshake(TC_CONF *conf, SSL *ssl)
 {
-    printf("###Doing SSL handshake\n");
+    DBG("###Doing SSL handshake\n");
     int ret;
     if (conf->server) {
         ret = do_ssl_accept(conf, ssl);
@@ -371,13 +349,13 @@ int do_ssl_read(TC_CONF *conf, SSL *ssl, const char *req, const char *res)
             break;
         }
         if (wait_for_sock_io(ssl, ret, "SSL_read")) {
-            printf("SSL read failed\n");
+            ERR("SSL read failed\n");
             return -1;
         }
     } while (1);
-    printf("SSL_read[%d] %s\n", ret, buf);
+    DBG("SSL_read[%d] %s\n", ret, buf);
     if (memcmp(buf, msg_for_cmp, strlen(msg_for_cmp))) {
-        printf("Invalid msg received\n");
+        ERR("Invalid msg received\n");
     }
     return 0;
 }
@@ -394,11 +372,11 @@ int do_ssl_write(TC_CONF *conf, SSL *ssl, const char* req, const char *res)
             break;
         }
         if (wait_for_sock_io(ssl, ret, "SSL_write")) {
-            printf("SSL write failed\n");
+            ERR("SSL write failed\n");
             return -1;
         }
     } while (1);
-    printf("SSL_write[%d] sent %s\n", ret, msg);
+    DBG("SSL_write[%d] sent %s\n", ret, msg);
     return 0;
 }
 
@@ -410,7 +388,7 @@ int do_data_transfer_client(TC_CONF *conf, SSL *ssl)
     for (i = 0; i < sizeof(msg_req)/sizeof(msg_req[0]); i++) {
         if ((do_ssl_write(conf, ssl, msg_req[i], msg_res[i]) != 0)
                 || (do_ssl_read(conf, ssl, msg_req[i], msg_res[i]) != 0)) {
-            printf("Data transfer failed\n");
+            ERR("Data transfer failed\n");
             return -1;
         }
     }
@@ -425,7 +403,7 @@ int do_data_transfer_server(TC_CONF *conf, SSL *ssl)
     for (i = 0; i < sizeof(msg_req)/sizeof(msg_req[0]); i++) {
         if ((do_ssl_read(conf, ssl, msg_req[i], msg_res[i]) != 0)
                 || (do_ssl_write(conf, ssl, msg_req[i], msg_res[i]) != 0)) {
-            printf("Data transfer failed\n");
+            ERR("Data transfer failed\n");
             return -1;
         }
     }
@@ -434,7 +412,7 @@ int do_data_transfer_server(TC_CONF *conf, SSL *ssl)
 
 int do_data_transfer(TC_CONF *conf, SSL *ssl)
 {
-    printf("### Doing Data transfer\n");
+    DBG("### Doing Data transfer\n");
     if (conf->server) {
         return do_data_transfer_server(conf, ssl);
     } else {
@@ -447,7 +425,7 @@ void do_cleanup_openssl(TC_CONF *conf, SSL_CTX *ctx, SSL *ssl)
     if (ssl) {
         SSL_free(ssl);
     }
-    check_and_close(&conf->fd);
+    close_sock_connection(&conf->test_con_fd);
     if (ctx) {
         SSL_CTX_free(ctx);
     }
@@ -462,28 +440,28 @@ int do_test_tls_connection(TC_CONF *conf)
     conf->con_count++;
     ctx = create_context_openssl(conf);
     if (!ctx) {
-        printf("SSl context creation failed\n");
+        ERR("SSl context creation failed\n");
         return -1;
     }
 
     ssl = create_ssl_object_openssl(conf, ctx);
     if (!ssl) {
-        printf("SSl context object failed\n");
+        ERR("SSl context object failed\n");
         goto err;
     }
 
     if (do_ssl_handshake(conf, ssl)) {
-        printf("SSL handshake failed\n");
+        ERR("SSL handshake failed\n");
         goto err;
     }
 
     if (do_data_transfer(conf, ssl)) {
-        printf("Data transfer over TLS failed\n");
+        ERR("Data transfer over TLS failed\n");
         goto err;
     }
-    printf("Data transfer over TLS succeeded\n");
+    DBG("Data transfer over TLS succeeded\n");
     if (do_key_update_test(conf, ssl)) {
-        printf("Key update testing failed\n");
+        ERR("Key update testing failed\n");
         goto err;
     }
     if (conf->server == 0) {
@@ -510,43 +488,43 @@ int do_test_early_data(TC_CONF *conf)
     conf->con_count++;
     ctx = create_context_openssl(conf);
     if (!ctx) {
-        printf("SSl context creation failed\n");
+        ERR("SSl context creation failed\n");
         return -1;
     }
 
     ssl = create_ssl_object_openssl(conf, ctx);
     if (!ssl) {
-        printf("SSl context object failed\n");
+        ERR("SSl context object failed\n");
         goto err;
     }
 
     if (conf->server == 0) {
         if (conf->res.sess == NULL) {
-            printf("Sess is not available for doing early data\n");
+            ERR("Sess is not available for doing early data\n");
             goto err;
         }
         SSL_set_session(ssl, conf->res.sess);
         /* On client send early data during handshake */
         /*if (do_ssl_write_early_data(conf, ssl)) {
-            printf("Write early data failed\n");
+            ERR("Write early data failed\n");
             goto err;
         }*/
         if (do_ssl_handshake(conf, ssl)) {
-            printf("SSL handshake failed\n");
+            ERR("SSL handshake failed\n");
             goto err;
         }
     } else {
         /* On server do normal handshake */
         if (do_ssl_handshake(conf, ssl)) {
-            printf("SSL handshake failed\n");
+            ERR("SSL handshake failed\n");
             goto err;
         }
     }
     if (do_data_transfer(conf, ssl)) {
-        printf("Data transfer over TLS failed\n");
+        ERR("Data transfer over TLS failed\n");
         goto err;
     }
-    printf("Data transfer over TLS succeeded\n");
+    DBG("Data transfer over TLS succeeded\n");
     ret_val = 0;
 err:
     do_cleanup_openssl(conf, ctx, ssl);
@@ -557,12 +535,9 @@ int do_test_openssl(TC_CONF *conf)
 {
     int ret_val = -1;
 
-    printf("Staring Test OpenSSL\n");
-    if (create_listen_sock(conf)) {
-        return -1;
-    }
+    DBG("Staring Test OpenSSL\n");
     if (do_openssl_init(conf)) {
-        printf("Openssl init failed\n");
+        ERR("Openssl init failed\n");
         return -1;
     }
     if (do_test_tls_connection(conf)) {

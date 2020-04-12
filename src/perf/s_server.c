@@ -134,6 +134,7 @@ void check_and_close(int *fd)
     }
     printf("Closing fd=%d\n", *fd);
     close(*fd);
+    *fd = -1;
 }
 
 int load_ca_cert(SSL_CTX *ctx, const char *ca_file)

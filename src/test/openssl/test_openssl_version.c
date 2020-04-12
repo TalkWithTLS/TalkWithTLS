@@ -59,9 +59,9 @@ int do_negotiated_version_validation(TC_CONF *conf, SSL *ssl)
     ver_should_negotiate = conf->ver_should_negotiate ?
                                 conf->ver_should_negotiate : TLS1_3_VERSION;
     if (SSL_version(ssl) != ver_should_negotiate) {
-        printf("Negotiated version=%#x, expected=%#x\n", SSL_version(ssl), ver_should_negotiate);
+        ERR("Negotiated version=%#x, expected=%#x\n", SSL_version(ssl), ver_should_negotiate);
         return -1;
     }
-    printf("Negotiated [D]TLS version=%#x\n", SSL_version(ssl));
+    DBG("Negotiated [D]TLS version=%#x\n", SSL_version(ssl));
     return 0;
 }

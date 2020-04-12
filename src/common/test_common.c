@@ -15,7 +15,7 @@ int create_udp_sock()
     int fd;
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd < 0) {
-        printf("socket creation failed, errno%d\n", errno);
+        PRINT("socket creation failed, errno%d\n", errno);
         return -1;
     }
     return fd;
@@ -29,22 +29,22 @@ int create_udp_serv_sock(const char *server_ip, uint16_t port)
 
     fd = create_udp_sock();
     if (fd < 0) {
-        printf("socket creation failed\n");
+        PRINT("socket creation failed\n");
         return -1;
     }
 
     serv_addr.sin_family = AF_INET;
     if (inet_aton(server_ip, &serv_addr.sin_addr) == 0) {
-        printf("inet_aton failed\n");
+        PRINT("inet_aton failed\n");
         goto err_handler;
     }
     serv_addr.sin_port = htons(port);
 
     if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval))) {
-        printf("set sock reuseaddr failed\n");
+        PRINT("set sock reuseaddr failed\n");
     }
     if (bind(fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr))) {
-        printf("bind failed, errno=%d\n", errno);
+        PRINT("bind failed, errno=%d\n", errno);
         goto err_handler;
     }
     return fd;
@@ -62,23 +62,23 @@ int do_tcp_connection(const char *server_ip, uint16_t port)
 
     fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0) {
-        printf("Socket creation failed\n");
+        PRINT("Socket creation failed\n");
         return -1;
     }
-    printf("Client fd=%d created\n", fd);
+    PRINT("Client fd=%d created\n", fd);
 
     serv_addr.sin_family = AF_INET;
     if (inet_aton(server_ip, &serv_addr.sin_addr) == 0) {
-        printf("inet_aton failed\n");
+        PRINT("inet_aton failed\n");
         goto err_handler;
     }
     serv_addr.sin_port = htons(port);
 
-    printf("Connecting to %s:%d...\n", server_ip, port);
+    PRINT("Connecting to %s:%d...\n", server_ip, port);
     do {
         ret = connect(fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
         if (ret) {
-            printf("Connect failed, errno=%d\n", errno);
+            PRINT("Connect failed, errno=%d\n", errno);
             goto err_handler;
         } else {
             break;
@@ -87,7 +87,7 @@ int do_tcp_connection(const char *server_ip, uint16_t port)
         usleep(TCP_CON_RETRY_WAIT_TIME_MS);
     } while (count < TCP_CON_RETRY_COUNT);
     
-    printf("TLS connection succeeded, fd=%d\n", fd);
+    PRINT("TLS connection succeeded, fd=%d\n", fd);
     return fd;
 err_handler:
     close(fd);
@@ -103,33 +103,33 @@ int do_tcp_listen(const char *server_ip, uint16_t port)
 
     lfd = socket(AF_INET, SOCK_STREAM, 0);
     if (lfd < 0) {
-        printf("Socket creation failed\n");
+        PRINT("Socket creation failed\n");
         return -1;
     }
 
     addr.sin_family = AF_INET;
     if (inet_aton(server_ip, &addr.sin_addr) == 0) {
-        printf("inet_aton failed\n");
+        PRINT("inet_aton failed\n");
         goto err_handler;
     }
     addr.sin_port = htons(port);
 
     if (setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval))) {
-        printf("set sock reuseaddr failed\n");
+        PRINT("set sock reuseaddr failed\n");
     }
     ret = bind(lfd, (struct sockaddr *)&addr, sizeof(addr));
     if (ret) {
-        printf("bind failed %s:%d\n", server_ip, port);
+        PRINT("bind failed %s:%d\n", server_ip, port);
         goto err_handler;
     }
 
-    printf("TCP listening on %s:%d...\n", server_ip, port);
+    PRINT("TCP listening on %s:%d...\n", server_ip, port);
     ret = listen(lfd, 5);
     if (ret) {
-        printf("listen failed\n");
+        PRINT("listen failed\n");
         goto err_handler;
     }
-    printf("TCP listen fd=%d\n", lfd);
+    PRINT("TCP listen fd=%d\n", lfd);
     return lfd;
 err_handler:
     close(lfd);
@@ -142,15 +142,28 @@ int do_tcp_accept(int lfd)
     socklen_t peerlen = sizeof(peeraddr);
     int cfd;
 
-    printf("Waiting for TCP connection from client...\n");
+    PRINT("Waiting for TCP connection from client on listen fd=%d...\n", lfd);
     cfd = accept(lfd, (struct sockaddr *)&peeraddr, &peerlen);
     if (cfd < 0) {
-        printf("accept failed, errno=%d\n", errno);
+        PRINT("accept failed, errno=%d\n", errno);
         return -1;
     }
 
-    printf("TCP connection accepted fd=%d\n", cfd);
+    PRINT("TCP connection accepted fd=%d\n", cfd);
     return cfd;
+}
+
+int set_receive_to(int fd, int secs)
+{
+    struct timeval tv;
+    tv.tv_sec = secs;
+    tv.tv_usec = 0;
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv) != 0) {
+        PRINT("Setting receive timeout on fd=%d failed\n", fd);
+        return -1;
+    }
+    PRINT("Set receive timeout=%dsecs on fd=%d\n", secs, fd);
+    return 0;
 }
 
 void check_and_close(int *fd)
@@ -159,8 +172,9 @@ void check_and_close(int *fd)
         return;
     }
     if (*fd == 0 || *fd == 1 || *fd == 2) {
-        printf("Trying to close fd=%d, skipping it !!!\n", *fd);
+        PRINT("Trying to close fd=%d, skipping it !!!\n", *fd);
     }
-    printf("Closing fd=%d\n", *fd);
+    PRINT("Closing fd=%d\n", *fd);
     close(*fd);
+    *fd = -1;
 }

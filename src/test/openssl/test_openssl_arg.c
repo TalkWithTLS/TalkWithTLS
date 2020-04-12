@@ -2,13 +2,23 @@
 #include <getopt.h>
 #include "test_openssl_common.h"
 #include "test_openssl_arg.h"
+#include "test_init.h"
 
 void usage()
 {
     printf("-help\n");
     printf("    - Help\n");
+    printf("-tc-automation <tc_automation_port,test_port,instance_id>\n");
+    printf("    - Listens for test command on a TCP socket on a default address [0.0.0.0:25100]\n");
+    printf("    - Value is mandatory to this option, should contain tc_automation,\n");
+    printf("      test port and an instance id.\n");
+    printf("    - If -tc-automation is used, then all other option gets ignored and "\
+                  "directly listens on TC automation TCP socket\n");
     printf("-serv\n");
     printf("    - Run as [D]TLS server\n");
+    printf("-clnt[=serv_port]\rn");
+    printf("    - Run as [D]TLS clnt\n");
+    printf("    - Value is server port to connect, which is optional\n");
     printf("-cauth\n");
     printf("    - Performs Client Cert Authentication\n");
     printf("-kex <arg>\n");
@@ -51,78 +61,118 @@ void usage()
     printf("    2 - Enable at SSL\n");
 }
 
-struct option lopts[] = {
-    {"help", no_argument, NULL, 1},
-    {"serv", optional_argument, NULL, 2},
-    {"cauth", optional_argument, NULL, 3},
-    {"kex", required_argument, NULL, 4},
-    {"nbsock", optional_argument, NULL, 5},
-    {"res", optional_argument, NULL, 6},
-    {"psk", optional_argument, NULL, 7},
-    {"ver", required_argument, NULL, 8},
-    {"kupda", required_argument, NULL, 9},
-    {"earlydata", optional_argument, NULL, 10},
-    {"infocb", no_argument, NULL, 11},
-    {"msgcb", optional_argument, NULL, 12},
-    {"memcb", optional_argument, NULL, 13},
-    {"relbuf", required_argument, NULL, 14},
+enum cmd_opt_id {
+    OPT_HELP = 1,
+    OPT_TC_AUTOMATION,
+    OPT_SERV,
+    OPT_CLNT,
+    OPT_CAUTH,
+    OPT_KEX,
+    OPT_NBSOCK,
+    OPT_RES,
+    OPT_PSK,
+    OPT_VER,
+    OPT_KUPDA,
+    OPT_EARLYDATA,
+    OPT_INFOCB,
+    OPT_MSGCB,
+    OPT_MEMCB,
+    OPT_RELBUF,
 };
 
-int parse_arg(int argc, char *argv[], TC_CONF *conf)
+struct option lopts[] = {
+    {"help", no_argument, NULL, OPT_HELP},
+    {"tc-automation", required_argument, NULL, OPT_TC_AUTOMATION},
+    {"serv", no_argument, NULL, OPT_SERV},
+    {"clnt", optional_argument, NULL, OPT_CLNT},
+    /*TODO Need to take cauth arg to use type of certs */
+    {"cauth", optional_argument, NULL, OPT_CAUTH},
+    {"kex", required_argument, NULL, OPT_KEX},
+    {"nbsock", optional_argument, NULL, OPT_NBSOCK},
+    {"res", optional_argument, NULL, OPT_RES},
+    {"psk", optional_argument, NULL, OPT_PSK},
+    {"ver", required_argument, NULL, OPT_VER},
+    {"kupda", required_argument, NULL, OPT_KUPDA},
+    {"earlydata", optional_argument, NULL, OPT_EARLYDATA},
+    {"infocb", no_argument, NULL, OPT_INFOCB},
+    {"msgcb", optional_argument, NULL, OPT_MSGCB},
+    {"memcb", optional_argument, NULL, OPT_MEMCB},
+    {"relbuf", required_argument, NULL, OPT_RELBUF},
+};
+
+/* Parses CLI argument and updates values to TC_CONF
+ * return : Returns 0 in case of successfully parsing or else -1
+ *          Special value of 1 is returned for test automation
+ *          And 2 is returned for help */
+int parse_args(int argc, char **argv, TC_CONF *conf)
 {
     int opt;
     int count = 0;
 
+    /* optind should be resetted to 0 for repeatitive calls to getoptxxx with
+     * different argv list */
+    optind = 0;
     while ((opt = getopt_long_only(argc, argv, "", lopts, NULL)) != -1) {
         count++;
         switch (opt) {
-            case 1:
+            case OPT_HELP:
                 usage();
-                return 1;
-            case 2:
+                return TWT_CLI_HELP;
+            case OPT_TC_AUTOMATION:
+                conf->test_automation = 1;
+                test_sock_addr_tc_automation(conf->taddr, optarg);
+                return TWT_START_AUTOMATION;
+            case OPT_SERV:
                 conf->server = 1;
                 break;
-            case 3:
+            case OPT_CLNT:
+                conf->server = 0;
+                test_sock_addr_port_to_connect(conf->taddr, (uint16_t)atoi(optarg));
+                break;
+            case OPT_CAUTH:
                 conf->auth |= TC_CONF_CLIENT_CERT_AUTH;
                 break;
-            case 4:
+            case OPT_KEX:
                 conf->kexch.kexch_conf = atoi(optarg);
                 break;
-            case 5:
+            case OPT_NBSOCK:
                 conf->nb_sock = 1;
                 break;
-            case 6:
+            case OPT_RES:
                 conf->res.resumption = 1;
                 break;
-            case 7:
+            case OPT_PSK:
                 conf->res.psk = 1;
                 break;
-            case 8:
+            case OPT_VER:
                 conf->max_version = atoi(optarg);
                 break;
-            case 9:
+            case OPT_KUPDA:
                 conf->ku.key_update_test = atoi(optarg);
                 break;
-            case 10:
+            case OPT_EARLYDATA:
                 conf->res.early_data = 1;
                 break;
-            case 11:
+            case OPT_INFOCB:
                 conf->cb.info_cb = 1;
                 break;
-            case 12:
+            case OPT_MSGCB:
                 conf->cb.msg_cb = 1;
                 if (optarg != NULL)
                     conf->cb.msg_cb_detailed = 1;
                 break;
-            case 13:
+            case OPT_MEMCB:
                 conf->cb.crypto_mem_cb = 1;
                 break;
-            case 14:
+            case OPT_RELBUF:
                 conf->ssl_mode.release_buf = (uint8_t)atoi(optarg);
+                break;
+            default:
+                ERR("Unknown options [%d]\n", opt);
                 break;
         }
     }
 
-    printf("Processed %d arguments successfully\n", count);
+    DBG("Processed %d arguments successfully\n", count);
     return 0;
 }

@@ -14,17 +14,17 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
     long key_len;
     unsigned char *key;
     
-    printf("Called PSK use sess cb\n");
+    DBG("Called PSK use sess cb\n");
     key = OPENSSL_hexstr2buf(conf->res.psk_key, &key_len);
     if (key == NULL) {
-        printf("hexstr2buf failed\n");
+        ERR("hexstr2buf failed\n");
         return 0;
     }
 
     /* We default to SHA-256 */
     cipher = SSL_CIPHER_find(s, g_tls13_aes256gcmsha384_id);
     if (cipher == NULL) {
-        printf("Cipher fine failed\n");
+        ERR("Cipher fine failed\n");
         OPENSSL_free(key);
         return 0;
     }
@@ -46,7 +46,7 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
 
     if ((conf->res.early_data)
             && (SSL_SESSION_set_max_early_data(usesess, 4098) != 1)) {
-        printf("Use sess cb: Enabled early data\n");
+        ERR("Use sess cb: Enabled early data\n");
         goto err;
     }
 
@@ -70,7 +70,7 @@ int tls13_psk_find_session_cb(SSL *ssl, const unsigned char *id,
     long key_len;
     const SSL_CIPHER *cipher = NULL;
 
-    printf("Called PSK find sess cb\n");
+    DBG("Called PSK find sess cb\n");
     if ((id_len != strlen(conf->res.psk_id))
             || (memcmp(id, conf->res.psk_id, id_len) != 0)) {
         *sess = NULL;
@@ -79,14 +79,14 @@ int tls13_psk_find_session_cb(SSL *ssl, const unsigned char *id,
 
     key = OPENSSL_hexstr2buf(conf->res.psk_key, &key_len);
     if (key == NULL) {
-        printf("hexstr2buf conversion failed\n");
+        ERR("hexstr2buf conversion failed\n");
         return 0;
     }
 
     /* We default to SHA256 */
     cipher = SSL_CIPHER_find(ssl, g_tls13_aes256gcmsha384_id);
     if (cipher == NULL) {
-        printf("Find cipher failed\n");
+        ERR("Find cipher failed\n");
         OPENSSL_free(key);
         return 0;
     }
@@ -109,10 +109,10 @@ int initialize_resumption_params(TC_CONF *conf, SSL_CTX *ctx)
 {
     if (conf->server) {
         SSL_CTX_set_psk_find_session_callback(ctx, tls13_psk_find_session_cb);
-        printf("Registered TLS1.3 PSK find sess cb\n");
+        DBG("Registered TLS1.3 PSK find sess cb\n");
     } else {
         SSL_CTX_set_psk_use_session_callback(ctx, tls13_psk_use_session_cb);
-        printf("Registered TLS1.3 PSK use sess cb\n");
+        DBG("Registered TLS1.3 PSK use sess cb\n");
     }
     return 0;
 }
