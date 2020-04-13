@@ -312,6 +312,7 @@ err_handler:
 #define DEFAULT_SESS_TKT_COUNT -1
 int init_conf(PERF_CONF *conf)
 {
+    memset(conf, 0, sizeof(PERF_CONF));
     if (sizeof(conf->ip) <= strlen(SERVER_IP)) {
         printf("Size of conf->ip is small [%zu]\n", sizeof(conf->ip));
         return -1;
@@ -419,7 +420,7 @@ void sig_handler(int signum)
 
 int main(int argc, char *argv[])
 {
-    PERF_CONF conf = {0};
+    PERF_CONF conf;
     int ret;
 
     signal(SIGTERM, sig_handler);

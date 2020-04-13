@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <getopt.h>
+#include <sys/time.h>
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -38,6 +39,8 @@ typedef struct perf_conf_st {
     uint32_t time_sec;
     int proto_version;
     uint32_t with_client_auth:1;
+    uint32_t time_taken_for_ssl_read:1;
+    uint32_t time_taken_by_ssl_read_us;
 }PERF_CONF;
 
 enum opt_enum {
@@ -46,6 +49,7 @@ enum opt_enum {
     CLI_PORT,
     CLI_TIME,
     CLI_CLIENT_AUTH,
+    CLI_TIME_TAKEN_FOR_SSL_READ,
     CLI_TLS1_0,
     CLI_TLS1_1,
     CLI_TLS1_2,
@@ -58,6 +62,7 @@ struct option lopts[] = {
     {"port", required_argument, NULL, CLI_PORT},
     {"time", required_argument, NULL, CLI_TIME},
     {"client-auth", no_argument, NULL, CLI_CLIENT_AUTH},
+    {"time-taken-for-read", no_argument, NULL, CLI_TIME_TAKEN_FOR_SSL_READ},
     {"tls1_0", no_argument, NULL, CLI_TLS1_0},
     {"tls1_1", no_argument, NULL, CLI_TLS1_1},
     {"tls1_2", no_argument, NULL, CLI_TLS1_2},
@@ -178,8 +183,9 @@ SSL *create_ssl_object(SSL_CTX *ctx, PERF_CONF *conf)
     return ssl;
 }
 
-int do_data_transfer(SSL *ssl)
+int do_data_transfer(SSL *ssl, PERF_CONF *conf)
 {
+    struct timeval start, end;
     const char *msg = MSG_FOR_S_TIME;
     char buf[MAX_BUF_SIZE] = {0};
     int ret;
@@ -189,7 +195,18 @@ int do_data_transfer(SSL *ssl)
         printf("SSL_write failed ret=%d\n", ret);
         return -1;
     }
+    if (conf->time_taken_for_ssl_read != 0) {
+        gettimeofday(&start, NULL);
+    }
     ret = SSL_read(ssl, buf, sizeof(buf) - 1);
+    if (conf->time_taken_for_ssl_read != 0) {
+        gettimeofday(&end, NULL);
+        //printf("Start [%lusec, %luusec], end[%lusec, %luusec]\n",
+        //        start.tv_sec, start.tv_usec, end.tv_sec, end.tv_usec);
+        conf->time_taken_by_ssl_read_us += (end.tv_usec - start.tv_usec);
+        conf->time_taken_by_ssl_read_us += (end.tv_sec - start.tv_sec) \
+                                           * 1000 * 1000;
+    }
     if (ret <= 0) {
         printf("SSL_read failed ret=%d\n", ret);
         return -1;
@@ -239,7 +256,7 @@ int do_tls_client(SSL_CTX *ctx, PERF_CONF *conf)
         goto err_handler;
     }
 
-    if (do_data_transfer(ssl)) {
+    if (do_data_transfer(ssl, conf)) {
         printf("Data transfer over TLS failed\n");
         goto err_handler;
     }
@@ -253,6 +270,7 @@ err_handler:
 #define DEFAULT_TIME_SEC 30
 int init_conf(PERF_CONF *conf)
 {
+    memset(conf, 0, sizeof(PERF_CONF));
     if (sizeof(conf->ip) <= strlen(SERVER_IP)) {
         printf("Size of conf->ip is small [%zu]\n", sizeof(conf->ip));
         return -1;
@@ -270,6 +288,7 @@ void usage()
     printf("-port           Port number to connect\n");
     printf("-time           Time to run (in second), default is 30 secs\n");
     printf("-client-auth    To perform client authentication\n");
+    printf("-time-taken-for-read To measure time taken for SSL_read\n");
     printf("-tls1_0         TLS connection with TLSv1.0\n");
     printf("-tls1_1         TLS connection with TLSv1.1\n");
     printf("-tls1_2         TLS connection with TLSv1.2\n");
@@ -287,7 +306,8 @@ int parse_cli_args(int argc, char *argv[], PERF_CONF *conf) {
                 return 1;
             case CLI_IP:
                 if (sizeof(conf->ip) <= strlen(optarg)) {
-                    printf("Size of IP passed [%zu] is much bigger\n", strlen(optarg));
+                    printf("Size of IP passed [%zu] is much bigger\n",
+                           strlen(optarg));
                     return -1;
                 }
                 strcpy(conf->ip, optarg);
@@ -304,6 +324,9 @@ int parse_cli_args(int argc, char *argv[], PERF_CONF *conf) {
                 break;
             case CLI_CLIENT_AUTH:
                 conf->with_client_auth = 1;
+                break;
+            case CLI_TIME_TAKEN_FOR_SSL_READ:
+                conf->time_taken_for_ssl_read = 1;
                 break;
             case CLI_TLS1_0:
                 conf->proto_version = TLS1_VERSION;
@@ -350,6 +373,10 @@ int do_tls_client_perf(PERF_CONF *conf)
     } while (1);
     printf("%u TLS connections in %u secs\n", count, conf->time_sec);
     printf("%u connections/sec\n", count / conf->time_sec); 
+    if (conf->time_taken_for_ssl_read != 0) {
+        printf("Average Time taken by SSL_read=%u usecs\n",
+               conf->time_taken_by_ssl_read_us / count);
+    }
     ret_val = 0;
 err:
     do_cleanup(ctx, NULL);
