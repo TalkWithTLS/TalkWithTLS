@@ -41,6 +41,7 @@ typedef struct perf_conf_st {
     uint32_t with_client_auth:1;
     uint32_t time_taken_for_ssl_read:1;
     uint32_t time_taken_by_ssl_read_us;
+    const char *ciphersuite_t13;
 }PERF_CONF;
 
 enum opt_enum {
@@ -53,7 +54,8 @@ enum opt_enum {
     CLI_TLS1_0,
     CLI_TLS1_1,
     CLI_TLS1_2,
-    CLI_TLS1_3
+    CLI_TLS1_3,
+    CLI_T13_CIPHER
 };
 
 struct option lopts[] = {
@@ -67,6 +69,7 @@ struct option lopts[] = {
     {"tls1_1", no_argument, NULL, CLI_TLS1_1},
     {"tls1_2", no_argument, NULL, CLI_TLS1_2},
     {"tls1_3", no_argument, NULL, CLI_TLS1_3},
+    {"tls13-cipher", required_argument, NULL, CLI_T13_CIPHER},
 };
 
 int do_tcp_connection(const char *server_ip, uint16_t port)
@@ -155,6 +158,10 @@ SSL_CTX *create_context(PERF_CONF *conf)
         SSL_CTX_set_max_proto_version(ctx, conf->proto_version);
     }
 
+    if (SSL_CTX_set_ciphersuites(ctx, TLS1_3_RFC_CHACHA20_POLY1305_SHA256) != 1) {
+        printf("Setting TLS1.3 cipher suite failed\n");
+        goto err_handler;
+    }
     return ctx;
 err_handler:
     SSL_CTX_free(ctx);
@@ -293,8 +300,39 @@ void usage()
     printf("-tls1_1         TLS connection with TLSv1.1\n");
     printf("-tls1_2         TLS connection with TLSv1.2\n");
     printf("-tls1_3         TLS connection with TLSv1.3\n");
+    printf("-tls13-cipher   TLS 1.3 Ciphersuite\n");
+    printf("                1301 - AES_128_GCM\n");
+    printf("                1302 - AES_256_GCM\n");
+    printf("                1303 - ChaCha20Poly1305\n");
+    printf("                1304 - AES_128_CCM\n");
+    printf("                1305 - AES_128_CCM_8\n");
     return;
 };
+
+int config_tls13_cipher(PERF_CONF *conf, const char *optarg)
+{
+    switch(atoi(optarg)) {
+    case 1301:
+        conf->ciphersuite_t13 = TLS1_3_RFC_AES_128_GCM_SHA256;
+        break;
+    case 1302:
+        conf->ciphersuite_t13 = TLS1_3_RFC_AES_256_GCM_SHA384;
+        break;
+    case 1303:
+        conf->ciphersuite_t13 = TLS1_3_RFC_CHACHA20_POLY1305_SHA256;
+        break;
+    case 1304:
+        conf->ciphersuite_t13 = TLS1_3_RFC_AES_128_CCM_SHA256;
+        break;
+    case 1305:
+        conf->ciphersuite_t13 = TLS1_3_RFC_AES_128_CCM_8_SHA256;
+        break;
+    default:
+        printf("Invalid TLS1.3 ciphersuite=%s\n", optarg);
+        return -1;
+    }
+    return 0;
+}
 
 int parse_cli_args(int argc, char *argv[], PERF_CONF *conf) {
     int opt;
@@ -339,6 +377,11 @@ int parse_cli_args(int argc, char *argv[], PERF_CONF *conf) {
                 break;
             case CLI_TLS1_3:
                 conf->proto_version = TLS1_3_VERSION;
+                break;
+            case CLI_T13_CIPHER:
+                if (config_tls13_cipher(conf, optarg) != 0) {
+                    goto err;
+                }
                 break;
         }
     }
