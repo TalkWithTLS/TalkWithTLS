@@ -55,8 +55,9 @@ int receive_n(int test_fd, char *buf, size_t buf_size)
 
 int receive_tc(TC_AUTOMATION *ta, char *buf, size_t buf_size)
 {
-    TC_CMD_HDR hdr = {0};
+    TC_CMD_HDR hdr;
     size_t payload_len;
+    memset(&hdr, 0, sizeof(hdr));
     if (receive_n(ta->test_fd, (char *)&hdr, sizeof(hdr)) != TWT_SUCCESS) {
         return TWT_FAILURE;
     }
@@ -78,8 +79,9 @@ int receive_tc(TC_AUTOMATION *ta, char *buf, size_t buf_size)
 
 int send_tc_result(TC_AUTOMATION *ta, int result_val)
 {
-    TC_CMD_RESULT result = {0};
+    TC_CMD_RESULT result;
     int ret;
+    memset(&result, 0, sizeof(result));
     result.hdr.type = TC_RESULT;
     result.hdr.len = htons(1);
     if (result_val == TWT_SUCCESS) {
