@@ -253,7 +253,10 @@ ifeq ($(GPROF),1)
 endif
 
 # Address Sanitizer flags
-SANFLAGS = -fsanitize=address -static-libasan
+SANFLAGS = -fsanitize=address
+ifeq ($(NOSTATICASAN),)
+SANFLAGS += -static-libasan
+endif
 OSSL_SANFLAGS = enable-asan
 ifeq ($(NOSAN),1)
 	SANFLAGS =
