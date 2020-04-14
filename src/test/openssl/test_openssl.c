@@ -9,10 +9,10 @@
 #include "test_conf.h"
 #include "test_init.h"
 #include "test_cmd.h"
-#include "test_openssl_common.h"
-#include "test_openssl_arg.h"
-#include "test_openssl_kexch.h"
-#include "test_openssl_auth.h"
+#include "openssl_common.h"
+#include "test_cli_arg.h"
+#include "openssl_kexch.h"
+#include "openssl_auth.h"
 
 void tc_conf_dtls(TC_CONF *conf)
 {

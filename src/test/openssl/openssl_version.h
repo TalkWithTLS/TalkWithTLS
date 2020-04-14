@@ -1,11 +1,11 @@
-#ifndef _TEST_OPENSSL_VERSION_H_
-#define _TEST_OPENSSL_VERSION_H_
+#ifndef _OPENSSL_VERSION_H_
+#define _OPENSSL_VERSION_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "test_openssl_common.h"
+#include "openssl_common.h"
 
 int ssl_ctx_version_conf(TC_CONF *conf, SSL_CTX *ctx);
 

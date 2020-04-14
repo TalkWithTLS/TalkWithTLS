@@ -1,6 +1,6 @@
 #include <unistd.h>
 #include <getopt.h>
-#include "test_openssl_arg.h"
+#include "test_cli_arg.h"
 #include "test_init.h"
 
 void usage()

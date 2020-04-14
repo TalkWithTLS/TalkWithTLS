@@ -1,4 +1,4 @@
-#include "test_openssl_ssl_mode.h"
+#include "openssl_ssl_mode.h"
 
 int ssl_ctx_mode_config(TC_CONF *conf, SSL_CTX *ssl_ctx)
 {

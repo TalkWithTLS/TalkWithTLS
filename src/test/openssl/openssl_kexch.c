@@ -1,4 +1,4 @@
-#include "test_openssl_kexch.h"
+#include "openssl_kexch.h"
 
 int ssl_kexch_config(TC_CONF *conf, SSL *ssl)
 {

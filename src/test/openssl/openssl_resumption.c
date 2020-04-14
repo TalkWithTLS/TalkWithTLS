@@ -1,4 +1,4 @@
-#include "test_openssl_resumption.h"
+#include "openssl_resumption.h"
 
 
 const unsigned char g_tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };

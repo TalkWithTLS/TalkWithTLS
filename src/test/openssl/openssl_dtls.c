@@ -1,6 +1,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include "test_openssl_dtls.h"
+#include "openssl_dtls.h"
 
 int ssl_config_dtls_bio(TC_CONF *conf, SSL *ssl)
 {

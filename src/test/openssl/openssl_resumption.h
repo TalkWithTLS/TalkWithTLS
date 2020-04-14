@@ -1,11 +1,11 @@
-#ifndef _TEST_OPENSSL_ARG_H_
-#define _TEST_OPENSSL_ARG_H_
+#ifndef _OPENSSL_ARG_H_
+#define _OPENSSL_ARG_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "test_openssl_common.h"
+#include "openssl_common.h"
 
 int initialize_resumption_params(TC_CONF *conf, SSL_CTX *ctx);
 

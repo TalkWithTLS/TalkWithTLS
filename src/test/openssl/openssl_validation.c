@@ -1,6 +1,6 @@
-#include "test_openssl_validation.h"
-#include "test_openssl_kexch.h"
-#include "test_openssl_version.h"
+#include "openssl_validation.h"
+#include "openssl_kexch.h"
+#include "openssl_version.h"
 
 int do_after_handshake_validation(TC_CONF *conf, SSL *ssl)
 {

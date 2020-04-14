@@ -1,4 +1,4 @@
-#include "test_openssl_auth.h"
+#include "openssl_auth.h"
 
 int tc_conf_auth(TC_CONF *conf)
 {

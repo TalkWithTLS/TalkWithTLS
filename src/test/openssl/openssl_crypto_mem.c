@@ -1,4 +1,4 @@
-#include "test_openssl_crypto_mem.h"
+#include "openssl_crypto_mem.h"
 
 #define MEM_SIZE_LIMIT_TO_PRINT 1000
 

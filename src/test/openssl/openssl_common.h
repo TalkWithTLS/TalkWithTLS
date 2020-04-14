@@ -1,5 +1,5 @@
-#ifndef _TEST_OPENSSL_COMMON_H_
-#define _TEST_OPENSSL_COMMON_H_
+#ifndef _OPENSSL_COMMON_H_
+#define _OPENSSL_COMMON_H_
 
 #ifdef __cplusplus
 extern "C" {

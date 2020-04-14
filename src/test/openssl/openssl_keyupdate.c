@@ -1,4 +1,4 @@
-#include "test_openssl_keyupdate.h"
+#include "openssl_keyupdate.h"
 
 int do_key_update(TC_CONF *conf, SSL *ssl, int type)
 {

@@ -1,4 +1,4 @@
-#include "test_openssl_version.h"
+#include "openssl_version.h"
 
 int ssl_ctx_version_conf(TC_CONF *conf, SSL_CTX *ctx)
 {
