@@ -1,4 +1,6 @@
 # TalkWithTLS
+[![CircleCI](https://circleci.com/gh/TalkWithTLS/TalkWithTLS.svg?style=shield)](https://circleci.com/gh/TalkWithTLS/TalkWithTLS)
+
 Sample Code for [D]TLS usage and a lot more than that.
 - It has sample code to use TLS and DTLS from OpenSSL and wolfSSL.
 - And it has a python based automated test framework using Pytest to test OpenSSL.
