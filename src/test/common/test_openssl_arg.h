@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#include "test_openssl_common.h"
+#include "test_conf.h"
 
 int parse_args(int argc, char **argv, TC_CONF *conf);
 

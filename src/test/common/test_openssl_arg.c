@@ -1,6 +1,5 @@
 #include <unistd.h>
 #include <getopt.h>
-#include "test_openssl_common.h"
 #include "test_openssl_arg.h"
 #include "test_init.h"
 
