@@ -14,6 +14,10 @@ ENV_OSSL_111_CLNT_AUTOMATION_PORT=os.environ['OSSL_111_CLNT_AUTOMATION_PORT']
 ENV_OSSL_111_SERV_AUTOMATION_PORT=os.environ['OSSL_111_SERV_AUTOMATION_PORT']
 ENV_OSSL_111_CLNT_PORT=os.environ['OSSL_111_CLNT_PORT']
 ENV_OSSL_111_SERV_PORT=os.environ['OSSL_111_SERV_PORT']
+ENV_OSSL_300_CLNT_AUTOMATION_PORT=os.environ['OSSL_300_CLNT_AUTOMATION_PORT']
+ENV_OSSL_300_SERV_AUTOMATION_PORT=os.environ['OSSL_300_SERV_AUTOMATION_PORT']
+ENV_OSSL_300_CLNT_PORT=os.environ['OSSL_300_CLNT_PORT']
+ENV_OSSL_300_SERV_PORT=os.environ['OSSL_300_SERV_PORT']
 
 TEST_RESULT_WAIT_TIME_SEC = 5.0
 
@@ -79,7 +83,11 @@ def do_test(tc_name, sarg, carg, sport, cport):
         return TC_SUCCESS
 
 def run_test(func_name, sarg, carg, flags=0):
-    carg_default = '-clnt=' + ENV_OSSL_111_SERV_PORT + ' '
-    return do_test(func_name, sarg, carg_default + carg,
+    carg_default_ossl111 = '-clnt=' + ENV_OSSL_111_SERV_PORT + ' '
+    assert do_test(func_name, sarg, carg_default_ossl111 + carg,
                    int(ENV_OSSL_111_SERV_AUTOMATION_PORT),
-                   int(ENV_OSSL_111_CLNT_AUTOMATION_PORT))
+                   int(ENV_OSSL_111_CLNT_AUTOMATION_PORT)) == TC_SUCCESS
+    carg_default_ossl300 = '-clnt=' + ENV_OSSL_300_SERV_PORT + ' '
+    assert do_test(func_name, sarg, carg_default_ossl300 + carg,
+                   int(ENV_OSSL_300_SERV_AUTOMATION_PORT),
+                   int(ENV_OSSL_300_CLNT_AUTOMATION_PORT)) == TC_SUCCESS
