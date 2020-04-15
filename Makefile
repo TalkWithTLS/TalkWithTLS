@@ -1,4 +1,4 @@
-####################################################################################################
+################################################################################
 # Configuration variables are
 # - BIN_PATH
 # - OSSL111_PATH
@@ -13,7 +13,7 @@
 # - perf_bin - To build both release and debug bin of perf
 # - perf_bin_dbg - To build only debug bins of perf
 # - perf_bin_rel - To build only release bins of perf
-####################################################################################################
+################################################################################
 SRC_DIR=src
 BIN_DIR=bin
 OBJ_DIR=obj
@@ -120,8 +120,9 @@ PERF_BIN = $(PERF_BIN_DBG) $(PERF_BIN_REL)
 # Test binaries
 TEST_COMMON_LIB = $(BIN_DIR)/libtest_common.a
 TEST_PREFIX = test
-TEST_OPENSSL_BIN=$(BIN_DIR)/$(TEST_PREFIX)$(OSSL_111_SUFFIX)
-TEST_BIN=$(TEST_COMMON_LIB) $(TEST_OPENSSL_BIN)
+TEST_OSSL_111_BIN=$(BIN_DIR)/$(TEST_PREFIX)$(OSSL_111_SUFFIX)
+TEST_OSSL_300_BIN=$(BIN_DIR)/$(TEST_PREFIX)$(OSSL_300_SUFFIX)
+TEST_BIN=$(TEST_COMMON_LIB) $(TEST_OSSL_111_BIN) $(TEST_OSSL_300_BIN)
 
 COMMON_SRC=$(SRC_DIR)/$(COMMON_DIR)
 SAMPLE_SRC=$(SRC_DIR)/$(SAMPLE_DIR)
@@ -162,8 +163,8 @@ S_SERVER_SRC=$(PERF_SRC)/$(S_SERVER).c
 S_TIME_SRC=$(PERF_SRC)/$(S_TIME).c
 
 # Test code Srcs
-TEST_COMMON_SRC=$(wildcard $(TEST_COMMON_DIR)/*.c)
-TEST_OPENSSL_SRC=$(wildcard $(TEST_OPENSSL_DIR)/*.c) $(COMM_SRC_FILES)
+TEST_COMMON_SRC=$(wildcard $(TEST_COMMON_DIR)/*.c) $(COMM_SRC_FILES)
+TEST_OPENSSL_SRC=$(wildcard $(TEST_OPENSSL_DIR)/*.c)
 
 # Common Code Objs
 COMM_OBJ=$(addprefix $(OBJ_DIR)/,$(COMM_SRC_FILES:.c=.o))
@@ -209,7 +210,10 @@ S_TIME_OSSL_300_OBJ_REL=$(addprefix $(OBJ_DIR)/,$(S_TIME_SRC:.c=$(OSSL_300_SUFFI
 
 # Test code Objs
 TEST_COMMON_OBJ=$(addprefix $(OBJ_DIR)/,$(TEST_COMMON_SRC:.c=.o))
-TEST_OPENSSL_OBJ=$(addprefix $(OBJ_DIR)/,$(TEST_OPENSSL_SRC:.c=.o))
+TEST_OSSL_111_OBJ=$(addprefix $(OBJ_DIR)/,\
+					$(TEST_OPENSSL_SRC:.c=$(OSSL_111_SUFFIX).o))
+TEST_OSSL_300_OBJ=$(addprefix $(OBJ_DIR)/,\
+					$(TEST_OPENSSL_SRC:.c=$(OSSL_300_SUFFIX).o))
 
 DEPENDENCY_DIR=dependency
 OSSL_1_1_1=openssl-1.1.1f
@@ -278,6 +282,7 @@ WOLFSSL_CFLAGS = $(CFLAGS_DBG) -I $(WOLFSSL_DIR)
 TEST_COMMON_CFLAGS = -I $(TEST_COMMON_DIR)
 TEST_OSSL_CFLAGS = -I $(TEST_COMMON_DIR) -I $(TEST_OPENSSL_DIR)
 TEST_OSSL_111_CFLAGS = $(TEST_OSSL_CFLAGS)
+TEST_OSSL_300_CFLAGS = $(TEST_OSSL_CFLAGS)
 
 LDFLAGS_DBG = $(GPROF_FLAGS)
 OSSL_LDFLAGS = -lpthread -ldl
@@ -294,6 +299,7 @@ WOLFSSL_LDFLAGS = -L $(BIN_DIR) -lwolfssl $(SANFLAGS)
 
 TEST_LDFLAGS = -L $(BIN_DIR) -ltest_common
 TEST_OSSL_111_LDFLAGS = $(TEST_LDFLAGS)
+TEST_OSSL_300_LDFLAGS = $(TEST_LDFLAGS)
 
 ifeq ($(CC),cc)
 	CC=gcc
@@ -436,9 +442,13 @@ $(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_300_SUFFIX)$(REL).o:$(PERF_SRC)/%.c \
 $(OBJ_DIR)/$(TEST_COMMON_DIR)/%.o:$(TEST_COMMON_DIR)/%.c
 	$(CC) $(CFLAGS_DBG) $(TEST_COMMON_CFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/$(TEST_OPENSSL_DIR)/%.o:$(TEST_OPENSSL_DIR)/%.c \
+$(OBJ_DIR)/$(TEST_OPENSSL_DIR)/%$(OSSL_111_SUFFIX).o:$(TEST_OPENSSL_DIR)/%.c \
 								   $(OSSL_111_LIBS_DBG)
 	$(CC) $(OSSL_111_CFLAGS_DBG) $(TEST_OSSL_111_CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/$(TEST_OPENSSL_DIR)/%$(OSSL_300_SUFFIX).o:$(TEST_OPENSSL_DIR)/%.c \
+								   $(OSSL_300_LIBS_DBG)
+	$(CC) $(OSSL_300_CFLAGS_DBG) $(TEST_OSSL_300_CFLAGS) -c $< -o $@
 
 # Sample Binaries
 $(SAMPLE_BIN_DIR)/$(OPENSSL_SAMPLE_NB_CLNT):$(OPENSSL_SAMPLE_NB_CLNT_OBJ)
@@ -582,8 +592,11 @@ $(S_TIME_OSSL_300_REL):$(S_TIME_OSSL_300_OBJ_REL) $(OSSL_300_LIBS_DBG)
 $(TEST_COMMON_LIB):$(TEST_COMMON_OBJ)
 	$(AR) r $@ $^
 
-$(TEST_OPENSSL_BIN):$(TEST_OPENSSL_OBJ)
+$(TEST_OSSL_111_BIN):$(TEST_OSSL_111_OBJ)
 	$(CC) $^ $(OSSL_111_LDFLAGS_DBG) $(TEST_OSSL_111_LDFLAGS) -o $@
+
+$(TEST_OSSL_300_BIN):$(TEST_OSSL_300_OBJ)
+	$(CC) $^ $(OSSL_300_LDFLAGS_DBG) $(TEST_OSSL_300_LDFLAGS) -o $@
 
 clean:
 	@$(RM) -rf *.o *.a
