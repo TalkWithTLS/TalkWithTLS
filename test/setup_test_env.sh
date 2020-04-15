@@ -20,11 +20,15 @@ export OSSL_300_SERV_PORT=15400
 OSSL_300_CLNT=(${OSSL_300_CLNT_AUTOMATION_PORT},${OSSL_300_CLNT_PORT})
 OSSL_300_SERV="${OSSL_300_SERV_AUTOMATION_PORT},${OSSL_300_SERV_PORT}"
 
-col_size=3
+col_size=4
 SUTS_INFO=(${TEST_OSSL_111} ${OSSL_111_CLNT} test_openssl_111_clnt
+                            ${OSSL_111_CLNT_AUTOMATION_PORT}
            ${TEST_OSSL_111} ${OSSL_111_SERV} test_openssl_111_serv
-           #${TEST_OSSL_300} ${OSSL_300_CLNT} ${TEST_OSSL_300}_clnt
-           #${TEST_OSSL_300} ${OSSL_300_SERV} ${TEST_OSSL_300}_serv
+                            ${OSSL_111_SERV_AUTOMATION_PORT}
+           ${TEST_OSSL_300} ${OSSL_300_CLNT} test_openssl_300_clnt
+                            ${OSSL_300_CLNT_AUTOMATION_PORT}
+           ${TEST_OSSL_300} ${OSSL_300_SERV} test_openssl_300_serv
+                            ${OSSL_300_SERV_AUTOMATION_PORT}
           )
 
 # Get nth row and update to 2nd arg
