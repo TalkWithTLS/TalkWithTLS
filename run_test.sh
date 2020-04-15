@@ -40,7 +40,7 @@ while [ true ]; do
             > ${REPORT_DIR}/${SUT_LOG}${ins_id}.txt 2>&1 &
         pid=$!
         echo "Spawned ${SUT_EXE} [${SUT_OPTVAL}], PID=${pid}"
-        pids+=${pid}
+        pids+=(${pid})
     fi
     echo ""
     ((row_idx++))
