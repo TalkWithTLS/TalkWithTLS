@@ -83,11 +83,21 @@ def do_test(tc_name, sarg, carg, sport, cport):
         return TC_SUCCESS
 
 def run_test(func_name, sarg, carg, flags=0):
-    carg_default_ossl111 = '-clnt=' + ENV_OSSL_111_SERV_PORT + ' '
-    assert do_test(func_name, sarg, carg_default_ossl111 + carg,
+    Connect_OSSL111_Serv = '-clnt=' + ENV_OSSL_111_SERV_PORT + ' '
+    Connect_OSSL300_Serv = '-clnt=' + ENV_OSSL_300_SERV_PORT + ' '
+    # 1. OpenSSL 1.1.1 Client vs OpenSSL 1.1.1 Server
+    assert do_test(func_name, sarg, Connect_OSSL111_Serv + carg,
                    int(ENV_OSSL_111_SERV_AUTOMATION_PORT),
                    int(ENV_OSSL_111_CLNT_AUTOMATION_PORT)) == TC_SUCCESS
-    carg_default_ossl300 = '-clnt=' + ENV_OSSL_300_SERV_PORT + ' '
-    assert do_test(func_name, sarg, carg_default_ossl300 + carg,
+    # 2. OpenSSL 3.0.0 Client vs OpenSSL 3.0.0 Server
+    assert do_test(func_name, sarg, Connect_OSSL300_Serv + carg,
                    int(ENV_OSSL_300_SERV_AUTOMATION_PORT),
+                   int(ENV_OSSL_300_CLNT_AUTOMATION_PORT)) == TC_SUCCESS
+    # 3. OpenSSL 1.1.1 Client vs OpenSSL 3.0.0 Server
+    assert do_test(func_name, sarg, Connect_OSSL300_Serv + carg,
+                   int(ENV_OSSL_300_SERV_AUTOMATION_PORT),
+                   int(ENV_OSSL_111_CLNT_AUTOMATION_PORT)) == TC_SUCCESS
+    # 4. OpenSSL 3.0.0 Client vs OpenSSL 1.1.1 Server
+    assert do_test(func_name, sarg, Connect_OSSL111_Serv + carg,
+                   int(ENV_OSSL_111_SERV_AUTOMATION_PORT),
                    int(ENV_OSSL_300_CLNT_AUTOMATION_PORT)) == TC_SUCCESS
