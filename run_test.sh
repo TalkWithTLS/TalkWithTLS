@@ -18,25 +18,42 @@ fi
 PORT=25100
 
 ins_id=0 #Instance ID
+sut_ports=()
 pids=()
 echo "Spawning SUTs..."
-./${TEST_OPENSSL} -tc-automation="${OSSL_111_CLNT},${ins_id}" \
-                    > ${REPORT_DIR}/ossl_111_clnt_${ins_id}.txt 2>&1 &
-pids+=($!)
-./${TEST_OPENSSL} -tc-automation="${OSSL_111_SERV},${ins_id}" \
-                    > ${REPORT_DIR}/ossl_111_serv_${ins_id}.txt 2>&1 &
-pids+=($!)
-for pid in "${pids[@]}"
-do
-    echo "Spawned PID ${pid}"
+
+row_idx=0
+arr=()
+while [ true ]; do
+    arr=()
+    # Get each SUT info
+    get_sut ${row_idx} arr
+    if [ -z "${arr}" ]; then
+        echo "Arr is empty"
+        break
+    else
+        # Spawn each SUT
+        SUT_EXE=${arr[0]}
+        SUT_OPTVAL=${arr[1]}
+        SUT_LOG=${arr[2]}
+        sut_ports+=(${arr[3]})
+        ./${SUT_EXE} -tc-automation="${SUT_OPTVAL},${ins_id}" \
+            > ${REPORT_DIR}/${SUT_LOG}${ins_id}.txt 2>&1 &
+        pid=$!
+        echo "Spawned SUT [${SUT_EXE}] [${SUT_OPTVAL}], PID=${pid}"
+        pids+=(${pid})
+    fi
+    echo ""
+    ((row_idx++))
 done
 
 python -m pytest ${TS} -v --maxfail=1 --html=${REPORT_DIR}/TalkWithTLS.html
 python_res=$?
 
 echo "Shutting down SUTs"
-python test/stop_sut.py ${OSSL_111_CLNT_AUTOMATION_PORT} ${ins_id}
-python test/stop_sut.py ${OSSL_111_SERV_AUTOMATION_PORT} ${ins_id}
+for sut_port in "${sut_ports[@]}"; do
+    python test/stop_sut.py ${sut_port} ${ins_id}
+done
 
 sut_res=0
 for pid in "${pids[@]}"

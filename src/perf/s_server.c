@@ -290,7 +290,7 @@ int do_tls_server(SSL_CTX *ctx, int lfd, PERF_CONF *conf)
     printf("    - KeyExch Group: %s\n",
 #ifdef WITH_OSSL_111
             OBJ_nid2sn(SSL_get_shared_group(ssl, 0))
-#elif defined WITH_OSSL_MASTER
+#elif defined WITH_OSSL_300
             OBJ_nid2sn(SSL_get_negotiated_group(ssl))
 #endif
     );

@@ -16,4 +16,4 @@ def tc_setup():
 ])
 
 def test_openssl_tls13_auth(tc_setup, sarg, carg):
-    assert run_test(inspect.stack()[0][3], sarg, carg) == TC_SUCCESS
+    run_test(inspect.stack()[0][3], sarg, carg)
