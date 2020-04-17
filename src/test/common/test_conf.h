@@ -67,6 +67,8 @@ extern "C" {
 
 #define MAX_IP_ADDR_STR     64
 
+#define MAX_CIPHER_STR_SIZE   128
+
 #define TC_AUTOMATION_IP "0.0.0.0"
 #define TC_AUTOMATION_PORT 25100
 
@@ -101,7 +103,8 @@ typedef struct test_case_conf_resumption_st {
 }TC_CONF_RESUMPTION;
 
 typedef struct test_case_kexch_st {
-    int kexch_should_neg; /* Alg ID it should be negotiation in TLS1.3 supported groups ext */
+    /* Alg ID it should be negotiation in TLS1.3 supported groups ext */
+    int kexch_should_neg;
     int kexch_groups[MAX_TLS13_KEXCH_GROUPS]; /* Used for TLS1.3 connections */
     int kexch_groups_count;
     char kexch_groups_str[MAX_KEXCH_STR];
@@ -112,6 +115,11 @@ typedef struct test_case_kexch_st {
 typedef struct test_case_ssl_mode_st {
     uint8_t release_buf;
 }TC_CONF_SSL_MODE;
+
+typedef struct test_case_config_cipher_st {
+    char ciph[MAX_CIPHER_STR_SIZE]; /* Cipher stored as OpenSSL's string */
+    char *negotiated_ciph;
+}TC_CONF_CIPHER;
 
 #define TC_CONF_KEY_UPDATE_REQ_ON_SERVER    1
 #define TC_CONF_KEY_UPDATE_REQ_ON_CLIENT    2
@@ -138,10 +146,11 @@ typedef struct test_sock_addr_st {
     uint16_t port_off;
 }TEST_SOCK_ADDR;
 
-typedef struct test_serv_fd_st{
+typedef struct test_serv_fd_st {
     int tcp_listen_fd;
     /* For DTLS server udp_serv_fd is created and assigned to con_fd */
-    /* For DTLS client con_fd is created directly before starting DTLS connection*/
+    /* For DTLS client con_fd is created directly before starting DTLS
+     * connection*/
     int udp_serv_fd;
 }TEST_SERV_FD;
 
@@ -153,11 +162,13 @@ struct test_case_conf_st {
     TEST_SOCK_ADDR *taddr;
     TEST_CON_FD test_con_fd;
     TEST_SERV_FD *test_serv_fd;
-    uint32_t test_automation:1; /* Test automation keep listens on test_fd for Test cases */
+    /* Test automation keep listens on test_fd for Test cases */
+    uint32_t test_automation:1;
     uint8_t server;
     uint32_t dtls:1;
     fini_fp fini; /* Specific fini function */
-    /* TEST_CON_FD and TEST_SERV_FD are created for TEST TLS and DTLS connections */
+    /* TEST_CON_FD and TEST_SERV_FD are created for TEST TLS and DTLS
+     * connections */
     int tcp_listen_fd;
     int fd;
     uint8_t nb_sock;
@@ -172,6 +183,7 @@ struct test_case_conf_st {
     int min_version; /*TODO Need to CLI arg for this */
     int max_version;
     int ver_should_negotiate;
+    TC_CONF_CIPHER ch;
     TC_CONF_KEXCH kexch;
     TC_CONF_RESUMPTION res;
     TC_CONF_CB cb;

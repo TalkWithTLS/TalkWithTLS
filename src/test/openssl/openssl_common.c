@@ -9,6 +9,7 @@
 #include "openssl_keyupdate.h"
 #include "openssl_dtls.h"
 #include "openssl_msg_cb.h"
+#include "openssl_cipher.h"
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -175,6 +176,11 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
         if (ssl_config_dtls_bio(conf, ssl) != 0) {
             goto err;
         }
+    }
+
+    if (ssl_ciph_config(conf, ssl) != TWT_SUCCESS) {
+        ERR("SSL Cipher config failed\n");
+        goto err;
     }
 
     if (ssl_kexch_config(conf, ssl)) {

@@ -20,6 +20,10 @@ void usage()
     printf("    - Value is server port to connect, which is optional\n");
     printf("-cauth\n");
     printf("    - Performs Client Cert Authentication\n");
+    printf("-ciph\n");
+    printf("    - Configure TLSv1.3 ciphersuite\n");
+    printf("    - Takes OpenSSL cipher string as input\n");
+    printf("    - More than one cipher are delimeted by ':'\n");
     printf("-kex <arg>\n");
     printf("    - Key Exchange group for TLS1.3\n");
     printf("    1 - All ECDHE\n");
@@ -66,6 +70,7 @@ enum cmd_opt_id {
     OPT_SERV,
     OPT_CLNT,
     OPT_CAUTH,
+    OPT_CIPH,
     OPT_KEX,
     OPT_NBSOCK,
     OPT_RES,
@@ -86,6 +91,7 @@ struct option lopts[] = {
     {"clnt", optional_argument, NULL, OPT_CLNT},
     /*TODO Need to take cauth arg to use type of certs */
     {"cauth", optional_argument, NULL, OPT_CAUTH},
+    {"ciph", required_argument, NULL, OPT_CIPH},
     {"kex", required_argument, NULL, OPT_KEX},
     {"nbsock", optional_argument, NULL, OPT_NBSOCK},
     {"res", optional_argument, NULL, OPT_RES},
@@ -130,6 +136,14 @@ int parse_args(int argc, char **argv, TC_CONF *conf)
                 break;
             case OPT_CAUTH:
                 conf->auth |= TC_CONF_CLIENT_CERT_AUTH;
+                break;
+            case OPT_CIPH:
+                if (strlen(optarg) >= sizeof(conf->ch.ciph)) {
+                    ERR("Insufficient ciph buffer to copy %zu bytes",
+                           strlen(optarg));
+                    return TWT_FAILURE;
+                }
+                strcpy(conf->ch.ciph, optarg);
                 break;
             case OPT_KEX:
                 conf->kexch.kexch_conf = atoi(optarg);
