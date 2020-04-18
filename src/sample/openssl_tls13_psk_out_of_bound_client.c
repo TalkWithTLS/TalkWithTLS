@@ -14,28 +14,6 @@
 
 #include "test_common.h"
 
-#define CAFILE1 EC256_CAFILE1
-#define CAFILE2 RAS2048_PSS_PSS_CAFILE1
-
-int load_ca_cert(SSL_CTX *ctx, const char *ca_file)
-{
-    if (SSL_CTX_load_verify_locations(ctx, ca_file, NULL) != 1) {
-        printf("Load CA cert %s failed\n", ca_file);
-        return -1;
-    }
-
-    printf("Loaded cert %s on context\n", ca_file);
-    return 0;
-}
-
-int g_kexch_groups[] = {
-    NID_X9_62_prime256v1,   /* secp256r1 */
-    NID_secp384r1,          /* secp384r1 */
-    NID_secp521r1,          /* secp521r1 */
-    NID_X25519,             /* x25519 */
-    NID_X448                /* x448 */
-};
-
 SSL_CTX *create_context()
 {
     SSL_CTX *ctx;
@@ -48,31 +26,7 @@ SSL_CTX *create_context()
 
     printf("SSL context created\n");
 
-    if (load_ca_cert(ctx, CAFILE1) || load_ca_cert(ctx, CAFILE2)) {
-        goto err_handler;
-    }
-
-    if (SSL_CTX_set_ciphersuites(ctx, TLS1_3_RFC_CHACHA20_POLY1305_SHA256) != 1) {
-        printf("Setting TLS1.3 cipher suite failed\n");
-        goto err_handler;
-    }
-    printf("Setting TLS1.3 cipher suite succeeded\n");
-
-    if (SSL_CTX_set_cipher_list(ctx, TLS1_TXT_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) != 1) {
-        printf("Setting TLS1.2 cipher suite failed\n");
-        goto err_handler;
-    }
-    printf("Setting TLS1.2 cipher suite succeeded\n");
-
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
-    SSL_CTX_set_verify_depth(ctx, 5);
-
-    printf("SSL context configurations completed\n");
-
     return ctx;
-err_handler:
-    SSL_CTX_free(ctx);
-    return NULL;
 }
 
 #define PSK_ID "Client1"
@@ -116,19 +70,11 @@ SSL *create_ssl_object(SSL_CTX *ctx)
 
     SSL_set_fd(ssl, fd);
 
-    if (SSL_set1_groups(ssl, g_kexch_groups, sizeof(g_kexch_groups)/sizeof(g_kexch_groups[0])) != 1) {
-        printf("Set Groups failed\n");
-        goto err_handler;
-    }
-
     SSL_set_psk_client_callback(ssl, tls13_psk_out_of_bound_cb);
 
     printf("SSL object creation finished\n");
 
     return ssl;
-err_handler:
-    SSL_free(ssl);
-    return NULL;
 }
 
 int do_data_transfer(SSL *ssl)
