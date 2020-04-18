@@ -275,7 +275,9 @@ endif
 # Address Sanitizer flags
 SANFLAGS = -fsanitize=address
 ifeq ($(NOSTATICASAN),)
-SANFLAGS += -static-libasan
+	ifeq ($(CLANG),)
+		SANFLAGS += -static-libasan
+	endif
 endif
 OSSL_SANFLAGS = enable-asan
 ifeq ($(NOSAN),1)

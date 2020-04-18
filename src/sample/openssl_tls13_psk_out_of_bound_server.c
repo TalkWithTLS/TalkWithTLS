@@ -14,17 +14,6 @@
 
 #include "test_common.h"
 
-#define SERVER_CERT_FILE EC256_SERVER_CERT_FILE
-#define SERVER_KEY_FILE EC256_SERVER_KEY_FILE
-
-int g_kexch_groups[] = {
-    NID_X9_62_prime256v1,   /* secp256r1 */
-    NID_secp384r1,          /* secp384r1 */
-    NID_secp521r1,          /* secp521r1 */
-    NID_X25519,             /* x25519 */
-    NID_X448                /* x448 */
-};
-
 SSL_CTX *create_context()
 {
     SSL_CTX *ctx;
@@ -36,27 +25,7 @@ SSL_CTX *create_context()
     }
 
     printf("SSL context created\n");
-
-    if (SSL_CTX_use_certificate_file(ctx, SERVER_CERT_FILE, SSL_FILETYPE_PEM) != 1) {
-        printf("Load Server cert %s failed\n", SERVER_CERT_FILE);
-        goto err_handler;
-    }
-
-    printf("Loaded server cert %s on context\n", SERVER_CERT_FILE);
-
-    if (SSL_CTX_use_PrivateKey_file(ctx, SERVER_KEY_FILE, SSL_FILETYPE_ASN1) != 1) {
-        printf("Load Server key %s failed\n", SERVER_KEY_FILE);
-        goto err_handler;
-    }
-
-    printf("Loaded server key %s on context\n", SERVER_KEY_FILE);
-
-    printf("SSL context configurations completed\n");
-
     return ctx;
-err_handler:
-    SSL_CTX_free(ctx);
-    return NULL;
 }
 
 #define PSK_ID "Client1"
@@ -98,20 +67,9 @@ SSL *create_ssl_object(SSL_CTX *ctx, int lfd)
     }
 
     SSL_set_fd(ssl, fd);
-
-    if (SSL_set1_groups(ssl, g_kexch_groups, sizeof(g_kexch_groups)/sizeof(g_kexch_groups[0])) != 1) {
-        printf("Set Groups failed\n");
-        goto err_handler;
-    }
-
     SSL_set_psk_server_callback(ssl, tls13_psk_out_of_bound_serv_cb);
-
     printf("SSL object creation finished\n");
-
     return ssl;
-err_handler:
-    SSL_free(ssl);
-    return NULL;
 }
 
 int do_data_transfer(SSL *ssl)

@@ -107,7 +107,7 @@ int tls12_client()
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
-    int fd;
+    int fd = -1;
     int ret;
 
     ctx = create_context();
