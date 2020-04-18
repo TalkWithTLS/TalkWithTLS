@@ -103,7 +103,7 @@ int do_sign_verify(int alg_nid, const char *cert_file, const char *priv_file, in
     size_t sign_len;
     char data[] = "abcdefghijabcdefghij";
     long finish_time;
-    uint32_t count;
+    uint32_t count = 0;
 
     if ((ed_pub_key = get_pub_key(cert_file)) == NULL)
         goto err;
@@ -158,7 +158,7 @@ int do_rand(int secs)
 {
     long finish_time;
     uint8_t data[RAND_SIZE] = {0};
-    uint32_t count;
+    uint32_t count = 0;
     int ret;
 
     finish_time = time(NULL) + secs;
