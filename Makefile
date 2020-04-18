@@ -59,6 +59,8 @@ OPENSSL_T13RESUMPTION_CLNT = openssl_tls13_resumption_client
 OPENSSL_T13RESUMPTION_SERV = openssl_tls13_resumption_server
 OPENSSL_T13_PSK_CLNT = openssl_tls13_psk_out_of_bound_client
 OPENSSL_T13_PSK_SERV = openssl_tls13_psk_out_of_bound_server
+BSSL_T13_PSK_CLNT = boringssl_tls13_psk_out_of_bound_client
+BSSL_T13_PSK_SERV = boringssl_tls13_psk_out_of_bound_server
 WOLFSSL_T13_SERV_SAMPLE = wolfssl_tls13_server
 WOLFSSL_T13_CLNT_SAMPLE = wolfssl_tls13_client
 
@@ -86,6 +88,8 @@ SAMPLE_BIN=$(SAMPLE_BIN_DIR)/$(OPENSSL_SAMPLE_NB_CLNT) \
 	$(SAMPLE_BIN_DIR)/$(OPENSSL_T13RESUMPTION_SERV) \
 	$(SAMPLE_BIN_DIR)/$(OPENSSL_T13_PSK_CLNT) \
 	$(SAMPLE_BIN_DIR)/$(OPENSSL_T13_PSK_SERV) \
+	$(SAMPLE_BIN_DIR)/$(BSSL_T13_PSK_CLNT) \
+	$(SAMPLE_BIN_DIR)/$(BSSL_T13_PSK_SERV) \
 	$(SAMPLE_BIN_DIR)/$(WOLFSSL_T13_SERV_SAMPLE) \
 	$(SAMPLE_BIN_DIR)/$(WOLFSSL_T13_CLNT_SAMPLE)
 
@@ -165,6 +169,9 @@ OPENSSL_T13_PSK_CLNT_SRC=$(SAMPLE_SRC)/$(OPENSSL_T13_PSK_CLNT).c \
 OPENSSL_T13_PSK_SERV_SRC=$(SAMPLE_SRC)/$(OPENSSL_T13_PSK_SERV).c \
 						 $(COMM_SRC_FILES)
 
+BSSL_T13_PSK_CLNT_SRC=$(SAMPLE_SRC)/$(BSSL_T13_PSK_CLNT).c $(COMM_SRC_FILES)
+BSSL_T13_PSK_SERV_SRC=$(SAMPLE_SRC)/$(BSSL_T13_PSK_SERV).c $(COMM_SRC_FILES)
+
 # Perf Code Srcs
 SPEED_SRC=$(PERF_SRC)/$(SPEED).c
 S_SERVER_SRC=$(PERF_SRC)/$(S_SERVER).c
@@ -205,6 +212,9 @@ OPENSSL_T13_PSK_CLNT_OBJ=$(addprefix $(OBJ_DIR)/,\
 						 $(OPENSSL_T13_PSK_CLNT_SRC:.c=.o))
 OPENSSL_T13_PSK_SERV_OBJ=$(addprefix $(OBJ_DIR)/,\
 						 $(OPENSSL_T13_PSK_SERV_SRC:.c=.o))
+
+BSSL_T13_PSK_CLNT_OBJ=$(addprefix $(OBJ_DIR)/,$(BSSL_T13_PSK_CLNT_SRC:.c=.o))
+BSSL_T13_PSK_SERV_OBJ=$(addprefix $(OBJ_DIR)/,$(BSSL_T13_PSK_SERV_SRC:.c=.o))
 
 # Perf Code Objs
 SPEED_OSSL_111_OBJ_DBG=$(addprefix $(OBJ_DIR)/,$(SPEED_SRC:.c=$(OSSL_111_SUFFIX)$(DBG).o))
@@ -261,9 +271,9 @@ WOLFSSL_DIR=$(DEPENDENCY_DIR)/$(WOLFSSL_MASTER)
 WOLFSSL_LIBS=$(WOLFSSL_DIR)/src/.libs/libwolfssl.so
 WOLFSSL_LIBS_COPY=$(BIN_DIR)/libwolfssl.so
 
-BSSL_CHROMIUM=boringssl_chromium
-BSSL_CHROMIUM_DIR=$(DEPENDENCY_DIR)/$(BSSL_CHROMIUM)
-BSSL_CHROMIUM_LIBS=$(BSSL_CHROMIUM)/build/ssl/libssl.a
+BSSL_MASTER=boringssl-master
+BSSL_MASTER_DIR=$(DEPENDENCY_DIR)/$(BSSL_MASTER)
+BSSL_MASTER_LIBS_DBG=$(BSSL_MASTER)/build_dbg/ssl/libssl.a
 
 # Gprofile flags
 GPROF_FLAGS =
@@ -292,7 +302,9 @@ OSSL_111_CFLAGS_DBG = $(CFLAGS_DBG) -I $(OSSL_1_1_1_DIR)/include -DWITH_OSSL -DW
 OSSL_111_CFLAGS_REL = $(CFLAGS_REL) -I $(OSSL_1_1_1_DIR_REL)/include -DWITH_OSSL -DWITH_OSSL_111
 OSSL_300_CFLAGS_DBG = $(CFLAGS_DBG) -I $(OSSL_300_DIR)/include -DWITH_OSSL -DWITH_OSSL_300
 OSSL_300_CFLAGS_REL = $(CFLAGS_REL) -I $(OSSL_300_DIR_REL)/include -DWITH_OSSL -DWITH_OSSL_300
+BSSL_MASTER_CFLAGS_DBG = $(CFLAGS_DBG) -I $(BSSL_MASTER_DIR)/include
 WOLFSSL_CFLAGS = $(CFLAGS_DBG) -I $(WOLFSSL_DIR)
+
 TEST_COMMON_CFLAGS = -I $(TEST_COMMON_DIR)
 TEST_OSSL_CFLAGS = -I $(TEST_COMMON_DIR) -I $(TEST_OPENSSL_DIR)
 TEST_OSSL_111_CFLAGS = $(TEST_OSSL_CFLAGS)
@@ -300,14 +312,24 @@ TEST_OSSL_300_CFLAGS = $(TEST_OSSL_CFLAGS)
 
 LDFLAGS_DBG = $(GPROF_FLAGS)
 OSSL_LDFLAGS = -lpthread -ldl
-OSSL_111_LDFLAGS_DBG = $(LDFLAGS_DBG) $(OSSL_1_1_1_DIR)/libssl.a $(OSSL_1_1_1_DIR)/libcrypto.a \
+OSSL_111_LDFLAGS_DBG = $(LDFLAGS_DBG) $(OSSL_1_1_1_DIR)/libssl.a \
+					   $(OSSL_1_1_1_DIR)/libcrypto.a \
 					   $(OSSL_LDFLAGS) $(SANFLAGS)
-OSSL_111_LDFLAGS_REL = $(OSSL_1_1_1_DIR_REL)/libssl.a $(OSSL_1_1_1_DIR_REL)/libcrypto.a \
+OSSL_111_LDFLAGS_REL = $(OSSL_1_1_1_DIR_REL)/libssl.a \
+					   $(OSSL_1_1_1_DIR_REL)/libcrypto.a \
 					   $(OSSL_LDFLAGS)
-OSSL_300_LDFLAGS_DBG = $(LDFLAGS_DBG) $(OSSL_300_DIR)/libssl.a $(OSSL_300_DIR)/libcrypto.a \
-						  $(OSSL_LDFLAGS) $(SANFLAGS)
-OSSL_300_LDFLAGS_REL = $(OSSL_300_DIR_REL)/libssl.a $(OSSL_300_DIR_REL)/libcrypto.a \
-						  $(OSSL_LDFLAGS)
+OSSL_300_LDFLAGS_DBG = $(LDFLAGS_DBG) $(OSSL_300_DIR)/libssl.a \
+					   $(OSSL_300_DIR)/libcrypto.a \
+					   $(OSSL_LDFLAGS) $(SANFLAGS)
+OSSL_300_LDFLAGS_REL = $(OSSL_300_DIR_REL)/libssl.a \
+					   $(OSSL_300_DIR_REL)/libcrypto.a \
+					   $(OSSL_LDFLAGS)
+
+BSSL_LDFLAGS = -lpthread
+BSSL_MASTER_LDFLAGS_DBG = $(LDFLAGS_DBG) \
+						  $(BSSL_MASTER_DIR)/build_dbg/ssl/libssl.a \
+						  $(BSSL_MASTER_DIR)/build_dbg/crypto/libcrypto.a \
+						  $(BSSL_LDFLAGS) $(SANFLAGS)
 
 WOLFSSL_LDFLAGS = -L $(BIN_DIR) -lwolfssl $(SANFLAGS)
 
@@ -409,11 +431,12 @@ $(WOLFSSL_LIBS_COPY):$(WOLFSSL_LIBS)
 	@cp $(WOLFSSL_LIBS)* $(BIN_DIR)
 	@echo ""
 
-$(BSSL_CHROMIUM_LIBS):
-	@echo "Building $(BSSL_CHROMIUM)..."
-	@mkdir -p $(BSSL_CHROMIUM_DIR)/build
-	@cd $(DEPENDENCY_DIR) && tar -zxvf $(BSSL_CHROMIUM).tar.gz -C $(BSSL_CHROMIUM) > /dev/null
-	@cd $(BSSL_CHROMIUM_DIR)/build && cmake .. > /dev/null && $(MAKE) > /dev/null
+$(BSSL_MASTER_LIBS_DBG):
+	@echo "Building $(BSSL_MASTER)..."
+	@mkdir -p $(BSSL_MASTER_DIR)/build_dbg
+	@cd $(BSSL_MASTER_DIR)/build_dbg \
+		&& cmake -DCMAKE_BUILD_TYPE=Debug .. > /dev/null \
+		&& $(MAKE)
 
 init_task:
 	@mkdir -p $(BIN_DIR)
@@ -436,6 +459,10 @@ $(OBJ_DIR)/$(SAMPLE_SRC)/$(OPENSSL)%.o:$(SAMPLE_SRC)/$(OPENSSL)%.c \
 $(OBJ_DIR)/$(SAMPLE_SRC)/$(WOLFSSL)%.o:$(SAMPLE_SRC)/$(WOLFSSL)%.c \
 							           $(WOLFSSL_LIBS_COPY)
 	$(CC) $(WOLFSSL_CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/$(SAMPLE_SRC)/$(BORINGSSL)%.o:$(SAMPLE_SRC)/$(BORINGSSL)%.c \
+							           $(BSSL_MASTER_LIBS_DBG)
+	$(CC) $(BSSL_MASTER_CFLAGS_DBG) -c $< -o $@
 
 $(OBJ_DIR)/$(PERF_SRC)/%$(OSSL_111_SUFFIX)$(DBG).o:$(PERF_SRC)/%.c \
 				                                   $(OSSL_111_LIBS_DBG)
@@ -553,6 +580,14 @@ $(SAMPLE_BIN_DIR)/$(OPENSSL_T12_VERF_CB_SERV):$(OPENSSL_T12_VERF_CB_SERV_OBJ)
 	$(CC) $^ $(OSSL_111_LDFLAGS_DBG) -o $@
 	@echo ""
 
+$(SAMPLE_BIN_DIR)/$(BSSL_T13_PSK_SERV):$(BSSL_T13_PSK_SERV_OBJ)
+	$(CC) $^ $(BSSL_MASTER_LDFLAGS_DBG) -o $@
+	@echo ""
+
+$(SAMPLE_BIN_DIR)/$(BSSL_T13_PSK_CLNT):$(BSSL_T13_PSK_CLNT_OBJ)
+	$(CC) $^ $(BSSL_MASTER_LDFLAGS_DBG) -o $@
+	@echo ""
+
 $(SAMPLE_BIN_DIR)/$(WOLFSSL_T13_SERV_SAMPLE):$(WOLFSSL_T13_SERV_SAMPLE_OBJ)
 	$(CC) $^ $(WOLFSSL_LDFLAGS) -o $@
 	@echo ""
@@ -641,3 +676,6 @@ clobber: clean
 	@echo "Cleaning $(WOLFSSL_DIR)..."
 	@if [ -f $(WOLFSSL_DIR)/Makefile ]; then \
 		cd $(WOLFSSL_DIR) && $(MAKE) clean > /dev/null; fi
+	@echo "Cleaning $(BSSL_MASTER_DIR)..."
+	@if [ -d $(BSSL_MASTER_DIR)/build_* ]; then \
+		rm -rf $(BSSL_MASTER_DIR)/build_*
