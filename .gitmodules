@@ -7,3 +7,6 @@
 [submodule "dependency/openssl-master-rel"]
 	path = dependency/openssl-master-rel
 	url = https://github.com/openssl/openssl
+[submodule "dependency/boringssl-master"]
+	path = dependency/boringssl-master
+	url = https://boringssl.googlesource.com/boringssl/
