@@ -16,21 +16,14 @@
 
 #define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
 
-int g_kexch_groups[] = {
-    NID_secp521r1,          /* secp521r1 */
-    NID_X9_62_prime256v1,   /* secp256r1 */
-    NID_secp384r1,          /* secp384r1 */
-    NID_X25519,             /* x25519 */
-    NID_X448                /* x448 */
-};
-
+#if 0
 SSL_SESSION *g_prev_sess = NULL;
 uint8_t g_ssl_sess_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
 
 int g_conf_tlsver;
 
-int tls13_use_sess_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id, size_t *idlen,
-                                                                        SSL_SESSION **sess)
+int tls13_use_sess_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
+                      size_t *idlen, SSL_SESSION **sess)
 {
     const unsigned char *sess_id;
     uint32_t sess_id_len = 0;
@@ -67,6 +60,8 @@ void update_ver(SSL_CTX *ctx)
     }
 }
 
+#endif
+
 SSL_CTX *create_context()
 {
     SSL_CTX *ctx;
@@ -79,7 +74,7 @@ SSL_CTX *create_context()
 
     printf("SSL context created\n");
 
-    update_ver(ctx);
+    //update_ver(ctx);
 
     if (SSL_CTX_load_verify_locations(ctx, CAFILE1, NULL) != 1) {
         printf("Load CA cert failed\n");
@@ -117,18 +112,8 @@ SSL *create_ssl_object(SSL_CTX *ctx)
     }
 
     SSL_set_fd(ssl, fd);
-
-    if (SSL_set1_groups(ssl, g_kexch_groups, sizeof(g_kexch_groups)/sizeof(g_kexch_groups[0])) != 1) {
-        printf("Set Groups failed\n");
-        goto err_handler;
-    }
-
     printf("SSL object creation finished\n");
-
     return ssl;
-err_handler:
-    SSL_free(ssl);
-    return NULL;
 }
 
 int do_data_transfer(SSL *ssl)
@@ -156,6 +141,7 @@ int do_data_transfer(SSL *ssl)
     return 0;
 }
 
+#if 0
 int update_for_sess_resumption(SSL *ssl, SSL_SESSION *prev_sess)
 {
     if (SSL_SESSION_get_protocol_version(prev_sess) < TLS1_3_VERSION) {
@@ -176,6 +162,7 @@ int update_for_sess_resumption(SSL *ssl, SSL_SESSION *prev_sess)
     }
     return 0;
 }
+#endif
 
 int validate_sess_resumption(SSL *ssl, int *check_sess_reused)
 {
@@ -214,10 +201,12 @@ int tls13_client(int con_count)
 
         fd = SSL_get_fd(ssl);
 
-        if (prev_sess) {
-            if (update_for_sess_resumption(ssl, prev_sess)) {
+        if (prev_sess != NULL) {
+            /*if (update_for_sess_resumption(ssl, prev_sess)) {
                 goto err_handler;
-            }
+            }*/
+            SSL_set_session(ssl, prev_sess);
+            SSL_SESSION_free(prev_sess);
             prev_sess = NULL;
             check_sess_reused = 1;
         }
@@ -255,15 +244,9 @@ int tls13_client(int con_count)
 
     ret_val = 0;
 err_handler:
-    if (ssl) {
-        SSL_free(ssl);
-    }
-    if (g_prev_sess) {
-        SSL_SESSION_free(g_prev_sess);
-    }
-    if (prev_sess) {
-        SSL_SESSION_free(prev_sess);
-    }
+    SSL_free(ssl);
+    //SSL_SESSION_free(g_prev_sess);
+    SSL_SESSION_free(prev_sess);
     SSL_CTX_free(ctx);
     close(fd);
     return ret_val;
@@ -271,12 +254,12 @@ err_handler:
 
 int main(int argc, char *argv[])
 {
-    if (argc > 1) {
+    /*if (argc > 1) {
         g_conf_tlsver = atoi(argv[1]);
-    }
+    }*/
     printf("OpenSSL version: %s, %s\n", OpenSSL_version(OPENSSL_VERSION), OpenSSL_version(OPENSSL_BUILT_ON));
     if (tls13_client(2)) {
-        printf("TLS12 client connection failed\n");
+        printf("TLS13 client connection failed\n");
         return -1;
     }
     return 0;
