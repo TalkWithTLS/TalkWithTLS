@@ -341,7 +341,8 @@ int speed_sym_alg(SPEED_CONF *conf)
 
 int main(int argc, char *argv[])
 {
-    SPEED_CONF conf = {0};
+    SPEED_CONF conf;
+    memset(&conf, 0, sizeof(conf));
     //return do_sign_verify(NID_ED25519, ED25519_CERT, ED25519_PRIV, secs);
     //return do_sign_verify(NID_X9_62_prime256v1, EC256_CERT, EC256_PRIV, secs);
     //return do_rand(secs);
