@@ -445,6 +445,8 @@ $(WOLFSSL_LIBS_COPY):$(WOLFSSL_LIBS)
 
 $(BSSL_MASTER_LIBS_DBG):
 	@echo "Building $(BSSL_MASTER)..."
+	@if [ ! -f $(BSSL_MASTER)/.gitignore ]; then \
+		cd $(DEPENDENCY_DIR) && tar -zxvf $(BSSL_MASTER).tar.gz > /dev/null; fi
 	@mkdir -p $(BSSL_MASTER_DIR)/build_dbg
 	@cd $(BSSL_MASTER_DIR)/build_dbg \
 		&& cmake -DCMAKE_BUILD_TYPE=Debug .. > /dev/null \
