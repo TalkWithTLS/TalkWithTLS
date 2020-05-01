@@ -700,4 +700,4 @@ clobber: clean
 		cd $(WOLFSSL_DIR) && $(MAKE) clean > /dev/null; fi
 	@echo "Cleaning $(BSSL_MASTER_DIR)..."
 	@if [ -d $(BSSL_MASTER_DIR)/build_* ]; then \
-		rm -rf $(BSSL_MASTER_DIR)/build_*
+		rm -rf $(BSSL_MASTER_DIR)/build_* > /dev/null; fi
