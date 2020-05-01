@@ -450,7 +450,7 @@ $(BSSL_MASTER_LIBS_DBG):
 	@mkdir -p $(BSSL_MASTER_DIR)/build_dbg
 	@cd $(BSSL_MASTER_DIR)/build_dbg \
 		&& cmake -DCMAKE_BUILD_TYPE=Debug .. > /dev/null \
-		&& $(MAKE)
+		&& $(MAKE) > /dev/null
 
 init_task:
 	@mkdir -p $(BIN_DIR)
