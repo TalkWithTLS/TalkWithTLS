@@ -92,7 +92,7 @@ typedef struct test_case_conf_cb_st {
 
 typedef struct test_case_conf_resumption_st {
     void *sess;
-    uint8_t resumption;
+    uint32_t resumption:1;
     uint8_t psk;
     char psk_id[TEST_MAX_PSK_ID];
     uint16_t psk_id_len;

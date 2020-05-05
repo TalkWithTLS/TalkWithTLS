@@ -273,14 +273,6 @@ int do_ssl_accept(TC_CONF *conf, SSL *ssl)
         }
         DBG("Continue SSL accept\n");
     } while (1);
-    if (conf->res.resumption) { //TODO Need to improve this check for TLS1.2 resumption also
-        if (SSL_session_reused(ssl)) {
-            DBG("SSL session reused\n");
-        } else {
-            DBG("SSL session not reused\n");
-            return -1;
-        }
-    }
     return 0;
 }
 
@@ -290,6 +282,7 @@ int do_ssl_write_early_data(TC_CONF *conf, SSL *ssl)
     size_t sent = 0;
     int ret = 0;
     if ((conf->res.early_data != 1) && (conf->res.early_data_sent == 0)) {
+        DBG("###Doing Early Data send\n");
         ret = SSL_write_early_data(ssl, msg, strlen(msg), &sent);
         DBG("write early data ret=%d\n", ret);
     }
@@ -485,16 +478,17 @@ err:
     return ret_val;
 }
 
-int do_test_early_data(TC_CONF *conf)
+int do_resumption(TC_CONF *conf)
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
 
-    if (conf->res.early_data == 0) {
+    if (conf->res.resumption == 0) {
         return 0;
     }
 
+    DBG("###Doing Resumption\n");
     conf->con_count++;
     ctx = create_context_openssl(conf);
     if (!ctx) {
@@ -510,11 +504,11 @@ int do_test_early_data(TC_CONF *conf)
 
     if (conf->server == 0) {
         if (conf->res.sess == NULL) {
-            ERR("Sess is not available for doing early data\n");
+            ERR("Sess is not available for doing resumption\n");
             goto err;
         }
         SSL_set_session(ssl, conf->res.sess);
-        /* On client send early data during handshake */
+        /* TODO On client send early data during handshake */
         /*if (do_ssl_write_early_data(conf, ssl)) {
             ERR("Write early data failed\n");
             goto err;
@@ -530,6 +524,15 @@ int do_test_early_data(TC_CONF *conf)
             goto err;
         }
     }
+    /* TODO enable this check
+    if (conf->res.resumption) {
+        if (SSL_session_reused(ssl)) {
+            DBG("SSL session reused\n");
+        } else {
+            ERR("SSL session not reused\n");
+            goto err;
+        }
+    }*/
     if (do_data_transfer(conf, ssl)) {
         ERR("Data transfer over TLS failed\n");
         goto err;
@@ -553,7 +556,7 @@ int do_test_openssl(TC_CONF *conf)
     if (do_test_tls_connection(conf)) {
         goto err;
     }
-    if (do_test_early_data(conf)) {
+    if (do_resumption(conf)) {
         goto err;
     }
     ret_val = 0;

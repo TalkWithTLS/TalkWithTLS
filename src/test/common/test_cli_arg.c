@@ -164,6 +164,7 @@ int parse_args(int argc, char **argv, TC_CONF *conf)
                 conf->ku.key_update_test = atoi(optarg);
                 break;
             case OPT_EARLYDATA:
+                conf->res.resumption = 1;
                 conf->res.early_data = 1;
                 break;
             case OPT_INFOCB:
