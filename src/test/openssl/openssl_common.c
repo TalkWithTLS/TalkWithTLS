@@ -425,30 +425,24 @@ int do_data_transfer(TC_CONF *conf, SSL *ssl)
 
 void do_cleanup_openssl(TC_CONF *conf, SSL_CTX *ctx, SSL *ssl)
 {
-    if (ssl) {
-        SSL_free(ssl);
-    }
+    SSL_free(ssl);
     close_sock_connection(&conf->test_con_fd);
-    if (ctx) {
-        SSL_CTX_free(ctx);
-    }
+    SSL_CTX_free(ctx);
 }
 
-int do_test_tls_connection(TC_CONF *conf)
+int do_test_tls_connection(TC_CONF *conf, SSL_CTX **out_ctx)
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
 
     conf->con_count++;
-    ctx = create_context_openssl(conf);
-    if (!ctx) {
+    if ((ctx = create_context_openssl(conf)) == NULL) {
         ERR("SSl context creation failed\n");
         return -1;
     }
 
-    ssl = create_ssl_object_openssl(conf, ctx);
-    if (!ssl) {
+    if ((ssl = create_ssl_object_openssl(conf, ctx)) == NULL) {
         ERR("SSl context object failed\n");
         goto err;
     }
@@ -467,9 +461,17 @@ int do_test_tls_connection(TC_CONF *conf)
         ERR("Key update testing failed\n");
         goto err;
     }
-    if (conf->server == 0) {
-        /* Store SSL session for resumption */
-        conf->res.sess = SSL_get1_session(ssl);
+    if (conf->res.resumption == 1) {
+        if (conf->server == 1) {
+            *out_ctx = ctx;
+            ctx = NULL;
+        } else {
+            /* Store SSL session for resumption */
+            /* TODO Add TC to get session after handshake
+             * before shutdown
+             * after shutdown */
+            conf->res.sess = SSL_get1_session(ssl);
+        }
     }
     SSL_shutdown(ssl);
     ret_val = 0;
@@ -478,9 +480,9 @@ err:
     return ret_val;
 }
 
-int do_resumption(TC_CONF *conf)
+int do_resumption(TC_CONF *conf, SSL_CTX *in_ctx)
 {
-    SSL_CTX *ctx;
+    SSL_CTX *ctx = in_ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
 
@@ -490,14 +492,14 @@ int do_resumption(TC_CONF *conf)
 
     DBG("###Doing Resumption\n");
     conf->con_count++;
-    ctx = create_context_openssl(conf);
-    if (!ctx) {
-        ERR("SSl context creation failed\n");
-        return -1;
+    if (ctx == NULL) {
+        if ((ctx = create_context_openssl(conf)) == NULL) {
+            ERR("SSL context creation failed\n");
+            return -1;
+        }
     }
 
-    ssl = create_ssl_object_openssl(conf, ctx);
-    if (!ssl) {
+    if ((ssl = create_ssl_object_openssl(conf, ctx)) == NULL) {
         ERR("SSl context object failed\n");
         goto err;
     }
@@ -524,15 +526,14 @@ int do_resumption(TC_CONF *conf)
             goto err;
         }
     }
-    /* TODO enable this check
     if (conf->res.resumption) {
         if (SSL_session_reused(ssl)) {
-            DBG("SSL session reused\n");
+            DBG("###SSL session reused\n");
         } else {
             ERR("SSL session not reused\n");
             goto err;
         }
-    }*/
+    }
     if (do_data_transfer(conf, ssl)) {
         ERR("Data transfer over TLS failed\n");
         goto err;
@@ -546,6 +547,7 @@ err:
 
 int do_test_openssl(TC_CONF *conf)
 {
+    SSL_CTX *ctx = NULL;
     int ret_val = -1;
 
     DBG("Staring Test OpenSSL\n");
@@ -553,10 +555,10 @@ int do_test_openssl(TC_CONF *conf)
         ERR("Openssl init failed\n");
         return -1;
     }
-    if (do_test_tls_connection(conf)) {
+    if (do_test_tls_connection(conf, &ctx)) {
         goto err;
     }
-    if (do_resumption(conf)) {
+    if (do_resumption(conf, ctx)) {
         goto err;
     }
     ret_val = 0;
