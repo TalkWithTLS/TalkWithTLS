@@ -16,12 +16,6 @@ def tc_setup():
     (' -serv -nbsock ', ' -nbsock '),
 ])
 
-def test_openssl_basic(tc_setup, sarg, carg):
+def test_t13_basic(tc_setup, sarg, carg):
     run_test(inspect.stack()[0][3], sarg, carg)
 
-@pytest.mark.parametrize("sarg, carg", [
-    (' -serv -psk -msgcb ', ' -psk -msgcb '),
-])
-
-def test_openssl_psk(tc_setup, sarg, carg):
-    run_test(inspect.stack()[0][3], sarg, carg)

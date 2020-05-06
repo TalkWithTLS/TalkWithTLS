@@ -23,5 +23,5 @@ def tc_setup():
     (' -serv -kupda 4 -msgcb ', ' -kupda 4 -msgcb '),
 ])
 
-def test_openssl_kupdate(tc_setup, sarg, carg):
+def test_t13_kupdate(tc_setup, sarg, carg):
     run_test(inspect.stack()[0][3], sarg, carg)

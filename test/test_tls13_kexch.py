@@ -31,5 +31,5 @@ def tc_setup():
     #(' -serv -kex 2 -ver 13 -msgcb ', ' -kex 2 -ver 12 -msgcb '),
 ])
 
-def test_openssl_kexch(tc_setup, sarg, carg):
+def test_t13_kexch(tc_setup, sarg, carg):
     run_test(inspect.stack()[0][3], sarg, carg)

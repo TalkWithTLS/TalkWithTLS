@@ -16,5 +16,5 @@ def tc_setup():
     (' -serv ', ' -ciph TLS_AES_128_GCM_SHA256'),
 ])
 
-def test_openssl_tls13_ciphersuite(tc_setup, sarg, carg):
+def test_t13_ciphersuite(tc_setup, sarg, carg):
     run_test(inspect.stack()[0][3], sarg, carg)

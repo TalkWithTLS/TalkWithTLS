@@ -28,5 +28,5 @@ def tc_setup():
     (' -serv -relbuf 1 -ver 10', ' -relbuf 1 -ver 10 '),
 ])
 
-def test_openssl_tls_release_buf(tc_setup, sarg, carg):
+def test_tls_release_buf(tc_setup, sarg, carg):
     run_test(inspect.stack()[0][3], sarg, carg)

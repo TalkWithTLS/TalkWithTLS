@@ -19,5 +19,5 @@ def tc_setup():
     (' -serv -ver 912', ' -ver 912 '),
 ])
 
-def test_openssl_dtls_basic(tc_setup, sarg, carg):
+def test_dtls_basic(tc_setup, sarg, carg):
     run_test(inspect.stack()[0][3], sarg, carg)

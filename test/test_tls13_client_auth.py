@@ -15,5 +15,5 @@ def tc_setup():
     (' -serv -cauth -msgcb ', ' -cauth -msgcb '),
 ])
 
-def test_openssl_tls13_auth(tc_setup, sarg, carg):
+def test_t13_auth(tc_setup, sarg, carg):
     run_test(inspect.stack()[0][3], sarg, carg)
