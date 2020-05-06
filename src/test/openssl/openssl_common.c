@@ -1,6 +1,6 @@
 #include "openssl_common.h"
 #include "test_init.h"
-#include "openssl_resumption.h"
+#include "openssl_psk.h"
 #include "openssl_validation.h"
 #include "openssl_kexch.h"
 #include "openssl_version.h"
@@ -111,7 +111,7 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
         goto err;
     }*/
 
-    if ((conf->res.psk) && (initialize_resumption_params(conf, ctx) != 0)) {
+    if ((conf->res.psk) && (ssl_ctx_psk_config(conf, ctx) != 0)) {
         ERR("Initializing resumption params failed\n");
         goto err;
     }

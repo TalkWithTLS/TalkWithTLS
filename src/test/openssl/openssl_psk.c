@@ -1,4 +1,4 @@
-#include "openssl_resumption.h"
+#include "openssl_psk.h"
 
 
 const unsigned char g_tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
@@ -105,7 +105,7 @@ int tls13_psk_find_session_cb(SSL *ssl, const unsigned char *id,
     return 1;
 }
 
-int initialize_resumption_params(TC_CONF *conf, SSL_CTX *ctx)
+int ssl_ctx_psk_config(TC_CONF *conf, SSL_CTX *ctx)
 {
     if (conf->server) {
         SSL_CTX_set_psk_find_session_callback(ctx, tls13_psk_find_session_cb);

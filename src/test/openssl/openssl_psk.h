@@ -7,7 +7,7 @@ extern "C" {
 
 #include "openssl_common.h"
 
-int initialize_resumption_params(TC_CONF *conf, SSL_CTX *ctx);
+int ssl_ctx_psk_config(TC_CONF *conf, SSL_CTX *ctx);
 
 #ifdef __cplusplus
 }
