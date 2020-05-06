@@ -7,8 +7,9 @@ Sample Code for [D]TLS usage and a lot more than that.
 - Finally a perf script to test various TLS implementations.
 
 ## 1. Installing Dependencies
+### 1.1 On ubuntu
 ```
-sudo apt install make gcc python python-pip
+sudo apt install make gcc g++ python python-pip
 pip install --user pytest pytest-html
 ```
 
