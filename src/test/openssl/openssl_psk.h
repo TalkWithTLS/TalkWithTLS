@@ -1,5 +1,5 @@
-#ifndef _OPENSSL_ARG_H_
-#define _OPENSSL_ARG_H_
+#ifndef _OPENSSL_PSK_H_
+#define _OPENSSL_PSK_H_
 
 #ifdef __cplusplus
 extern "C" {

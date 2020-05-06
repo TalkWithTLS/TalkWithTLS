@@ -17,3 +17,10 @@ def tc_setup():
 
 def test_t13_resumption(tc_setup, sarg, carg):
     run_test(inspect.stack()[0][3], sarg, carg)
+
+@pytest.mark.parametrize("sarg, carg", [
+    (' -serv -res -earlydata ', ' -res -earlydata ')
+])
+
+def test_t13_resumption_early_data(tc_setup, sarg, carg):
+    run_test(inspect.stack()[0][3], sarg, carg)

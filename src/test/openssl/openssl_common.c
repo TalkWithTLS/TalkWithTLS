@@ -280,12 +280,26 @@ int do_ssl_write_early_data(TC_CONF *conf, SSL *ssl)
 {
     const char *msg = EARLY_DATA_MSG_FOR_OPENSSL_CLNT;
     size_t sent = 0;
-    int ret = 0;
-    if ((conf->res.early_data != 1) && (conf->res.early_data_sent == 0)) {
+    int ret = 1;
+    if (conf->res.early_data == 1) {
         DBG("###Doing Early Data send\n");
         ret = SSL_write_early_data(ssl, msg, strlen(msg), &sent);
         DBG("write early data ret=%d\n", ret);
     }
+    return ret > 0 ? 0 : -1;
+}
+
+int do_ssl_read_early_data(TC_CONF *conf, SSL *ssl)
+{
+    char buf[MAX_BUF_SIZE] = {0};
+    size_t readbytes = 0;
+    int ret = 1;
+    if (conf->res.early_data == 1) {
+        DBG("###Doing Early Data read\n");
+        ret = SSL_read_early_data(ssl, buf, sizeof(buf) - 1, &readbytes);
+        DBG("Read early data [%s]\n", buf);
+    }
+    //TODO memcmp with original early data
     return ret > 0 ? 0 : -1;
 }
 
@@ -480,7 +494,7 @@ err:
     return ret_val;
 }
 
-int do_resumption(TC_CONF *conf, SSL_CTX *in_ctx)
+int do_resumption_after_1st_con_closure(TC_CONF *conf, SSL_CTX *in_ctx)
 {
     SSL_CTX *ctx = in_ctx;
     SSL *ssl = NULL;
@@ -510,29 +524,29 @@ int do_resumption(TC_CONF *conf, SSL_CTX *in_ctx)
             goto err;
         }
         SSL_set_session(ssl, conf->res.sess);
-        /* TODO On client send early data during handshake */
-        /*if (do_ssl_write_early_data(conf, ssl)) {
+        if (do_ssl_write_early_data(conf, ssl)) {
             ERR("Write early data failed\n");
             goto err;
-        }*/
+        }
         if (do_ssl_handshake(conf, ssl)) {
             ERR("SSL handshake failed\n");
             goto err;
         }
     } else {
-        /* On server do normal handshake */
+        if (do_ssl_read_early_data(conf, ssl)) {
+            ERR("Read early data failed\n");
+            goto err;
+        }
         if (do_ssl_handshake(conf, ssl)) {
             ERR("SSL handshake failed\n");
             goto err;
         }
     }
-    if (conf->res.resumption) {
-        if (SSL_session_reused(ssl)) {
-            DBG("###SSL session reused\n");
-        } else {
-            ERR("SSL session not reused\n");
-            goto err;
-        }
+    if (SSL_session_reused(ssl)) {
+        DBG("###SSL session reused\n");
+    } else {
+        ERR("SSL session not reused\n");
+        goto err;
     }
     if (do_data_transfer(conf, ssl)) {
         ERR("Data transfer over TLS failed\n");
@@ -558,7 +572,7 @@ int do_test_openssl(TC_CONF *conf)
     if (do_test_tls_connection(conf, &ctx)) {
         goto err;
     }
-    if (do_resumption(conf, ctx)) {
+    if (do_resumption_after_1st_con_closure(conf, ctx)) {
         goto err;
     }
     ret_val = 0;

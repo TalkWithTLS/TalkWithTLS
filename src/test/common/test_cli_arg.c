@@ -35,6 +35,8 @@ void usage()
     printf("    - Performs resumption\n");
     printf("-psk\n");
     printf("    - Enables PSK\n");
+    printf("-earlydata\n");
+    printf("    - Performs TLSv1.3 early data transfer\n");
     printf("-ver <arg> \n");
     printf("    - [D]TLS Max Version on Server and Client\n");
     printf("    10 - TLS1.0\n");
@@ -49,8 +51,6 @@ void usage()
     printf("-kupda <arg>\n");
     printf("    - Performs TLSv1.3 Key update\n");
     printf("    - 1 - Server initiating Key update request\n");
-    printf("-earlydata\n");
-    printf("    - Performs TLSv1.3 early data transfer\n");
     printf("-infocb\n");
     printf("    - Enables TLS Info Callback\n");
     printf("-msgcb [<arg>] \n");
@@ -164,7 +164,6 @@ int parse_args(int argc, char **argv, TC_CONF *conf)
                 conf->ku.key_update_test = atoi(optarg);
                 break;
             case OPT_EARLYDATA:
-                conf->res.resumption = 1;
                 conf->res.early_data = 1;
                 break;
             case OPT_INFOCB:
