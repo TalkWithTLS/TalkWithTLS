@@ -111,7 +111,7 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
         goto err;
     }*/
 
-    if ((conf->res.psk) && (ssl_ctx_psk_config(conf, ctx) != 0)) {
+    if ((conf->res.psk > 0) && (ssl_ctx_psk_config(conf, ctx) != 0)) {
         ERR("Initializing resumption params failed\n");
         goto err;
     }

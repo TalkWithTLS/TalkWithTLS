@@ -33,8 +33,13 @@ void usage()
     printf("    - Enables non blocking on socket\n");
     printf("-res\n");
     printf("    - Performs resumption\n");
-    printf("-psk\n");
-    printf("    - Enables PSK\n");
+    printf("-psk <arg> \n");
+    printf("    - Enable PSK\n");
+    printf("    1 - With PSK ID and Key with default ciphersuite\n");
+    printf("    2 - With PSK ID and Key with specific ciphersuite\n");
+    printf("        configured using -ciph\n");
+    printf("    Here option '2' is only for out-of-band PSK in TLSv1.3.\n");
+    printf("    Option '1' is for all versions of [D]TLS\n");
     printf("-earlydata\n");
     printf("    - Performs TLSv1.3 early data transfer\n");
     printf("-ver <arg> \n");
@@ -95,7 +100,7 @@ struct option lopts[] = {
     {"kex", required_argument, NULL, OPT_KEX},
     {"nbsock", optional_argument, NULL, OPT_NBSOCK},
     {"res", optional_argument, NULL, OPT_RES},
-    {"psk", optional_argument, NULL, OPT_PSK},
+    {"psk", required_argument, NULL, OPT_PSK},
     {"ver", required_argument, NULL, OPT_VER},
     {"kupda", required_argument, NULL, OPT_KUPDA},
     {"earlydata", optional_argument, NULL, OPT_EARLYDATA},
@@ -155,7 +160,7 @@ int parse_args(int argc, char **argv, TC_CONF *conf)
                 conf->res.resumption = 1;
                 break;
             case OPT_PSK:
-                conf->res.psk = 1;
+                conf->res.psk = atoi(optarg);
                 break;
             case OPT_VER:
                 conf->max_version = atoi(optarg);

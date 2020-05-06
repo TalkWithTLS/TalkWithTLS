@@ -90,10 +90,15 @@ typedef struct test_case_conf_cb_st {
 #define TEST_MAX_PSK_ID     32
 #define TEST_MAX_PSK_KEY    64
 
+typedef enum tc_psk_test_type {
+    PSK_ID_AND_KEY = 1,
+    PSK_ID_KEY_AND_CIPHERSUITE,
+}TC_PSK_TEST_TYPE;
+
 typedef struct test_case_conf_resumption_st {
     void *sess;
     uint8_t resumption;
-    uint8_t psk;
+    TC_PSK_TEST_TYPE psk;
     char psk_id[TEST_MAX_PSK_ID];
     uint16_t psk_id_len;
     char psk_key[TEST_MAX_PSK_KEY];

@@ -12,7 +12,7 @@ def tc_setup():
     TWT_set_log_filename(filename)
 
 @pytest.mark.parametrize("sarg, carg", [
-    (' -serv -psk ', ' -psk ')
+    (' -serv -psk 1 ', ' -psk 1')
 ])
 
 def test_t13_psk(tc_setup, sarg, carg):

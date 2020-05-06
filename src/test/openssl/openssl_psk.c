@@ -105,14 +105,76 @@ int tls13_psk_find_session_cb(SSL *ssl, const unsigned char *id,
     return 1;
 }
 
-int ssl_ctx_psk_config(TC_CONF *conf, SSL_CTX *ctx)
+unsigned int tls_psk_client_cb(SSL *ssl, const char *hint,
+                                       char *identity,
+                                       unsigned int max_identity_len,
+                                       unsigned char *psk,
+                                       unsigned int max_psk_len)
 {
-    if (conf->server) {
+    DBG("Called PSK client cb\n");
+    TC_CONF *conf = SSL_get_ex_data(ssl, SSL_EX_DATA_TC_CONF);
+    if ((strlen(conf->res.psk_id) + 1 > max_identity_len)
+            || (strlen(conf->res.psk_key) > max_psk_len)) {
+        ERR("PSK ID or Key buffer is not sufficient\n");
+        goto err;
+    }
+    strcpy(identity, conf->res.psk_id);
+    memcpy(psk, conf->res.psk_key, strlen(conf->res.psk_key));
+    return strlen(conf->res.psk_key);
+err:
+    return 0;
+}
+
+unsigned int tls_psk_server_cb(SSL *ssl, const char *id,
+                                            unsigned char *psk,
+                                            unsigned int max_psk_len)
+{
+    DBG("Called PSK server cb\n");
+    TC_CONF *conf = SSL_get_ex_data(ssl, SSL_EX_DATA_TC_CONF);
+    if (strcmp(conf->res.psk_id, id) != 0) {
+        ERR("Unknown Client's PSK ID\n");
+        goto err;
+    }
+    if (strlen(conf->res.psk_key) > max_psk_len) {
+        ERR("Insufficient buffer size to copy conf->res.psk_key\n");
+        goto err;
+    }
+    memcpy(psk, conf->res.psk_key, strlen(conf->res.psk_key));
+    return strlen(conf->res.psk_key);
+err:
+    return 0;
+}
+
+int ssl_ctx_psk_cb_config(TC_CONF *conf, SSL_CTX *ctx)
+{
+    if (conf->server == 1) {
+        SSL_CTX_set_psk_server_callback(ctx, tls_psk_server_cb);
+    } else {
+        SSL_CTX_set_psk_client_callback(ctx, tls_psk_client_cb);
+    }
+    return TWT_SUCCESS;
+}
+
+int ssl_ctx_psk_sess_cb_config(TC_CONF *conf, SSL_CTX *ctx)
+{
+    if (conf->server == 1) {
         SSL_CTX_set_psk_find_session_callback(ctx, tls13_psk_find_session_cb);
         DBG("Registered TLS1.3 PSK find sess cb\n");
     } else {
         SSL_CTX_set_psk_use_session_callback(ctx, tls13_psk_use_session_cb);
         DBG("Registered TLS1.3 PSK use sess cb\n");
     }
-    return 0;
+    return TWT_SUCCESS;
+}
+
+int ssl_ctx_psk_config(TC_CONF *conf, SSL_CTX *ctx)
+{
+    switch (conf->res.psk) {
+        case PSK_ID_AND_KEY:
+            return ssl_ctx_psk_cb_config(conf, ctx);
+        case PSK_ID_KEY_AND_CIPHERSUITE:
+            return ssl_ctx_psk_sess_cb_config(conf, ctx);
+        default:
+            return TWT_FAILURE;
+    }
 }
