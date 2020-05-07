@@ -79,6 +79,16 @@ typedef struct test_mem_debug_st {
 }TC_MEM_DEBUG;
 #endif
 
+#define CIPHER_RFC_MAX 64
+#define CIPHER_OSSL_TXT 64
+typedef struct tc_ciphersuite_info_st {
+    char ciph_rfc[CIPHER_RFC_MAX];
+    uint8_t ciph_val[2];
+    char ciph_openssl_txt[CIPHER_OSSL_TXT];
+}TC_CIPHERSUITE_INFO;
+
+extern TC_CIPHERSUITE_INFO g_cipher_info[5];
+
 typedef struct test_case_conf_cb_st {
     uint8_t info_cb;
     uint8_t msg_cb;

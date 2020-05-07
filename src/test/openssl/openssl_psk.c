@@ -1,8 +1,27 @@
 #include "openssl_psk.h"
 
+const SSL_CIPHER *get_cipher_for_tls13_psk(SSL *s)
+{
+    TC_CONF *conf = SSL_get_ex_data(s, SSL_EX_DATA_TC_CONF);
+    unsigned char aes128gcmsha256_id[] = { 0x13, 0x04 };
+    const SSL_CIPHER *cipher;
+    const char *ch;
+    int i;
 
-const unsigned char g_tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
-const unsigned char g_tls13_aes256gcmsha384_id[] = { 0x13, 0x02 };
+    if (strlen(conf->ch.ciph) > 0) {
+        for (i = 0; i < sizeof(g_cipher_info)/sizeof(g_cipher_info[0]); i++) {
+            ch = g_cipher_info[i].ciph_rfc;
+            if (strncmp(conf->ch.ciph, ch, strlen(ch) == 0)
+                    && (cipher = SSL_CIPHER_find(s, g_cipher_info[i].ciph_val))
+                        != NULL) {
+                DBG("PSK out of band with cipher [%s]\n", ch);
+                return cipher;
+            }
+        }
+    }
+    DBG("PSK out of band with default ciphersuite TLS_AES_128_GCM_SHA256\n");
+    return SSL_CIPHER_find(s, aes128gcmsha256_id);
+}
 
 int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
                               const unsigned char **id, size_t *idlen,
@@ -21,10 +40,8 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
         return 0;
     }
 
-    /* We default to SHA-256 */
-    cipher = SSL_CIPHER_find(s, g_tls13_aes256gcmsha384_id);
-    if (cipher == NULL) {
-        ERR("Cipher fine failed\n");
+    if ((cipher = get_cipher_for_tls13_psk(s)) == NULL) {
+        ERR("TLS1.3 PSK Cipher find failed\n");
         OPENSSL_free(key);
         return 0;
     }
@@ -83,10 +100,8 @@ int tls13_psk_find_session_cb(SSL *ssl, const unsigned char *id,
         return 0;
     }
 
-    /* We default to SHA256 */
-    cipher = SSL_CIPHER_find(ssl, g_tls13_aes256gcmsha384_id);
-    if (cipher == NULL) {
-        ERR("Find cipher failed\n");
+    if ((cipher = get_cipher_for_tls13_psk(ssl)) == NULL) {
+        ERR("TLS1.3 PSK Cipher find failed\n");
         OPENSSL_free(key);
         return 0;
     }
