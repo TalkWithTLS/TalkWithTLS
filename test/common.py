@@ -70,7 +70,6 @@ def do_test(tc_name, sarg, carg, sport, cport):
     # 3. Receive TC result
     sres_bytes = sfd.recv(4)
     cres_bytes = cfd.recv(4)
-    TWT_LOG("sres_bytes" + str(len(sres_bytes)))
     sfd.close()
     cfd.close()
     sres_param = struct.unpack(TC_RESULT_FMT, sres_bytes)
@@ -86,18 +85,22 @@ def run_test(func_name, sarg, carg, flags=0):
     Connect_OSSL111_Serv = '-clnt=' + ENV_OSSL_111_SERV_PORT + ' '
     Connect_OSSL300_Serv = '-clnt=' + ENV_OSSL_300_SERV_PORT + ' '
     # 1. OpenSSL 1.1.1 Client vs OpenSSL 1.1.1 Server
+    print('Testing OpenSSL 1.1.1 CLient vs OpenSSL 1.1.1 Server')
     assert do_test(func_name, sarg, Connect_OSSL111_Serv + carg,
                    int(ENV_OSSL_111_SERV_AUTOMATION_PORT),
                    int(ENV_OSSL_111_CLNT_AUTOMATION_PORT)) == TC_SUCCESS
     # 2. OpenSSL 3.0.0 Client vs OpenSSL 3.0.0 Server
+    print('Testing OpenSSL 3.0.0 Client vs OpenSSL 3.0.0 Server')
     assert do_test(func_name, sarg, Connect_OSSL300_Serv + carg,
                    int(ENV_OSSL_300_SERV_AUTOMATION_PORT),
                    int(ENV_OSSL_300_CLNT_AUTOMATION_PORT)) == TC_SUCCESS
     # 3. OpenSSL 1.1.1 Client vs OpenSSL 3.0.0 Server
+    print('Testing OpenSSL 1.1.1 Client vs OpenSSL 3.0.0 Server')
     assert do_test(func_name, sarg, Connect_OSSL300_Serv + carg,
                    int(ENV_OSSL_300_SERV_AUTOMATION_PORT),
                    int(ENV_OSSL_111_CLNT_AUTOMATION_PORT)) == TC_SUCCESS
     # 4. OpenSSL 3.0.0 Client vs OpenSSL 1.1.1 Server
+    print('Testing OpenSSL 3.0.0 Client vs OpenSSL 1.1.1 Server')
     assert do_test(func_name, sarg, Connect_OSSL111_Serv + carg,
                    int(ENV_OSSL_111_SERV_AUTOMATION_PORT),
                    int(ENV_OSSL_300_CLNT_AUTOMATION_PORT)) == TC_SUCCESS

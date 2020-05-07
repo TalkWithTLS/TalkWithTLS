@@ -16,4 +16,5 @@ def TWT_LOG(str):
     global log_filename
     fd = open(log_filename, 'a')
     fd.write(str)
+    print(str)
     fd.close()
