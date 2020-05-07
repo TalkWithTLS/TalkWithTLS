@@ -303,6 +303,15 @@ int do_ssl_read_early_data(TC_CONF *conf, SSL *ssl)
     return ret > 0 ? 0 : -1;
 }
 
+int do_early_data(TC_CONF *conf, SSL *ssl)
+{
+    if (conf->server == 1) {
+        return do_ssl_read_early_data(conf, ssl);
+    } else {
+        return do_ssl_write_early_data(conf, ssl);
+    }
+}
+
 int do_ssl_connect(TC_CONF *conf, SSL *ssl)
 {
     int ret;
@@ -523,24 +532,19 @@ int do_resumption_after_1st_con_closure(TC_CONF *conf, SSL_CTX *in_ctx)
             ERR("Sess is not available for doing resumption\n");
             goto err;
         }
-        SSL_set_session(ssl, conf->res.sess);
-        if (do_ssl_write_early_data(conf, ssl)) {
-            ERR("Write early data failed\n");
+        if (SSL_set_session(ssl, conf->res.sess) != 1) {
+            ERR("Set session failed\n");
             goto err;
         }
-        if (do_ssl_handshake(conf, ssl)) {
-            ERR("SSL handshake failed\n");
-            goto err;
-        }
-    } else {
-        if (do_ssl_read_early_data(conf, ssl)) {
-            ERR("Read early data failed\n");
-            goto err;
-        }
-        if (do_ssl_handshake(conf, ssl)) {
-            ERR("SSL handshake failed\n");
-            goto err;
-        }
+    } 
+
+    if (do_early_data(conf, ssl)) {
+        ERR("Write early data failed\n");
+        goto err;
+    }
+    if (do_ssl_handshake(conf, ssl)) {
+        ERR("SSL handshake failed\n");
+        goto err;
     }
     if (SSL_session_reused(ssl)) {
         DBG("###SSL session reused\n");
@@ -555,6 +559,9 @@ int do_resumption_after_1st_con_closure(TC_CONF *conf, SSL_CTX *in_ctx)
     DBG("Data transfer over TLS succeeded\n");
     ret_val = 0;
 err:
+    if (in_ctx != NULL) {
+        ctx = NULL;
+    }
     do_cleanup_openssl(conf, ctx, ssl);
     return ret_val;
 }
@@ -577,6 +584,7 @@ int do_test_openssl(TC_CONF *conf)
     }
     ret_val = 0;
 err:
+    SSL_CTX_free(ctx);
     do_openssl_fini(conf);
     return ret_val;
 }
