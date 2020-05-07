@@ -21,9 +21,11 @@ void usage()
     printf("-cauth\n");
     printf("    - Performs Client Cert Authentication\n");
     printf("-ciph\n");
-    printf("    - Configure TLSv1.3 ciphersuite\n");
-    printf("    - Takes OpenSSL cipher string as input\n");
+    printf("    - Configure ciphersuite, currently supports only TLSv1.3\n");
+    printf("    - Takes RFC defined cipher string as input\n");
     printf("    - More than one cipher are delimeted by ':'\n");
+    printf("    - For eg 'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384'");
+    //TODO Need to add support for old ciphersuites as well
     printf("-kex <arg>\n");
     printf("    - Key Exchange group for TLS1.3\n");
     printf("    1 - All ECDHE\n");
