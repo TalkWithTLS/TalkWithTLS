@@ -3,7 +3,7 @@
 const SSL_CIPHER *get_cipher_for_tls13_psk(SSL *s)
 {
     TC_CONF *conf = SSL_get_ex_data(s, SSL_EX_DATA_TC_CONF);
-    unsigned char aes128gcmsha256_id[] = {0x13, 0x04};
+    unsigned char aes128gcmsha256_id[] = {0x13, 0x01};
     const SSL_CIPHER *cipher;
     const char *ch;
     int i;
