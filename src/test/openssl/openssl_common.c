@@ -474,7 +474,7 @@ int do_test_tls_connection(TC_CONF *conf, SSL_CTX **out_ctx)
             && (conf->max_version == TC_CONF_TLS_1_3_VERSION
                 || conf->max_version == 0)) {
         if (do_early_data(conf, ssl)) {
-            ERR("Write early data failed\n");
+            ERR("Early data transfer failed\n");
             goto err;
         }
     }
@@ -593,6 +593,9 @@ int do_test_openssl(TC_CONF *conf)
     }
     ret_val = 0;
 err:
+    if (ret_val != 0) {
+        print_ssl_err();
+    }
     SSL_CTX_free(ctx);
     do_openssl_fini(conf);
     return ret_val;

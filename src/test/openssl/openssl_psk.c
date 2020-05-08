@@ -31,7 +31,7 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
     SSL_SESSION *usesess = NULL;
     const SSL_CIPHER *cipher = NULL;
     long key_len;
-    unsigned char *key;
+    unsigned char *key = NULL;
     
     DBG("Called PSK use sess cb\n");
     key = OPENSSL_hexstr2buf(conf->res.psk_key, &key_len);
@@ -42,8 +42,7 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
 
     if ((cipher = get_cipher_for_tls13_psk(s)) == NULL) {
         ERR("TLS1.3 PSK Cipher find failed\n");
-        OPENSSL_free(key);
-        return 0;
+        goto err;
     }
 
     if (md != NULL && SSL_CIPHER_get_handshake_digest(cipher) != md) {
@@ -56,13 +55,14 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
             || !SSL_SESSION_set1_master_key(usesess, key, key_len)
             || !SSL_SESSION_set_cipher(usesess, cipher)
             || !SSL_SESSION_set_protocol_version(usesess, TLS1_3_VERSION)) {
-        OPENSSL_free(key);
         goto err;
     }
     OPENSSL_free(key);
+    key = NULL;
 
     if ((conf->res.early_data)
-            && (SSL_SESSION_set_max_early_data(usesess, 4098) != 1)) {
+            && (SSL_SESSION_set_max_early_data(usesess,
+                                               MAX_EARLY_DATA_MSG) != 1)) {
         ERR("Use sess cb: Enabled early data\n");
         goto err;
     }
@@ -70,11 +70,10 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
     *sess = usesess;
     *id = (unsigned char *)conf->res.psk_id;
     *idlen = strlen(conf->res.psk_id);
-
     return 1;
-
  err:
     SSL_SESSION_free(usesess);
+    OPENSSL_free(key);
     return 0;
 }
 
@@ -83,7 +82,7 @@ int tls13_psk_find_session_cb(SSL *ssl, const unsigned char *id,
 {
     TC_CONF *conf = SSL_get_ex_data(ssl, SSL_EX_DATA_TC_CONF);
     SSL_SESSION *tmpsess = NULL;
-    unsigned char *key;
+    unsigned char *key = NULL;
     long key_len;
     const SSL_CIPHER *cipher = NULL;
 
@@ -102,8 +101,7 @@ int tls13_psk_find_session_cb(SSL *ssl, const unsigned char *id,
 
     if ((cipher = get_cipher_for_tls13_psk(ssl)) == NULL) {
         ERR("TLS1.3 PSK Cipher find failed\n");
-        OPENSSL_free(key);
-        return 0;
+        goto err;
     }
 
     tmpsess = SSL_SESSION_new();
@@ -111,13 +109,24 @@ int tls13_psk_find_session_cb(SSL *ssl, const unsigned char *id,
             || !SSL_SESSION_set1_master_key(tmpsess, key, key_len)
             || !SSL_SESSION_set_cipher(tmpsess, cipher)
             || !SSL_SESSION_set_protocol_version(tmpsess, SSL_version(ssl))) {
-        OPENSSL_free(key);
-        return 0;
+        goto err;
     }
     OPENSSL_free(key);
-    *sess = tmpsess;
+    key = NULL;
 
+    if ((conf->res.early_data)
+            && (SSL_SESSION_set_max_early_data(tmpsess,
+                                               MAX_EARLY_DATA_MSG) != 1)) {
+        ERR("Use sess cb: Enabled early data\n");
+        goto err;
+    }
+
+    *sess = tmpsess;
     return 1;
+err:
+    SSL_SESSION_free(tmpsess);
+    OPENSSL_free(key);
+    return 0;
 }
 
 unsigned int tls_psk_client_cb(SSL *ssl, const char *hint,
