@@ -3,7 +3,7 @@
 const SSL_CIPHER *get_cipher_for_tls13_psk(SSL *s)
 {
     TC_CONF *conf = SSL_get_ex_data(s, SSL_EX_DATA_TC_CONF);
-    unsigned char aes128gcmsha256_id[] = { 0x13, 0x04 };
+    unsigned char aes128gcmsha256_id[] = {0x13, 0x04};
     const SSL_CIPHER *cipher;
     const char *ch;
     int i;
@@ -11,7 +11,7 @@ const SSL_CIPHER *get_cipher_for_tls13_psk(SSL *s)
     if (strlen(conf->ch.ciph) > 0) {
         for (i = 0; i < sizeof(g_cipher_info)/sizeof(g_cipher_info[0]); i++) {
             ch = g_cipher_info[i].ciph_rfc;
-            if (strncmp(conf->ch.ciph, ch, strlen(ch) == 0)
+            if (strncmp(conf->ch.ciph, ch, strlen(ch)) == 0
                     && (cipher = SSL_CIPHER_find(s, g_cipher_info[i].ciph_val))
                         != NULL) {
                 DBG("PSK out of band with cipher [%s]\n", ch);
