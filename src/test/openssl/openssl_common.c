@@ -470,6 +470,15 @@ int do_test_tls_connection(TC_CONF *conf, SSL_CTX **out_ctx)
         goto err;
     }
 
+    if ((conf->res.psk != 0)
+            && (conf->max_version == TC_CONF_TLS_1_3_VERSION
+                || conf->max_version == 0)) {
+        if (do_early_data(conf, ssl)) {
+            ERR("Write early data failed\n");
+            goto err;
+        }
+    }
+
     if (do_ssl_handshake(conf, ssl)) {
         ERR("SSL handshake failed\n");
         goto err;
