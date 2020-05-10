@@ -297,7 +297,11 @@ int do_ssl_read_early_data(TC_CONF *conf, SSL *ssl)
     if (conf->res.early_data == 1) {
         DBG("###Doing Early Data read\n");
         ret = SSL_read_early_data(ssl, buf, sizeof(buf) - 1, &readbytes);
-        DBG("Read early data [%s]\n", buf);
+        DBG("Read early data [%s] ret=%d\n", buf, ret);
+        if (strcmp(buf, EARLY_DATA_MSG_FOR_OPENSSL_CLNT) != 0) {
+            ERR("Received early data is incorrect\n");
+            return -1;
+        }
     }
     //TODO memcmp with original early data
     return ret > 0 ? 0 : -1;
