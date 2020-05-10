@@ -11,7 +11,7 @@ extern "C" {
 
 #define ERR(fmt, ...) \
     do { \
-        printf("[ERR]:"fmt, ##__VA_ARGS__); \
+        printf("[ERR]"fmt, ##__VA_ARGS__); \
         fflush(stdout); \
     } while (0)
 

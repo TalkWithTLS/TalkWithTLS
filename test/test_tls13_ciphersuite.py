@@ -12,16 +12,9 @@ def tc_setup():
     TWT_set_log_filename(filename)
 
 @pytest.mark.parametrize("sarg, carg", [
-    (' -serv ', ' '),
-    (' -serv -nbsock ', ' -nbsock '),
+    (' -serv ', ' -ciph TLS_CHACHA20_POLY1305_SHA256'),
+    (' -serv ', ' -ciph TLS_AES_128_GCM_SHA256'),
 ])
 
-def test_openssl_basic(tc_setup, sarg, carg):
-    run_test(inspect.stack()[0][3], sarg, carg)
-
-@pytest.mark.parametrize("sarg, carg", [
-    (' -serv -psk -msgcb ', ' -psk -msgcb '),
-])
-
-def test_openssl_psk(tc_setup, sarg, carg):
+def test_t13_ciphersuite(tc_setup, sarg, carg):
     run_test(inspect.stack()[0][3], sarg, carg)

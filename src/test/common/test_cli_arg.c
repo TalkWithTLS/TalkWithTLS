@@ -21,44 +21,49 @@ void usage()
     printf("-cauth\n");
     printf("    - Performs Client Cert Authentication\n");
     printf("-ciph\n");
-    printf("    - Configure TLSv1.3 ciphersuite\n");
-    printf("    - Takes OpenSSL cipher string as input\n");
+    printf("    - Configure ciphersuite, currently supports only TLSv1.3\n");
+    printf("    - Takes RFC defined cipher string as input\n");
     printf("    - More than one cipher are delimeted by ':'\n");
+    printf("    - Accepted ciphersuites:\n");
+    printf("    TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384\n");
+    printf("    TLS_CHACHA20_POLY1305_SHA256, TLS_AES_128_CCM_SHA256\n");
+    printf("    TLS_AES_128_CCM_8_SHA256\n");
+    //TODO Need to add support for old ciphersuites as well
     printf("-kex <arg>\n");
     printf("    - Key Exchange group for TLS1.3\n");
-    printf("    1 - All ECDHE\n");
-    printf("    2 - All FFDHE\n");
+    printf("    1 - All ECDHE, 2 - All FFDHE\n");
     printf("    3 - All ECDHE set using str API (SSL_set1_group_list)\n");
     printf("-nbsock\n");
     printf("    - Enables non blocking on socket\n");
     printf("-res\n");
     printf("    - Performs resumption\n");
-    printf("-psk\n");
-    printf("    - Enables PSK\n");
-    printf("-ver <arg> \n");
+    printf("-psk <num> \n");
+    printf("    - Enable PSK\n");
+    printf("    1 - With PSK ID and Key with default ciphersuite\n");
+    printf("    2 - With PSK ID and Key with specific ciphersuite\n");
+    printf("        configured using -ciph\n");
+    printf("    Here option '2' is only for out-of-band PSK in TLSv1.3.\n");
+    printf("    Option '1' is for all versions of [D]TLS\n");
+    printf("-earlydata\n");
+    printf("    - Performs TLSv1.3 early data transfer\n");
+    printf("-ver <num> \n");
     printf("    - [D]TLS Max Version on Server and Client\n");
-    printf("    10 - TLS1.0\n");
-    printf("    11 - TLS1.1\n");
-    printf("    12 - TLS1.2\n");
-    printf("    13 - TLS1.3\n");
+    printf("    10 - TLS1.0, 11 - TLS1.1, 12 - TLS1.2, 13 - TLS1.3\n");
     printf("    1312 - Server TLS1.3 and Client TLS1.2\n");
     printf("    1213 - Server TLS1.2 and Client TLS1.3\n");
     printf("    910 - DTLS1.0\n");
     printf("    912 - DTLS1.2\n");
-    printf("    11 - TLS1.1\n");
-    printf("-kupda <arg>\n");
+    printf("-kupda <num>\n");
     printf("    - Performs TLSv1.3 Key update\n");
     printf("    - 1 - Server initiating Key update request\n");
-    printf("-earlydata\n");
-    printf("    - Performs TLSv1.3 early data transfer\n");
     printf("-infocb\n");
     printf("    - Enables TLS Info Callback\n");
-    printf("-msgcb [<arg>] \n");
+    printf("-msgcb [<num>] \n");
     printf("    - Enables TLS msg Callback, argument is optional\n");
     printf("    - 1 - Enable detailed print on msg callback\n");
     printf("-memcb\n");
     printf("    - Enables Crypto mem Callback\n");
-    printf("-relbuf <arg>\n");
+    printf("-relbuf <num>\n");
     printf("    - Enables Release TLS buffer\n");
     printf("    1 - Enable at SSL context\n");
     printf("    2 - Enable at SSL\n");
@@ -95,7 +100,7 @@ struct option lopts[] = {
     {"kex", required_argument, NULL, OPT_KEX},
     {"nbsock", optional_argument, NULL, OPT_NBSOCK},
     {"res", optional_argument, NULL, OPT_RES},
-    {"psk", optional_argument, NULL, OPT_PSK},
+    {"psk", required_argument, NULL, OPT_PSK},
     {"ver", required_argument, NULL, OPT_VER},
     {"kupda", required_argument, NULL, OPT_KUPDA},
     {"earlydata", optional_argument, NULL, OPT_EARLYDATA},
@@ -155,7 +160,7 @@ int parse_args(int argc, char **argv, TC_CONF *conf)
                 conf->res.resumption = 1;
                 break;
             case OPT_PSK:
-                conf->res.psk = 1;
+                conf->res.psk = atoi(optarg);
                 break;
             case OPT_VER:
                 conf->max_version = atoi(optarg);

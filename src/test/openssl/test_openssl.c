@@ -249,14 +249,21 @@ int main(int argc, char **argv)
 {
     TEST_SOCK_ADDR taddr;
     TC_AUTOMATION ta;
-    int ret;
+    int ret = TWT_FAILURE;
 
     if ((init_tc_automation(&ta, argv[0]) != 0) || (init_test_sock_addr(&taddr) != 0)) {
-        return TWT_FAILURE;
+        goto end;
     }
     if ((ret = start_test_case(argc, argv, &taddr, NULL)) == TWT_START_AUTOMATION) {
         ret = start_test_automation(&ta, &taddr);
     }
     fini_tc_automation(&ta);
+
+end:
+    if (ret == TWT_SUCCESS) {
+        printf("SUCCESS !!\n");
+    } else {
+        printf("FAILURE !!\n");
+    }
     return ret;
 }

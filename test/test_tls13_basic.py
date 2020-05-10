@@ -12,8 +12,10 @@ def tc_setup():
     TWT_set_log_filename(filename)
 
 @pytest.mark.parametrize("sarg, carg", [
-    (' -serv -cauth -msgcb ', ' -cauth -msgcb '),
+    (' -serv ', ' '),
+    (' -serv -nbsock ', ' -nbsock '),
 ])
 
-def test_openssl_tls13_auth(tc_setup, sarg, carg):
+def test_t13_basic(tc_setup, sarg, carg):
     run_test(inspect.stack()[0][3], sarg, carg)
+

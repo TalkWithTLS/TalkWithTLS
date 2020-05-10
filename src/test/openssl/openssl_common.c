@@ -1,6 +1,6 @@
 #include "openssl_common.h"
 #include "test_init.h"
-#include "openssl_resumption.h"
+#include "openssl_psk.h"
 #include "openssl_validation.h"
 #include "openssl_kexch.h"
 #include "openssl_version.h"
@@ -111,7 +111,7 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
         goto err;
     }*/
 
-    if ((conf->res.psk) && (initialize_resumption_params(conf, ctx) != 0)) {
+    if ((conf->res.psk > 0) && (ssl_ctx_psk_config(conf, ctx) != 0)) {
         ERR("Initializing resumption params failed\n");
         goto err;
     }
@@ -273,14 +273,6 @@ int do_ssl_accept(TC_CONF *conf, SSL *ssl)
         }
         DBG("Continue SSL accept\n");
     } while (1);
-    if (conf->res.resumption) { //TODO Need to improve this check for TLS1.2 resumption also
-        if (SSL_session_reused(ssl)) {
-            DBG("SSL session reused\n");
-        } else {
-            DBG("SSL session not reused\n");
-            return -1;
-        }
-    }
     return 0;
 }
 
@@ -288,12 +280,40 @@ int do_ssl_write_early_data(TC_CONF *conf, SSL *ssl)
 {
     const char *msg = EARLY_DATA_MSG_FOR_OPENSSL_CLNT;
     size_t sent = 0;
-    int ret = 0;
-    if ((conf->res.early_data != 1) && (conf->res.early_data_sent == 0)) {
+    int ret = 1;
+    if (conf->res.early_data == 1) {
+        DBG("###Doing Early Data send\n");
         ret = SSL_write_early_data(ssl, msg, strlen(msg), &sent);
         DBG("write early data ret=%d\n", ret);
     }
     return ret > 0 ? 0 : -1;
+}
+
+int do_ssl_read_early_data(TC_CONF *conf, SSL *ssl)
+{
+    char buf[MAX_BUF_SIZE] = {0};
+    size_t readbytes = 0;
+    int ret = 1;
+    if (conf->res.early_data == 1) {
+        DBG("###Doing Early Data read\n");
+        ret = SSL_read_early_data(ssl, buf, sizeof(buf) - 1, &readbytes);
+        DBG("Read early data [%s] ret=%d\n", buf, ret);
+        if (strcmp(buf, EARLY_DATA_MSG_FOR_OPENSSL_CLNT) != 0) {
+            ERR("Received early data is incorrect\n");
+            return -1;
+        }
+    }
+    //TODO memcmp with original early data
+    return ret > 0 ? 0 : -1;
+}
+
+int do_early_data(TC_CONF *conf, SSL *ssl)
+{
+    if (conf->server == 1) {
+        return do_ssl_read_early_data(conf, ssl);
+    } else {
+        return do_ssl_write_early_data(conf, ssl);
+    }
 }
 
 int do_ssl_connect(TC_CONF *conf, SSL *ssl)
@@ -432,32 +452,35 @@ int do_data_transfer(TC_CONF *conf, SSL *ssl)
 
 void do_cleanup_openssl(TC_CONF *conf, SSL_CTX *ctx, SSL *ssl)
 {
-    if (ssl) {
-        SSL_free(ssl);
-    }
+    SSL_free(ssl);
     close_sock_connection(&conf->test_con_fd);
-    if (ctx) {
-        SSL_CTX_free(ctx);
-    }
+    SSL_CTX_free(ctx);
 }
 
-int do_test_tls_connection(TC_CONF *conf)
+int do_test_tls_connection(TC_CONF *conf, SSL_CTX **out_ctx)
 {
     SSL_CTX *ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
 
     conf->con_count++;
-    ctx = create_context_openssl(conf);
-    if (!ctx) {
+    if ((ctx = create_context_openssl(conf)) == NULL) {
         ERR("SSl context creation failed\n");
         return -1;
     }
 
-    ssl = create_ssl_object_openssl(conf, ctx);
-    if (!ssl) {
+    if ((ssl = create_ssl_object_openssl(conf, ctx)) == NULL) {
         ERR("SSl context object failed\n");
         goto err;
+    }
+
+    if ((conf->res.psk != 0)
+            && (conf->max_version == TC_CONF_TLS_1_3_VERSION
+                || conf->max_version == 0)) {
+        if (do_early_data(conf, ssl)) {
+            ERR("Early data transfer failed\n");
+            goto err;
+        }
     }
 
     if (do_ssl_handshake(conf, ssl)) {
@@ -474,9 +497,17 @@ int do_test_tls_connection(TC_CONF *conf)
         ERR("Key update testing failed\n");
         goto err;
     }
-    if (conf->server == 0) {
-        /* Store SSL session for resumption */
-        conf->res.sess = SSL_get1_session(ssl);
+    if (conf->res.resumption == 1) {
+        if (conf->server == 1) {
+            *out_ctx = ctx;
+            ctx = NULL;
+        } else {
+            /* Store SSL session for resumption */
+            /* TODO Add TC to get session after handshake
+             * before shutdown
+             * after shutdown */
+            conf->res.sess = SSL_get1_session(ssl);
+        }
     }
     SSL_shutdown(ssl);
     ret_val = 0;
@@ -485,50 +516,54 @@ err:
     return ret_val;
 }
 
-int do_test_early_data(TC_CONF *conf)
+int do_resumption_after_1st_con_closure(TC_CONF *conf, SSL_CTX *in_ctx)
 {
-    SSL_CTX *ctx;
+    SSL_CTX *ctx = in_ctx;
     SSL *ssl = NULL;
     int ret_val = -1;
 
-    if (conf->res.early_data == 0) {
+    if (conf->res.resumption == 0) {
         return 0;
     }
 
+    DBG("###Doing Resumption\n");
     conf->con_count++;
-    ctx = create_context_openssl(conf);
-    if (!ctx) {
-        ERR("SSl context creation failed\n");
-        return -1;
+    if (ctx == NULL) {
+        if ((ctx = create_context_openssl(conf)) == NULL) {
+            ERR("SSL context creation failed\n");
+            return -1;
+        }
     }
 
-    ssl = create_ssl_object_openssl(conf, ctx);
-    if (!ssl) {
+    if ((ssl = create_ssl_object_openssl(conf, ctx)) == NULL) {
         ERR("SSl context object failed\n");
         goto err;
     }
 
     if (conf->server == 0) {
         if (conf->res.sess == NULL) {
-            ERR("Sess is not available for doing early data\n");
+            ERR("Sess is not available for doing resumption\n");
             goto err;
         }
-        SSL_set_session(ssl, conf->res.sess);
-        /* On client send early data during handshake */
-        /*if (do_ssl_write_early_data(conf, ssl)) {
-            ERR("Write early data failed\n");
-            goto err;
-        }*/
-        if (do_ssl_handshake(conf, ssl)) {
-            ERR("SSL handshake failed\n");
+        if (SSL_set_session(ssl, conf->res.sess) != 1) {
+            ERR("Set session failed\n");
             goto err;
         }
+    } 
+
+    if (do_early_data(conf, ssl)) {
+        ERR("Write early data failed\n");
+        goto err;
+    }
+    if (do_ssl_handshake(conf, ssl)) {
+        ERR("SSL handshake failed\n");
+        goto err;
+    }
+    if (SSL_session_reused(ssl)) {
+        DBG("###SSL session reused\n");
     } else {
-        /* On server do normal handshake */
-        if (do_ssl_handshake(conf, ssl)) {
-            ERR("SSL handshake failed\n");
-            goto err;
-        }
+        ERR("SSL session not reused\n");
+        goto err;
     }
     if (do_data_transfer(conf, ssl)) {
         ERR("Data transfer over TLS failed\n");
@@ -537,12 +572,16 @@ int do_test_early_data(TC_CONF *conf)
     DBG("Data transfer over TLS succeeded\n");
     ret_val = 0;
 err:
+    if (in_ctx != NULL) {
+        ctx = NULL;
+    }
     do_cleanup_openssl(conf, ctx, ssl);
     return ret_val;
 }
 
 int do_test_openssl(TC_CONF *conf)
 {
+    SSL_CTX *ctx = NULL;
     int ret_val = -1;
 
     DBG("Staring Test OpenSSL\n");
@@ -550,14 +589,18 @@ int do_test_openssl(TC_CONF *conf)
         ERR("Openssl init failed\n");
         return -1;
     }
-    if (do_test_tls_connection(conf)) {
+    if (do_test_tls_connection(conf, &ctx)) {
         goto err;
     }
-    if (do_test_early_data(conf)) {
+    if (do_resumption_after_1st_con_closure(conf, ctx)) {
         goto err;
     }
     ret_val = 0;
 err:
+    if (ret_val != 0) {
+        print_ssl_err();
+    }
+    SSL_CTX_free(ctx);
     do_openssl_fini(conf);
     return ret_val;
 }

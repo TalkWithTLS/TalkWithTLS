@@ -79,6 +79,16 @@ typedef struct test_mem_debug_st {
 }TC_MEM_DEBUG;
 #endif
 
+#define CIPHER_RFC_MAX 64
+#define CIPHER_OSSL_TXT 64
+typedef struct tc_ciphersuite_info_st {
+    char ciph_rfc[CIPHER_RFC_MAX];
+    uint8_t ciph_val[2];
+    char ciph_openssl_txt[CIPHER_OSSL_TXT];
+}TC_CIPHERSUITE_INFO;
+
+extern TC_CIPHERSUITE_INFO g_cipher_info[5];
+
 typedef struct test_case_conf_cb_st {
     uint8_t info_cb;
     uint8_t msg_cb;
@@ -90,16 +100,21 @@ typedef struct test_case_conf_cb_st {
 #define TEST_MAX_PSK_ID     32
 #define TEST_MAX_PSK_KEY    64
 
+typedef enum tc_psk_test_type {
+    PSK_ID_AND_KEY = 1,
+    PSK_ID_KEY_AND_CIPHERSUITE,
+}TC_PSK_TEST_TYPE;
+
 typedef struct test_case_conf_resumption_st {
     void *sess;
     uint8_t resumption;
-    uint8_t psk;
+    TC_PSK_TEST_TYPE psk;
     char psk_id[TEST_MAX_PSK_ID];
     uint16_t psk_id_len;
     char psk_key[TEST_MAX_PSK_KEY];
     uint16_t psk_key_len;
     uint8_t early_data;
-    uint8_t early_data_sent;
+    uint8_t early_data_sent; //TODO Not needed
 }TC_CONF_RESUMPTION;
 
 typedef struct test_case_kexch_st {
