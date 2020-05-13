@@ -30,6 +30,11 @@ def tc_setup():
         ' -psk 2 -ciph TLS_AES_128_CCM_SHA256'),
     (' -serv -psk 2 -ciph TLS_AES_128_CCM_8_SHA256 ',
         ' -psk 2 -ciph TLS_AES_128_CCM_8_SHA256'),
+    # Interop with PSK default cipher vs PSK specific cipher
+    # In openssl interop with psk_client_cb/psk_server_cb vs
+    # psk_use_sess_cb/psk_find_sess_cb
+    (' -serv -psk 1 ', ' -psk 2 -ciph TLS_AES_128_GCM_SHA256 '),
+    (' -serv -psk 2 -ciph TLS_AES_128_GCM_SHA256', ' -psk 1 '),
 ])
 
 def test_t13_psk(tc_setup, sarg, carg):
