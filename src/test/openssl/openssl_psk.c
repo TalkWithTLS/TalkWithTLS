@@ -3,7 +3,7 @@
 const SSL_CIPHER *get_cipher_for_tls13_psk(SSL *s)
 {
     TC_CONF *conf = SSL_get_ex_data(s, SSL_EX_DATA_TC_CONF);
-    unsigned char aes128gcmsha256_id[] = {0x13, 0x01};
+    unsigned char aes128gcmsha256_id[] = {0x13, 0x02};
     const SSL_CIPHER *cipher;
     const char *ch;
     int i;
@@ -19,7 +19,7 @@ const SSL_CIPHER *get_cipher_for_tls13_psk(SSL *s)
             }
         }
     }
-    DBG("PSK out of band with default ciphersuite TLS_AES_128_GCM_SHA256\n");
+    DBG("PSK out of band with default ciphersuite TLS_AES_256_GCM_SHA384\n");
     return SSL_CIPHER_find(s, aes128gcmsha256_id);
 }
 
@@ -34,8 +34,7 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
     unsigned char *key = NULL;
     
     DBG("Called PSK use sess cb\n");
-    key = OPENSSL_hexstr2buf(conf->res.psk_key, &key_len);
-    if (key == NULL) {
+    if ((key = OPENSSL_hexstr2buf(conf->res.psk_key, &key_len)) == NULL) {
         ERR("hexstr2buf failed\n");
         return 0;
     }
@@ -93,8 +92,7 @@ int tls13_psk_find_session_cb(SSL *ssl, const unsigned char *id,
         return 1;
     }
 
-    key = OPENSSL_hexstr2buf(conf->res.psk_key, &key_len);
-    if (key == NULL) {
+    if ((key = OPENSSL_hexstr2buf(conf->res.psk_key, &key_len)) == NULL) {
         ERR("hexstr2buf conversion failed\n");
         return 0;
     }
@@ -135,17 +133,26 @@ unsigned int tls_psk_client_cb(SSL *ssl, const char *hint,
                                        unsigned char *psk,
                                        unsigned int max_psk_len)
 {
-    DBG("Called PSK client cb\n");
     TC_CONF *conf = SSL_get_ex_data(ssl, SSL_EX_DATA_TC_CONF);
+    unsigned char *key;
+    long key_len;
+
+    DBG("Called PSK client cb\n");
+    if ((key = OPENSSL_hexstr2buf(conf->res.psk_key, &key_len)) == NULL) {
+        ERR("hexstr2buf failed\n");
+        return 0;
+    }
     if ((strlen(conf->res.psk_id) + 1 > max_identity_len)
-            || (strlen(conf->res.psk_key) > max_psk_len)) {
+            || (key_len > max_psk_len)) {
         ERR("PSK ID or Key buffer is not sufficient\n");
         goto err;
     }
     strcpy(identity, conf->res.psk_id);
-    memcpy(psk, conf->res.psk_key, strlen(conf->res.psk_key));
-    return strlen(conf->res.psk_key);
+    memcpy(psk, key, key_len);
+    OPENSSL_free(key);
+    return (unsigned int)key_len;
 err:
+    OPENSSL_free(key);
     return 0;
 }
 
@@ -153,19 +160,28 @@ unsigned int tls_psk_server_cb(SSL *ssl, const char *id,
                                             unsigned char *psk,
                                             unsigned int max_psk_len)
 {
-    DBG("Called PSK server cb\n");
     TC_CONF *conf = SSL_get_ex_data(ssl, SSL_EX_DATA_TC_CONF);
+    unsigned char *key;
+    long key_len;
+
+    DBG("Called PSK server cb\n");
+    if ((key = OPENSSL_hexstr2buf(conf->res.psk_key, &key_len)) == NULL) {
+        ERR("hexstr2buf failed\n");
+        return 0;
+    }
     if (strcmp(conf->res.psk_id, id) != 0) {
         ERR("Unknown Client's PSK ID\n");
         goto err;
     }
-    if (strlen(conf->res.psk_key) > max_psk_len) {
+    if (key_len > max_psk_len) {
         ERR("Insufficient buffer size to copy conf->res.psk_key\n");
         goto err;
     }
-    memcpy(psk, conf->res.psk_key, strlen(conf->res.psk_key));
-    return strlen(conf->res.psk_key);
+    memcpy(psk, key, key_len);
+    OPENSSL_free(key);
+    return (unsigned int)key_len;
 err:
+    OPENSSL_free(key);
     return 0;
 }
 
