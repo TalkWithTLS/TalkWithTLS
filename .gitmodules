@@ -10,3 +10,11 @@
 [submodule "dependency/boringssl-master"]
 	path = dependency/boringssl-master
 	url = https://boringssl.googlesource.com/boringssl/
+[submodule "dependency/openssl-1.1.1"]
+	path = dependency/openssl-1.1.1
+	url = https://github.com/openssl/openssl
+	branch = OpenSSL_1_1_1-stable
+[submodule "dependency/openssl-1.1.1-rel"]
+	path = dependency/openssl-1.1.1-rel
+	url = https://github.com/openssl/openssl
+	branch = OpenSSL_1_1_1-stable
