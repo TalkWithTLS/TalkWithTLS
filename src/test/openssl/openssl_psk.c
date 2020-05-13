@@ -65,6 +65,8 @@ int tls13_psk_use_session_cb(SSL *s, const EVP_MD *md,
         ERR("Use sess cb: Enabled early data\n");
         goto err;
     }
+    DBG("Set Max early data [%d] to SSL_SESS in psk use cb\n",
+        MAX_EARLY_DATA_MSG);
 
     *sess = usesess;
     *id = (unsigned char *)conf->res.psk_id;
@@ -118,6 +120,8 @@ int tls13_psk_find_session_cb(SSL *ssl, const unsigned char *id,
         ERR("Use sess cb: Enabled early data\n");
         goto err;
     }
+    DBG("Set Max early data [%d] to SSL_SESS in psk find cb\n",
+        MAX_EARLY_DATA_MSG);
 
     *sess = tmpsess;
     return 1;

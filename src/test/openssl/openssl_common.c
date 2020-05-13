@@ -117,6 +117,7 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
     }
     if ((conf->res.early_data) && (conf->server)) {
         SSL_CTX_set_max_early_data(ctx, MAX_EARLY_DATA_MSG);
+        DBG("Set Max early data [%d] to SSL context\n", MAX_EARLY_DATA_MSG);
     }
     if (ssl_ctx_mode_config(conf, ctx) != 0) {
         goto err;
