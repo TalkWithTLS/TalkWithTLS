@@ -15,7 +15,13 @@
 
 int verify_cb(int ok, X509_STORE_CTX *ctx)
 {
+    char buf[256] = {0};
     printf("Verify Callback\n");
+    if (ok == 1) {
+        X509_NAME_oneline(X509_get_subject_name(
+                    X509_STORE_CTX_get_current_cert(ctx)), buf, sizeof(buf));
+        printf("Cert subject name [%s]\n", buf);
+    }
     return ok;
 }
 
