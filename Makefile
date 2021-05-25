@@ -250,8 +250,8 @@ TEST_OSSL_300_OBJ=$(addprefix $(OBJ_DIR)/,\
 					$(TEST_OPENSSL_SRC:.c=$(OSSL_300_SUFFIX).o))
 
 DEPENDENCY_DIR=dependency
-OSSL_1_1_1=openssl-1.1.1f
-OSSL_1_1_1_REL=openssl-1.1.1f-rel
+OSSL_1_1_1=openssl-1.1.1
+OSSL_1_1_1_REL=openssl-1.1.1-rel
 OSSL_MASTER=openssl-master
 OSSL_MASTER_REL=openssl-master-rel
 

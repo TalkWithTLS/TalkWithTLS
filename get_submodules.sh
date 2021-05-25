@@ -9,8 +9,7 @@ err_report()
 trap 'err_report $LINENO' ERR
 
 git submodule init
-git submodule update
-git submodule foreach git pull origin master 1>/dev/null 2>&1
-echo "Pulled latest code from origin"
-echo ""
-git submodule foreach git log -n 1 --oneline
+echo "Fetching submodule from remote..."
+git submodule update --recursive --remote 1>/dev/null
+echo "Fetched latest code from remote"
+git submodule status

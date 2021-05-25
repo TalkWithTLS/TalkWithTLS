@@ -2,9 +2,6 @@ obj
 bin
 report
 
-openssl-1.1.1*
-!openssl*.tar.gz
-
 tags
 cscope*
 

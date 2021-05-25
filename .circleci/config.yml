@@ -2,7 +2,8 @@ version: 2
 jobs:
     build_and_test:
         machine:
-            image: ubuntu-1604:201903-01
+            #image: ubuntu-1604:201903-01
+            image: ubuntu-2004:202010-01
             enabled: true
         steps:
             - checkout
@@ -13,9 +14,9 @@ jobs:
                 name: Install Prerequisites
                 command: |
                     sudo apt update
-                    sudo apt install python python-pip
-                    sudo pip install -U pip
-                    sudo pip install pipenv
+                    sudo apt install python3 python3-pip
+                    sudo pip3 install -U pip
+                    sudo pip3 install pipenv
                     pipenv install pytest
                     pipenv install pytest-html
                     #sudo apt install libunwind-dev golang-go
