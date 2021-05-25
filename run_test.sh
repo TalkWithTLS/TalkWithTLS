@@ -47,7 +47,7 @@ while [ true ]; do
     ((row_idx++))
 done
 
-python -m pytest ${TS} -v --maxfail=1 --html=${REPORT_DIR}/TalkWithTLS.html
+python3 -m pytest ${TS} -v --maxfail=1 --html=${REPORT_DIR}/TalkWithTLS.html
 python_res=$?
 
 echo "Shutting down SUTs"
