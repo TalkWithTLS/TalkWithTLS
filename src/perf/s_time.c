@@ -237,10 +237,15 @@ void do_cleanup(SSL_CTX *ctx, SSL *ssl)
 void get_error()
 {
     unsigned long error;
-    const char *file = NULL;
+    const char *file = NULL, *func = "";
     int line= 0;
+#ifdef WITH_OSSL_111
     error = ERR_get_error_line(&file, &line);
-    printf("Error reason=%d on [%s:%d]\n", ERR_GET_REASON(error), file, line);
+#elif defined WITH_OSSL_300
+    error = ERR_get_error_all(&file, &line, &func, NULL, NULL);
+#endif
+    printf("Error reason=%d on [%s:%d:%s]\n", ERR_GET_REASON(error),
+           file, line, func);
 }
 
 int do_tls_client(SSL_CTX *ctx, PERF_CONF *conf)
