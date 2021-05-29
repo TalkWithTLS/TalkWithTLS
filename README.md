@@ -2,38 +2,55 @@
 [![CircleCI](https://circleci.com/gh/TalkWithTLS/TalkWithTLS.svg?style=shield)](https://circleci.com/gh/TalkWithTLS/TalkWithTLS)
 
 Sample Code for [D]TLS usage and a lot more than that.
-- It has sample code to use TLS and DTLS from OpenSSL and wolfSSL.
+- It has sample code to use TLS and DTLS from OpenSSL.
 - And it has a python based automated test framework using Pytest to test OpenSSL.
 - Finally a perf script to test various TLS implementations.
 
 ## 1. Installing Dependencies
 ### 1.1 On ubuntu
 ```
-sudo apt install make gcc g++ python python-pip
-pip install --user pytest pytest-html
+sudo apt install make gcc g++ python3 python3-pip
+pip3 install --user pytest pytest-html
 ```
 
-## 2. Building
+## 2. Binaries & Building Procedure
+### 2.1 Binaries
+Binaries generated are
+- **./bin/test_openssl_xxx**
+  - Test binaries for openssl which are generated from the code `src/test`.
+  - Currently two binaries `test_openssl_111` and `test_openssl_300` are
+  generated using `1.1.1` and `3.0.0` versions of OpenSSL.
+  - This binaries are similar to `s_server` and `s_client` binaries in
+  OpenSSL. One program itself can run as server or client.
+- **./bin/sample/xxx**
+  - Sample code binaries which are generated from the code `src/sample`.
+- **./bin/perf/xxx**
+  - Binaries which are generated from the code `src/perf` and used to calculate
+  performance.
+
+### 2.2 Building
 ```
 ./get_submodules.sh
 make
 ```
 
 - Here `get_submodules.sh` executes
-[git-submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules) commands to fetch latest code
-of OpenSSL and wolfSSL master for its github repositories.
-- This fails if you are behind HTTPS proxy. In that case `get_submodules.sh` execution can
-be ignored so that `make` uses the pre archived master branch of OpenSSL and wolfSSL in `dependency`
-directory.
+[git-submodule](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
+commands to fetch latest code of OpenSSL and BoringSSL master from its git
+repositories.
+- This fails if you are behind HTTPS proxy. In that case `get_submodules.sh`
+execution can be ignored so that `make` uses the pre archived master branch of
+OpenSSL and BoringSSL in `dependency` directory.
 
-### 2.1 Building only specific binaries
-- `make sample_bin` To build only Sample binaries
-- `make test_bin` To build only Test binaries
-- `make perf_bin` To build only Performance script binaries
+#### 2.2.1 Building only specific binaries
+- `make test_bin`: To build only Test binaries `./bin/test_openssl_xxx`.
+- `make sample_bin`: To build only Sample binaries `./bin/sample/xxx`.
+- `make perf_bin`: To build only Performance script binaries `./bin/perf/xxx`.
 
 ## 3. Running
-**All binaries needs to run with current working directory as root directory of this repo**.
-Because binary accesses `certs` folder present on root directory.
+**All binaries needs to run with root directory of this repo as current
+working directory**. Because binary accesses `certs` folder present on root
+directory.
 
 ### 3.1 Running Sample Binaries
 ```
@@ -42,16 +59,27 @@ Because binary accesses `certs` folder present on root directory.
 ```
 
 ### 3.2 Running Test
+#### 3.2.1 Running Test Automation
+Test automation is achieved using `pytest` which can be triggered by the
+script `run_test.sh`.
 ```
 ./run_test.sh
 ```
 
+#### 3.2.2 Running Test
+Test binary can be executed separately similar to OpenSSL's `s_server` and
+`s_client`.
+```
+./bin/test_openssl_111 -serv -ver 13
+./bin/test_openssl_111 -ver 13
+```
+
 ### 3.3 Running Perf Binaries
-- Perf binaries available are
+Perf binaries available are
 ```
 ./bin/perf/s_server_openssl_master_rel
 ./bin/perf/s_time_openssl_master_rel
 ./bin/perf/speed_openssl_master_rel
 ```
-- `s_server_xxx` and `s_time_xxx` can be executed on virtual interface of type `veth` in a
-network namespace using the script `scripts/create_netns.sh`
+`s_server_xxx` and `s_time_xxx` can be executed on virtual interface of type
+`veth` in a network namespace using the script `scripts/create_netns.sh`
