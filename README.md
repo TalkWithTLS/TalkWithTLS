@@ -20,7 +20,7 @@ Binaries generated are
   - Test binaries for openssl which are generated from the code `src/test`.
   - Currently two binaries `test_openssl_111` and `test_openssl_300` are
   generated using `1.1.1` and `3.0.0` versions of OpenSSL.
-  - This binaries are similar to `s_server` and `s_client` binaries in
+  - These binaries are similar to `s_server` and `s_client` binaries in
   OpenSSL. One program itself can run as server or client.
 - **./bin/sample/xxx**
   - Sample code binaries which are generated from the code `src/sample`.
@@ -52,26 +52,26 @@ OpenSSL and BoringSSL in `dependency` directory.
 working directory**. Because binary accesses `certs` folder present on root
 directory.
 
-### 3.1 Running Sample Binaries
-```
-./bin/sample/openssl_tls13_server
-./bin/sample/openssl_tls13_client
-```
-
-### 3.2 Running Test
-#### 3.2.1 Running Test Automation
+### 3.1 Running Test
+#### 3.1.1 Running Test Automation
 Test automation is achieved using `pytest` which can be triggered by the
 script `run_test.sh`.
 ```
 ./run_test.sh
 ```
 
-#### 3.2.2 Running Test
+#### 3.1.2 Running Test
 Test binary can be executed separately similar to OpenSSL's `s_server` and
 `s_client`.
 ```
 ./bin/test_openssl_111 -serv -ver 13
 ./bin/test_openssl_111 -ver 13
+```
+
+### 3.2 Running Sample Binaries
+```
+./bin/sample/openssl_tls13_server
+./bin/sample/openssl_tls13_client
 ```
 
 ### 3.3 Running Perf Binaries
