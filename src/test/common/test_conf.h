@@ -69,6 +69,7 @@ extern "C" {
 
 #define MAX_CIPHER_STR_SIZE   128
 
+/* Reason for listing on Any IP is to run pytest and SUT on different nodes */
 #define TC_AUTOMATION_IP "0.0.0.0"
 #define TC_AUTOMATION_PORT 25100
 

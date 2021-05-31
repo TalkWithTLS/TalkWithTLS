@@ -15,7 +15,7 @@ void usage()
                   "directly listens on TC automation TCP socket\n");
     printf("-serv\n");
     printf("    - Run as [D]TLS server\n");
-    printf("-clnt[=serv_port]\n");
+    printf("-clnt[=serv_ip:serv_port]\n");
     printf("    - Run as [D]TLS clnt\n");
     printf("    - Value is server port to connect, which is optional\n");
     printf("-cauth\n");
@@ -138,7 +138,11 @@ int parse_args(int argc, char **argv, TC_CONF *conf)
             case OPT_CLNT:
                 conf->server = 0;
                 if (optarg != NULL) {
-                    test_sock_addr_port_to_connect(conf->taddr, (uint16_t)atoi(optarg));
+                    if (test_sock_addr_port_to_connect(conf->taddr, optarg) !=
+                                                                TWT_SUCCESS) {
+                        ERR("Invalid value to option -clnt");
+                        return TWT_FAILURE;
+                    }
                 }
                 break;
             case OPT_CAUTH:
