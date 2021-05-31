@@ -9,17 +9,26 @@ extern "C" {
 #include <stdint.h>
 #include <string.h>
 
-#define ERR(fmt, ...) \
+#define LOG(fmt, loglevel, ...) \
     do { \
-        printf("[ERR]"fmt, ##__VA_ARGS__); \
+        char *token, *filename = __FILE__; \
+        char *rest_orig, *rest; \
+        rest_orig = rest = strdup(filename); \
+        if (rest != NULL) { \
+            while ((token = strtok_r(rest, "/", &rest)) != NULL) { \
+                filename = token; \
+            } \
+        } \
+        printf("[%s][%s:%d]"fmt, loglevel, filename, __LINE__, ##__VA_ARGS__); \
         fflush(stdout); \
+        if (rest_orig != NULL) free(rest_orig); \
     } while (0)
 
 #define DBG(fmt, ...) \
-    do { \
-        printf("[DBG]"fmt, ##__VA_ARGS__); \
-        fflush(stdout); \
-    } while (0)
+    LOG(fmt, "DBG", ##__VA_ARGS__)
+
+#define ERR(fmt, ...) \
+    LOG(fmt, "ERR", ##__VA_ARGS__)
 
 #define PRINT(fmt, ...) \
     do { \
