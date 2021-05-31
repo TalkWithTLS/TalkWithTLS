@@ -214,7 +214,7 @@ void print_ssl_err()
 {
     char err_buf[512] = {0};
     unsigned long error;
-    const char *file;
+    const char *file = NULL;
     int line_num = 0;
     error = ERR_peek_error_line(&file, &line_num);
     ERR_error_string_n(error, err_buf, sizeof(err_buf));
