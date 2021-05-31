@@ -261,9 +261,9 @@ int main(int argc, char **argv)
 
 end:
     if (ret == TWT_SUCCESS) {
-        printf("SUCCESS !!\n");
+        DBG("SUCCESS !!\n");
     } else {
-        printf("FAILURE !!\n");
+        DBG("FAILURE !!\n");
     }
     return ret;
 }
