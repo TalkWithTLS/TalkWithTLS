@@ -82,8 +82,8 @@ def do_test(tc_name, sarg, carg, sport, cport):
         return TC_SUCCESS
 
 def run_test(func_name, sarg, carg, flags=0):
-    Connect_OSSL111_Serv = '-clnt=' + ENV_OSSL_111_SERV_PORT + ' '
-    Connect_OSSL300_Serv = '-clnt=' + ENV_OSSL_300_SERV_PORT + ' '
+    Connect_OSSL111_Serv = '-clnt=' + SUT_IP + ":" + ENV_OSSL_111_SERV_PORT + ' '
+    Connect_OSSL300_Serv = '-clnt=' + SUT_IP + ":" + ENV_OSSL_300_SERV_PORT + ' '
     # 1. OpenSSL 1.1.1 Client vs OpenSSL 1.1.1 Server
     print('Testing OpenSSL 1.1.1 CLient vs OpenSSL 1.1.1 Server')
     assert do_test(func_name, sarg, Connect_OSSL111_Serv + carg,

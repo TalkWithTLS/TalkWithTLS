@@ -7,6 +7,7 @@ int ssl_ciph_config(TC_CONF *conf, SSL *ssl)
             ERR("Configuring TLS1.3 ciphersuite [%s] failed\n", conf->ch.ciph);
             return TWT_FAILURE;
         }
+        DBG("Configured ciphersuite [%s]\n", conf->ch.ciph);
         if (conf->ch.negotiated_ciph == NULL) {
             conf->ch.negotiated_ciph = conf->ch.ciph;
         }

@@ -24,6 +24,7 @@ int init_test_sock_addr(TEST_SOCK_ADDR *taddr)
     taddr->test_addr.port = SERVER_PORT;
     test_sock_addr_ip(&taddr->peer_addr_to_con, SERVER_IP);
     taddr->peer_addr_to_con.port = SERVER_PORT;
+    DBG("Initialized Test sock address\n");
     return TWT_SUCCESS;
 }
 
@@ -36,10 +37,39 @@ int test_sock_addr_port_off(TEST_SOCK_ADDR *taddr, uint16_t port_off)
     return TWT_SUCCESS;
 }
 
-int test_sock_addr_port_to_connect(TEST_SOCK_ADDR *taddr, uint16_t port_to_connect)
+int test_sock_addr_port_to_connect(TEST_SOCK_ADDR *taddr, const char *ip_port)
 {
-    taddr->peer_addr_to_con.port = port_to_connect + taddr->port_off;
-    return TWT_SUCCESS;
+    char *ip_port_str, *token, *rest;
+    int ret_val = TWT_FAILURE, count = 1;
+    if ((ip_port_str = strdup(ip_port)) == NULL) {
+        ERR("IP Port string dup failed\n");
+        return TWT_FAILURE;
+    }
+    rest = ip_port_str;
+    while (((token = strtok_r(rest, ":", &rest)) != NULL) && (count <= 2)) {
+        switch (count) {
+            case 1:
+                if (strlen(token) >= sizeof(taddr->peer_addr_to_con.ip)) {
+                    ERR("Unsupported length IP address %s\n", token);
+                    goto err;
+                }
+                strcpy(taddr->peer_addr_to_con.ip, token);
+                break;
+            case 2:
+                if (atoi(token) <= 0) {
+                    ERR("Invalid port %s\n", token);
+                    goto err;
+                }
+                taddr->peer_addr_to_con.port = atoi(token) + taddr->port_off;
+                break;
+        }
+        count++;
+    }
+    DBG("Updated socket address to connect as [%s]\n", ip_port);
+    ret_val = TWT_SUCCESS;
+err:
+    free(ip_port_str);
+    return ret_val;
 }
 
 int test_sock_addr_tc_automation(TEST_SOCK_ADDR *taddr, const char *str)
@@ -49,7 +79,7 @@ int test_sock_addr_tc_automation(TEST_SOCK_ADDR *taddr, const char *str)
 
     DBG("TC automation address details [%s]\n", str);
     if ((data = (char *)malloc(strlen(str) + 1)) == NULL) {
-        printf("Malloc failed\n");
+        ERR("Malloc failed\n");
         return TWT_FAILURE;
     }
     strcpy(data, str);

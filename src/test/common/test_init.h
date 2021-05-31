@@ -9,7 +9,7 @@ extern "C" {
 
 int init_test_sock_addr(TEST_SOCK_ADDR *taddr);
 
-int test_sock_addr_port_to_connect(TEST_SOCK_ADDR *taddr, uint16_t port_to_connect);
+int test_sock_addr_port_to_connect(TEST_SOCK_ADDR *taddr, const char *ip_port);
 
 int test_sock_addr_tc_automation(TEST_SOCK_ADDR *taddr, const char *str);
 

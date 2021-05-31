@@ -6,6 +6,12 @@ TEST_OSSL_300=${BIN_DIR}/test_openssl_300
 export REPORT_DIR=report
 export LOG_DIR=report/log
 
+# TODO SUT_IP also should go from here to test/common.py
+
+# Two ports for each SUT (test exe)
+# - One (xxx_AUTOMATION_PORT) port for communicating test control msgs between
+#   python script and SUT (test exe)
+# - Another port for the actual port [D]TLS connection is made
 export OSSL_111_CLNT_AUTOMATION_PORT=25100
 export OSSL_111_SERV_AUTOMATION_PORT=25200
 export OSSL_111_CLNT_PORT=15100
