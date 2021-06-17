@@ -10,6 +10,7 @@
 #include "openssl_dtls.h"
 #include "openssl_msg_cb.h"
 #include "openssl_cipher.h"
+#include "openssl_auth.h"
 
 #include "openssl/crypto.h"
 #include "openssl/ssl.h"
@@ -51,7 +52,6 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
 {
     const SSL_METHOD *meth;
     SSL_CTX *ctx;
-    int i;
 
     meth = conf->server ? \
            (conf->dtls ? DTLS_server_method() : TLS_server_method()) \
@@ -70,42 +70,10 @@ SSL_CTX *create_context_openssl(TC_CONF *conf)
         goto err;
     }
 
-    if (conf->cafiles_count) {
-        for (i = 0; i < conf->cafiles_count; i++) {
-#ifdef WITH_OSSL_111
-            if (SSL_CTX_load_verify_locations(ctx, conf->cafiles[i], NULL) != 1) {
-#else
-            if (SSL_CTX_load_verify_file(ctx, conf->cafiles[i]) != 1) {
-#endif
-                ERR("Load CA cert [%s] failed\n", conf->cafiles[i]);
-                goto err;
-            }
-            DBG("Loaded cert %s on context\n", conf->cafiles[i]);
-        }
+    if (ssl_ctx_auth_conf(conf, ctx) != TWT_SUCCESS) {
+        ERR("Trust Certs, EE Certs or Peer Verify config failed\n");
+        goto err;
     }
-    if (conf->cert) {
-        if (SSL_CTX_use_certificate_file(ctx, conf->cert, conf->cert_type) != 1) {
-            ERR("Load Server cert %s failed\n", conf->cert);
-            goto err;
-        }
-
-        DBG("Loaded server cert %s on context\n", conf->cert);
-    }
-
-    if (conf->priv_key) {
-        if (SSL_CTX_use_PrivateKey_file(ctx, conf->priv_key, conf->priv_key_type) != 1) {
-            ERR("Load Server key %s failed\n", conf->priv_key);
-            goto err;
-        }
-
-        DBG("Loaded server key %s on context\n", conf->priv_key);
-    }
-
-    if ((conf->server == 0) || (conf->auth & TC_CONF_CLIENT_CERT_AUTH)) {
-        SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
-        DBG("Configured Verify Peer\n");
-    }
-    SSL_CTX_set_verify_depth(ctx, 5);
     /*if (SSL_CTX_set_session_id_context(ctx, SSL_SESS_ID_CTX, strlen(SSL_SESS_ID_CTX)) != 1) {
         ERR("Set sess id ctx failed\n");
         goto err;
