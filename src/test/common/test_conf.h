@@ -67,7 +67,8 @@ extern "C" {
 
 #define MAX_IP_ADDR_STR     64
 
-#define MAX_CIPHER_STR_SIZE   128
+#define MAX_CIPHER_STR_SIZE   32
+#define MAX_CIPHER_STR_LIST_SIZE   256
 
 /* Reason for listing on Any IP is to run pytest and SUT on different nodes */
 #define TC_AUTOMATION_IP "0.0.0.0"
@@ -133,8 +134,12 @@ typedef struct test_case_ssl_mode_st {
 }TC_CONF_SSL_MODE;
 
 typedef struct test_case_config_cipher_st {
-    char ciph[MAX_CIPHER_STR_SIZE]; /* Cipher stored as OpenSSL's string */
-    char *negotiated_ciph;
+    /* Passed with '-ciph' option to configure for [D]TLS connection. */
+    /* Stored as RFC defined cipher suite name delimited by ':'. */
+    char ciph[MAX_CIPHER_STR_LIST_SIZE];
+    /* Currently negotiated_ciph is set when only one ciph is configued using
+     * '-ciph' option. */
+    char negotiated_ciph[MAX_CIPHER_STR_SIZE];
 }TC_CONF_CIPHER;
 
 #define TC_CONF_KEY_UPDATE_REQ_ON_SERVER    1
