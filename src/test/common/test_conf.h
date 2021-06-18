@@ -63,6 +63,8 @@ extern "C" {
 #define TC_CONF_SERV_T13_CLNT_T12_VERSION       1312
 #define TC_CONF_SERV_T12_CLNT_T13_VERSION       1213
 
+#define MAX_FILE_NAME_SIZE  64
+#define MAX_CERT_TYPE_SIZE  4   /* To store 'pem' or 'asn' */
 #define MAX_CA_FILE_LOAD    5
 
 #define MAX_IP_ADDR_STR     64
@@ -194,11 +196,13 @@ struct test_case_conf_st {
     int fd;
     uint8_t nb_sock;
     uint8_t auth;
-    const char *cafiles[MAX_CA_FILE_LOAD];
+    char cafiles[MAX_CA_FILE_LOAD][MAX_FILE_NAME_SIZE];
     uint8_t cafiles_count;
-    const char *cert;
+    char cert[MAX_FILE_NAME_SIZE];
+    char cert_type_str[MAX_CERT_TYPE_SIZE];
     int cert_type;
-    const char *priv_key;
+    char priv_key[MAX_FILE_NAME_SIZE];
+    char priv_key_type_str[MAX_CERT_TYPE_SIZE];
     int priv_key_type;
     uint16_t con_count;
     int min_version; /*TODO Need to CLI arg for this */

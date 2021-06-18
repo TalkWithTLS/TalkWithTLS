@@ -23,8 +23,8 @@ void tc_conf_dtls(TC_CONF *conf)
 }
 
 /* tc_conf_update
- * Based on CLI arguments does some internal initialization which will be used
- * in further test scripts */
+ * - Based on CLI arguments it does some internal initialization which will be
+ *   used in further test scripts */
 int tc_conf_update(TC_CONF *conf)
 {
     if (tc_conf_kexch(conf)) {

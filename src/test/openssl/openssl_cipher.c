@@ -1,6 +1,8 @@
+#include "test_cli_arg.h"
 #include "openssl_cipher.h"
 
-#define CIPHER_DELIMITER ":"
+/* TWT cli args receives ciphers delimited by ',' */
+#define OPENSSL_CIPHER_DELIMITER ":"
 
 int append_ciph_str(char **ciph_list, const char *ciph)
 {
@@ -14,7 +16,7 @@ int append_ciph_str(char **ciph_list, const char *ciph)
     memset(ciph_list_new, 0, new_len);
     if (*ciph_list != NULL) {
         strcpy(ciph_list_new, *ciph_list);
-        strcat(ciph_list_new, CIPHER_DELIMITER);
+        strcat(ciph_list_new, OPENSSL_CIPHER_DELIMITER);
     }
     strcat(ciph_list_new, ciph);
     if (*ciph_list != NULL)
@@ -68,7 +70,8 @@ int convert_ciph_list_to_ossl_format(TC_CONF *conf, char* ciph,
     int ciph_count = 0, is_tls13_ciph = 0;
     char *rest = ciph, *token;
     const char *ciph_str;
-    while ((token = strtok_r(rest, CIPHER_DELIMITER, &rest)) != NULL) {
+    while ((token = strtok_r(rest, TWT_CLI_ARG_VALUE_DELIMITER, &rest))
+                                                                != NULL) {
         if ((ciph_str = convert_ciph_to_ossl_format(token, &is_tls13_ciph))
                                                                    == NULL) {
             return TWT_FAILURE;
