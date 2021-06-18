@@ -23,16 +23,34 @@ void usage()
     printf("-ciph\n");
     printf("    - Configure ciphersuite, currently supports only TLSv1.3\n");
     printf("    - Takes RFC defined cipher string as input\n");
-    printf("    - More than one cipher are delimeted by ':'\n");
-    printf("    - Accepted ciphersuites:\n");
-    printf("    TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384\n");
-    printf("    TLS_CHACHA20_POLY1305_SHA256, TLS_AES_128_CCM_SHA256\n");
-    printf("    TLS_AES_128_CCM_8_SHA256\n");
+    printf("    - More than one cipher are delimeted by ','\n");
+    printf("    - Accepted ciphersuites by this options are:\n");
+    printf("    TLSv1.3: TLS_AES_128_GCM_SHA256, TLS_AES_256_GCM_SHA384,\n");
+    printf("      TLS_CHACHA20_POLY1305_SHA256, TLS_AES_128_CCM_SHA256,\n");
+    printf("      TLS_AES_128_CCM_8_SHA256\n");
+    printf("    TLSv1.2: TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,\n");
+    printf("      TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,\n");
+    printf("      TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,\n");
+    printf("      TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,\n");
+    printf("      TLS_RSA_WITH_AES_128_GCM_SHA256,\n");
+    printf("      TLS_RSA_WITH_AES_256_GCM_SHA384\n");
     //TODO Need to add support for old ciphersuites as well
     printf("-kex <arg>\n");
     printf("    - Key Exchange group for TLS1.3\n");
     printf("    1 - All ECDHE, 2 - All FFDHE\n");
     printf("    3 - All ECDHE set using str API (SSL_set1_group_list)\n");
+    printf("-cert <cert_file_name>\n");
+    printf("    - By default cert file name is considered as PEM type\n");
+    printf("    - If it is of different type specify in '-cert-type' option\n");
+    printf("-cert-type <pem or asn>\n");
+    printf("    - It takes only two values 'pem' or 'asn'\n");
+    printf("-priv-key <priv_key_file>\n");
+    printf("    - By default priv key file name is considered as PEM type\n");
+    printf("    - If it is of different type specify in '-priv-key-type' option\n");
+    printf("-priv-key-type <pem or der>\n");
+    printf("    - It takes only two values 'pem' or 'der'\n");
+    printf("-trust-certs <cert_file_names>\n");
+    printf("    - File names are delimited by ','. And should of PEM type.\n");
     printf("-nbsock\n");
     printf("    - Enables non blocking on socket\n");
     printf("-res\n");
@@ -77,6 +95,11 @@ enum cmd_opt_id {
     OPT_CAUTH,
     OPT_CIPH,
     OPT_KEX,
+    OPT_CERT,
+    OPT_CERT_TYPE,
+    OPT_PRIV_KEY,
+    OPT_PRIV_KEY_TYPE,
+    OPT_TRUST_CERTS,
     OPT_NBSOCK,
     OPT_RES,
     OPT_PSK,
@@ -98,6 +121,11 @@ struct option lopts[] = {
     {"cauth", optional_argument, NULL, OPT_CAUTH},
     {"ciph", required_argument, NULL, OPT_CIPH},
     {"kex", required_argument, NULL, OPT_KEX},
+    {"cert", required_argument, NULL, OPT_CERT},
+    {"cert-type", required_argument, NULL, OPT_CERT_TYPE},
+    {"priv-key", required_argument, NULL, OPT_PRIV_KEY},
+    {"priv-key-type", required_argument, NULL, OPT_PRIV_KEY_TYPE},
+    {"trust-certs", required_argument, NULL, OPT_TRUST_CERTS},
     {"nbsock", optional_argument, NULL, OPT_NBSOCK},
     {"res", optional_argument, NULL, OPT_RES},
     {"psk", required_argument, NULL, OPT_PSK},
@@ -109,6 +137,52 @@ struct option lopts[] = {
     {"memcb", optional_argument, NULL, OPT_MEMCB},
     {"relbuf", required_argument, NULL, OPT_RELBUF},
 };
+
+void set_default_cert_type(char *out) {
+    if (strlen(out) == 0) {
+        strcpy(out, TWT_CLI_CERT_TYPE_PEM);
+    }
+}
+
+int copy_str(char *out, size_t out_buf_len, const char *in_str,
+                                        const char *option_name)
+{
+    if (strlen(in_str) >= out_buf_len) {
+        ERR("Insufficient buffer to copy %s option value of len %ld\n",
+                                            option_name, strlen(in_str));
+        return TWT_FAILURE;
+    }
+    strcpy(out, in_str);
+    return TWT_SUCCESS;
+}
+
+int copy_strs(char *out, size_t out_element_count, size_t out_element_size,
+              uint8_t *out_count, const char *in_str, const char *option_name)
+{
+    char *in, *rest, *token;
+    int ret_val = TWT_FAILURE, i = 0;
+    if ((in = strdup(in_str)) == NULL) {
+        ERR("Duping option value string failed\n");
+        return TWT_FAILURE;
+    }
+    rest = in;
+
+    while ((token = strtok_r(rest, TWT_CLI_ARG_VALUE_DELIMITER, &rest)) != NULL) {
+        if (strlen(token) >= out_element_size) {
+            ERR("Insufficient buffer to copy %s option value of len %ld\n",
+                                                option_name, strlen(token));
+            goto err;
+        }
+        strcpy((out + (i * out_element_size)), token);
+        i++;
+    }
+    *out_count = (uint8_t)i;
+    DBG("Processed %d values for option %s\n", i, option_name);
+    ret_val = TWT_SUCCESS;
+err:
+    free(in);
+    return ret_val;
+}
 
 /* Parses CLI argument and updates values to TC_CONF
  * return : Returns 0 in case of successfully parsing or else -1
@@ -149,15 +223,50 @@ int parse_args(int argc, char **argv, TC_CONF *conf)
                 conf->auth |= TC_CONF_CLIENT_CERT_AUTH;
                 break;
             case OPT_CIPH:
-                if (strlen(optarg) >= sizeof(conf->ch.ciph)) {
-                    ERR("Insufficient ciph buffer to copy %zu bytes",
-                           strlen(optarg));
+                if (copy_str(conf->ch.ciph, sizeof(conf->ch.ciph), optarg,
+                                                "-ciph") != TWT_SUCCESS) {
                     return TWT_FAILURE;
                 }
-                strcpy(conf->ch.ciph, optarg);
                 break;
             case OPT_KEX:
                 conf->kexch.kexch_conf = atoi(optarg);
+                break;
+            case OPT_CERT:
+                if (copy_str(conf->cert, sizeof(conf->cert), optarg,
+                                                "-cert") != TWT_SUCCESS) {
+                    return TWT_FAILURE;
+                }
+                /* So that even if user not passed cert type but only passed
+                 * cert file, we can consider it as by default pem */
+                set_default_cert_type(conf->cert_type_str);
+                break;
+            case OPT_CERT_TYPE:
+                if (copy_str(conf->cert_type_str, sizeof(conf->cert_type_str),
+                                        optarg, "-cert-type") != TWT_SUCCESS) {
+                    return TWT_FAILURE;
+                }
+                break;
+            case OPT_PRIV_KEY:
+                if (copy_str(conf->priv_key, sizeof(conf->priv_key), optarg,
+                                            "-priv-key") != TWT_SUCCESS) {
+                    return TWT_FAILURE;
+                }
+                set_default_cert_type(conf->priv_key_type_str);
+                break;
+            case OPT_PRIV_KEY_TYPE:
+                if (copy_str(conf->priv_key_type_str,
+                                    sizeof(conf->priv_key_type_str),
+                                    optarg, "-priv-key-type") != TWT_SUCCESS) {
+                    return TWT_FAILURE;
+                }
+                break;
+            case OPT_TRUST_CERTS:
+                if (copy_strs((char *)conf->cafiles,
+                        sizeof(conf->cafiles)/sizeof(conf->cafiles[0]),
+                        sizeof(conf->cafiles[0]), &conf->cafiles_count,
+                        optarg, "-trust-certs") != TWT_SUCCESS) {
+                    return TWT_FAILURE;
+                }
                 break;
             case OPT_NBSOCK:
                 conf->nb_sock = 1;

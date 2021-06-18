@@ -7,6 +7,8 @@ extern "C" {
 
 #include "openssl_common.h"
 
+int ssl_ctx_auth_conf(TC_CONF *conf, SSL_CTX *ctx);
+
 int tc_conf_auth(TC_CONF *conf);
 
 #ifdef __cplusplus
