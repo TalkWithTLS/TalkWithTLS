@@ -136,7 +136,7 @@ int do_negotiated_ciphersuite_validation(TC_CONF *conf, SSL *ssl)
 {
     const char *negotiated_cipher;
     negotiated_cipher = SSL_CIPHER_get_name(SSL_get_current_cipher(ssl));
-    DBG("Negotiated cipher[%s]\n", negotiated_cipher);
+    DBG("Negotiated cipher [%s]\n", negotiated_cipher);
     if (strlen(conf->ch.negotiated_ciph) != 0) {
         if ((negotiated_cipher == NULL) ||
                 (strcmp(negotiated_cipher, conf->ch.negotiated_ciph) != 0)) {
