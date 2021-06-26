@@ -26,7 +26,7 @@
 #define MSG_FOR_S_SERV    "<html><title>TWT Perf</title><body>TalkWithTLS</body></html>"
 
 #define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
-#define CAFILE2 "./certs/RSA_PSS_PSS_Certs/rootcert.pem"
+#define CAFILE2 "./certs/RSA2048_PSS_PSS_Certs/rootcert.pem"
 
 #define SERVER_CERT_FILE "./certs/ECC_Prime256_Certs/serv_cert.pem"
 #define SERVER_KEY_FILE "./certs/ECC_Prime256_Certs/serv_key.der"
