@@ -9,7 +9,10 @@ extern "C" {
 #include <stdint.h>
 #include <string.h>
 
-#define LOG(fmt, loglevel, ...) \
+#define RED_COLOUR    "\x1B[31m"
+#define RESET_COLOUR  "\x1B[0m"
+
+#define LOG(colour_start, colour_end, fmt, loglevel, ...) \
     do { \
         char *token, *filename = __FILE__; \
         char *rest_orig, *rest; \
@@ -19,16 +22,17 @@ extern "C" {
                 filename = token; \
             } \
         } \
-        printf("[%s][%s:%d]"fmt, loglevel, filename, __LINE__, ##__VA_ARGS__); \
+        printf("%s[%s][%s:%d]"fmt"%s", colour_start, loglevel, filename, \
+                __LINE__, ##__VA_ARGS__, colour_end); \
         fflush(stdout); \
         if (rest_orig != NULL) free(rest_orig); \
     } while (0)
 
 #define DBG(fmt, ...) \
-    LOG(fmt, "DBG", ##__VA_ARGS__)
+    LOG("", "", fmt, "DBG", ##__VA_ARGS__)
 
 #define ERR(fmt, ...) \
-    LOG(fmt, "ERR", ##__VA_ARGS__)
+    LOG(RED_COLOUR, RESET_COLOUR, fmt, "ERR", ##__VA_ARGS__)
 
 #define PRINT(fmt, ...) \
     do { \
