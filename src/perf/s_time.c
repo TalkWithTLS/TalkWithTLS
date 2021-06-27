@@ -25,7 +25,7 @@
 #define MSG_FOR_S_TIME "GET /index.html HTTP/1.1\r\nHOST: twt.com\r\n\r\n"
 
 #define CAFILE1 "./certs/ECC_Prime256_Certs/rootcert.pem"
-#define CAFILE2 "./certs/RSA_PSS_PSS_Certs/rootcert.pem"
+#define CAFILE2 "./certs/RSA2048_PSS_PSS_Certs/rootcert.pem"
 
 #define CLIENT_CERT_FILE "./certs/ECC_Prime256_Certs/client_cert.der"
 #define CLIENT_CERT_TYPE  SSL_FILETYPE_ASN1

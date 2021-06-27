@@ -18,5 +18,7 @@ openssl x509 -inform PEM -in rootcert.pem -outform DER -out rootcert.der
 openssl rsa -inform PEM -passin pass:123456 -in rootkey.pem -outform DER -out rootkey.der
 openssl x509 -inform PEM -in serv_cert.pem -outform DER -out serv_cert.der
 openssl rsa -inform PEM -passin pass:123456 -in serv_key.pem -outform DER -out serv_key.der
+openssl rsa -inform PEM -passin pass:123456 -in serv_key.pem -outform PEM -out serv_key_unencrypted.pem
+
 
 rm *req.pem

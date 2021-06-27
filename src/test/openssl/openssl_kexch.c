@@ -35,18 +35,46 @@ int is_kexch_not_required(TC_CONF *conf, SSL *ssl) {
     return 0;
 }
 
+const char *convert_ossl_group_id_to_str(int group) {
+    switch (group) {
+        case NID_ffdhe2048:
+            return "FFDHE2048";
+        case NID_ffdhe3072:
+            return "FFDHE3072";
+        case NID_ffdhe4096:
+            return "FFDHE4096";
+        case NID_ffdhe6144:
+            return "FFDHE6144";
+        case NID_ffdhe8192:
+            return "FFDHE8192";
+        case NID_X9_62_prime256v1:
+            return "SECP-256R1";
+        case NID_secp384r1:
+            return "SECP-384R1";
+        case NID_secp521r1:
+            return "SECP-521R1";
+        case NID_X25519:
+            return "X25519";
+        case NID_X448:
+            return "X448";
+        default:
+            return "Unknowns-Kexch-alg";
+    }
+}
 int do_negotiated_kexch_validation(TC_CONF *conf, SSL *ssl)
 {
     int kexch_group;
+    /* OpenSSL client does not have API to provide negotiated group */
     if (conf->server) {
         if (is_kexch_not_required(conf, ssl) == 1) {
             DBG("Negotiated keyexchange alg not required to check\n");
             return TWT_SUCCESS;
         }
         kexch_group = SSL_get_shared_group(ssl, 0);
-        DBG("Kexch group=%x\n", kexch_group);
+        DBG("Negotiated Kexch group [%s]\n", convert_ossl_group_id_to_str(kexch_group));
         if (kexch_group != conf->kexch.kexch_should_neg) {
-            ERR("Expected kexch group is %x\n", conf->kexch.kexch_should_neg);
+            ERR("Expected kexch group is %s\n",
+                    convert_ossl_group_id_to_str(conf->kexch.kexch_should_neg));
             return TWT_FAILURE;
         }
     }
