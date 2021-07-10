@@ -27,7 +27,6 @@ SAMPLE_DIR=sample
 PERF_DIR=perf
 
 OPENSSL = openssl
-WOLFSSL = wolfssl
 BORINGSSL = boringssl
 
 # Binary suffixes
@@ -63,8 +62,6 @@ BSSL_T13_PSK_CLNT = boringssl_tls13_psk_out_of_band_client
 BSSL_T13_PSK_SERV = boringssl_tls13_psk_out_of_band_server
 BSSL_T13_RESUMPTION_CLNT = boringssl_tls13_resumption_client
 BSSL_T13_RESUMPTION_SERV = boringssl_tls13_resumption_server
-WOLFSSL_T13_SERV_SAMPLE = wolfssl_tls13_server
-WOLFSSL_T13_CLNT_SAMPLE = wolfssl_tls13_client
 
 SAMPLE_BIN_DIR=$(BIN_DIR)/$(SAMPLE_DIR)
 
@@ -93,9 +90,7 @@ SAMPLE_BIN=$(SAMPLE_BIN_DIR)/$(OPENSSL_SAMPLE_NB_CLNT) \
 	$(SAMPLE_BIN_DIR)/$(BSSL_T13_PSK_CLNT) \
 	$(SAMPLE_BIN_DIR)/$(BSSL_T13_PSK_SERV) \
 	$(SAMPLE_BIN_DIR)/$(BSSL_T13_RESUMPTION_CLNT) \
-	$(SAMPLE_BIN_DIR)/$(BSSL_T13_RESUMPTION_SERV) \
-	$(SAMPLE_BIN_DIR)/$(WOLFSSL_T13_SERV_SAMPLE) \
-	$(SAMPLE_BIN_DIR)/$(WOLFSSL_T13_CLNT_SAMPLE)
+	$(SAMPLE_BIN_DIR)/$(BSSL_T13_RESUMPTION_SERV)
 
 # Perf binaries
 SPEED = speed
@@ -146,8 +141,6 @@ TEST_OPENSSL_DIR=$(SRC_DIR)/test/openssl
 COMM_SRC_FILES=$(wildcard $(COMMON_SRC)/*.c)
 
 # Sample Code Srcs
-WOLFSSL_T13_SERV_SAMPLE_SRC=$(SAMPLE_SRC)/$(WOLFSSL_T13_SERV_SAMPLE).c $(COMM_SRC_FILES)
-WOLFSSL_T13_CLNT_SAMPLE_SRC=$(SAMPLE_SRC)/$(WOLFSSL_T13_CLNT_SAMPLE).c $(COMM_SRC_FILES)
 OPENSSL_SAMPLE_NB_CLNT_SRC=$(SAMPLE_SRC)/$(OPENSSL_SAMPLE_NB_CLNT).c $(COMM_SRC_FILES)
 OPENSSL_SAMPLE_NB_SERV_SRC=$(SAMPLE_SRC)/$(OPENSSL_SAMPLE_NB_SERV).c $(COMM_SRC_FILES)
 OPENSSL_D12_CLNT_SRC=$(SAMPLE_SRC)/$(OPENSSL_D12_CLNT).c $(COMM_SRC_FILES)
@@ -193,8 +186,6 @@ TEST_OPENSSL_SRC=$(wildcard $(TEST_OPENSSL_DIR)/*.c)
 COMM_OBJ=$(addprefix $(OBJ_DIR)/,$(COMM_SRC_FILES:.c=.o))
 
 # Sample Code Objs
-WOLFSSL_T13_SERV_SAMPLE_OBJ=$(addprefix $(OBJ_DIR)/,$(WOLFSSL_T13_SERV_SAMPLE_SRC:.c=.o))
-WOLFSSL_T13_CLNT_SAMPLE_OBJ=$(addprefix $(OBJ_DIR)/,$(WOLFSSL_T13_CLNT_SAMPLE_SRC:.c=.o))
 OPENSSL_SAMPLE_NB_CLNT_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_SAMPLE_NB_CLNT_SRC:.c=.o))
 OPENSSL_SAMPLE_NB_SERV_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_SAMPLE_NB_SERV_SRC:.c=.o))
 OPENSSL_D12_CLNT_OBJ=$(addprefix $(OBJ_DIR)/,$(OPENSSL_D12_CLNT_SRC:.c=.o))
@@ -278,11 +269,6 @@ OSSL_111_LIBS_REL=$(OSSL_1_1_1_DIR_REL)/libssl.a
 OSSL_300_LIBS_DBG=$(OSSL_300_DIR)/libssl.a
 OSSL_300_LIBS_REL=$(OSSL_300_DIR_REL)/libssl.a
 
-WOLFSSL_MASTER=wolfssl-master
-WOLFSSL_DIR=$(DEPENDENCY_DIR)/$(WOLFSSL_MASTER)
-WOLFSSL_LIBS=$(WOLFSSL_DIR)/src/.libs/libwolfssl.so
-WOLFSSL_LIBS_COPY=$(BIN_DIR)/libwolfssl.so
-
 BSSL_MASTER=boringssl-master
 BSSL_MASTER_DIR=$(DEPENDENCY_DIR)/$(BSSL_MASTER)
 BSSL_MASTER_LIBS_DBG=$(BSSL_MASTER)/build_dbg/ssl/libssl.a
@@ -315,7 +301,6 @@ OSSL_111_CFLAGS_REL = $(CFLAGS_REL) -I $(OSSL_1_1_1_DIR_REL)/include -DWITH_OSSL
 OSSL_300_CFLAGS_DBG = $(CFLAGS_DBG) -I $(OSSL_300_DIR)/include -DWITH_OSSL -DWITH_OSSL_300
 OSSL_300_CFLAGS_REL = $(CFLAGS_REL) -I $(OSSL_300_DIR_REL)/include -DWITH_OSSL -DWITH_OSSL_300
 BSSL_MASTER_CFLAGS_DBG = $(CFLAGS_DBG) -I $(BSSL_MASTER_DIR)/include
-WOLFSSL_CFLAGS = $(CFLAGS_DBG) -I $(WOLFSSL_DIR)
 
 TEST_COMMON_CFLAGS = -I $(TEST_COMMON_DIR)
 TEST_OSSL_CFLAGS = -I $(TEST_COMMON_DIR) -I $(TEST_OPENSSL_DIR)
@@ -342,8 +327,6 @@ BSSL_MASTER_LDFLAGS_DBG = $(LDFLAGS_DBG) \
 						  $(BSSL_MASTER_DIR)/build_dbg/ssl/libssl.a \
 						  $(BSSL_MASTER_DIR)/build_dbg/crypto/libcrypto.a \
 						  $(BSSL_LDFLAGS) $(SANFLAGS)
-
-WOLFSSL_LDFLAGS = -L $(BIN_DIR) -lwolfssl $(SANFLAGS)
 
 TEST_LDFLAGS = -L $(BIN_DIR) -ltest_common
 TEST_OSSL_111_LDFLAGS = $(TEST_LDFLAGS)
@@ -385,7 +368,6 @@ perf_bin_dbg : init_task $(PERF_BIN_DBG)
 
 perf_bin_rel : init_task $(PERF_BIN_REL)
 
-#TODO Generate test exes from different openssl version, so that interop (111 vs master) is possible
 #TODO Better to avoid using DEPENDENCY_DIR instead use generic way while untaring
 
 $(OSSL_111_LIBS_DBG):
@@ -428,21 +410,6 @@ $(OSSL_300_LIBS_REL):
 	@cd $(OSSL_300_DIR_REL) && $(MAKE) > /dev/null
 	@echo ""
 
-WOLFSSL_CONF_ARGS=--enable-tls13 --enable-harden --enable-debug
-
-$(WOLFSSL_LIBS):
-	@echo "Building $(WOLFSSL_DIR)..."
-	@if [ ! -f $(WOLFSSL_DIR)/.gitignore ]; then \
-		cd $(DEPENDENCY_DIR) && tar -zxvf $(WOLFSSL_MASTER).tar.gz > /dev/null; fi
-	@cd $(WOLFSSL_DIR) && autoreconf -i > /dev/null
-	@cd $(WOLFSSL_DIR) && ./configure $(WOLFSSL_CONF_ARGS) > /dev/null
-	@cd $(WOLFSSL_DIR) && $(MAKE) > /dev/null
-	@mkdir -p $(BIN_DIR)
-
-$(WOLFSSL_LIBS_COPY):$(WOLFSSL_LIBS)
-	@cp $(WOLFSSL_LIBS)* $(BIN_DIR)
-	@echo ""
-
 $(BSSL_MASTER_LIBS_DBG):
 	@echo "Building $(BSSL_MASTER)..."
 	@if [ ! -f $(BSSL_MASTER)/.gitignore ]; then \
@@ -469,10 +436,6 @@ $(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c
 $(OBJ_DIR)/$(SAMPLE_SRC)/$(OPENSSL)%.o:$(SAMPLE_SRC)/$(OPENSSL)%.c \
 									   $(OSSL_111_LIBS_DBG)
 	$(CC) $(OSSL_111_CFLAGS_DBG) -c $< -o $@
-
-$(OBJ_DIR)/$(SAMPLE_SRC)/$(WOLFSSL)%.o:$(SAMPLE_SRC)/$(WOLFSSL)%.c \
-							           $(WOLFSSL_LIBS_COPY)
-	$(CC) $(WOLFSSL_CFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/$(SAMPLE_SRC)/$(BORINGSSL)%.o:$(SAMPLE_SRC)/$(BORINGSSL)%.c \
 							           $(BSSL_MASTER_LIBS_DBG)
@@ -610,14 +573,6 @@ $(SAMPLE_BIN_DIR)/$(BSSL_T13_RESUMPTION_CLNT):$(BSSL_T13_RESUMPTION_CLNT_OBJ)
 	$(CC) $^ $(BSSL_MASTER_LDFLAGS_DBG) -o $@
 	@echo ""
 
-$(SAMPLE_BIN_DIR)/$(WOLFSSL_T13_SERV_SAMPLE):$(WOLFSSL_T13_SERV_SAMPLE_OBJ)
-	$(CC) $^ $(WOLFSSL_LDFLAGS) -o $@
-	@echo ""
-
-$(SAMPLE_BIN_DIR)/$(WOLFSSL_T13_CLNT_SAMPLE):$(WOLFSSL_T13_CLNT_SAMPLE_OBJ)
-	$(CC) $^ $(WOLFSSL_LDFLAGS) -o $@
-	@echo ""
-
 # Perf Binaries
 $(SPEED_OSSL_111_DBG):$(SPEED_OSSL_111_OBJ_DBG) $(OSSL_111_LIBS_DBG)
 	$(CC) $(SPEED_OSSL_111_OBJ_DBG) $(OSSL_111_LDFLAGS_DBG) -o $@
@@ -695,9 +650,6 @@ clobber: clean
 	@echo "Cleaning $(OSSL_300_DIR_REL)..."
 	@if [ -f $(OSSL_300_DIR_REL)/Makefile ]; then \
 		cd $(OSSL_300_DIR_REL) && $(MAKE) clean > /dev/null; fi
-	@echo "Cleaning $(WOLFSSL_DIR)..."
-	@if [ -f $(WOLFSSL_DIR)/Makefile ]; then \
-		cd $(WOLFSSL_DIR) && $(MAKE) clean > /dev/null; fi
 	@echo "Cleaning $(BSSL_MASTER_DIR)..."
 	@if [ -d $(BSSL_MASTER_DIR)/build_* ]; then \
 		rm -rf $(BSSL_MASTER_DIR)/build_* > /dev/null; fi
