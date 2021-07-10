@@ -1,6 +1,9 @@
 #include "test_cli_arg.h"
 #include "openssl_auth.h"
 
+#include "openssl/bio.h"
+#include "openssl/x509.h"
+
 int ssl_ctx_trusted_certs_conf(TC_CONF *conf, SSL_CTX *ctx)
 {
     int i;
@@ -132,4 +135,23 @@ int tc_conf_auth(TC_CONF *conf)
 {
     tc_conf_default_certs(conf);
     return tc_conf_update_cert_types(conf);
+}
+
+int do_print_peer_cert(TC_CONF *conf, SSL *ssl)
+{
+    X509 *cert;
+    BIO *bio;
+    if ((bio = BIO_new_fp(stdout, 0)) == NULL) {
+        ERR("BIO new failed\n");
+        return TWT_FAILURE;
+    }
+    if ((cert = SSL_get_peer_certificate(ssl)) == NULL) {
+        DBG("No peer certificate\n");
+    } else {
+        DBG("<<<PEER Certificate>>>\n");
+        X509_print(bio, cert);
+    }
+    BIO_free(bio);
+    X509_free(cert);
+    return TWT_SUCCESS;
 }
