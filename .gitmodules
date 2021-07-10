@@ -1,9 +1,6 @@
 [submodule "dependency/openssl-master"]
 	path = dependency/openssl-master
 	url = https://github.com/openssl/openssl
-[submodule "dependency/wolfssl-master"]
-	path = dependency/wolfssl-master
-	url = https://github.com/wolfSSL/wolfssl
 [submodule "dependency/openssl-master-rel"]
 	path = dependency/openssl-master-rel
 	url = https://github.com/openssl/openssl
