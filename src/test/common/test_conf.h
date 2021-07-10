@@ -204,6 +204,7 @@ struct test_case_conf_st {
     char priv_key[MAX_FILE_NAME_SIZE];
     char priv_key_type_str[MAX_CERT_TYPE_SIZE];
     int priv_key_type;
+    uint8_t print_peer_cert;
     uint16_t con_count;
     int min_version; /*TODO Need to CLI arg for this */
     int max_version;

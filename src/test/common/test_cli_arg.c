@@ -51,6 +51,8 @@ void usage()
     printf("    - It takes only two values 'pem' or 'der'\n");
     printf("-trust-certs <cert_file_names>\n");
     printf("    - File names are delimited by ','. And should of PEM type.\n");
+    printf("-print-peer-cert\n");
+    printf("    - Prints the peer cert\n");
     printf("-nbsock\n");
     printf("    - Enables non blocking on socket\n");
     printf("-res\n");
@@ -100,6 +102,7 @@ enum cmd_opt_id {
     OPT_PRIV_KEY,
     OPT_PRIV_KEY_TYPE,
     OPT_TRUST_CERTS,
+    OPT_PRINT_PEER_CERT,
     OPT_NBSOCK,
     OPT_RES,
     OPT_PSK,
@@ -126,6 +129,7 @@ struct option lopts[] = {
     {"priv-key", required_argument, NULL, OPT_PRIV_KEY},
     {"priv-key-type", required_argument, NULL, OPT_PRIV_KEY_TYPE},
     {"trust-certs", required_argument, NULL, OPT_TRUST_CERTS},
+    {"print-peer-cert", no_argument, NULL, OPT_PRINT_PEER_CERT},
     {"nbsock", optional_argument, NULL, OPT_NBSOCK},
     {"res", optional_argument, NULL, OPT_RES},
     {"psk", required_argument, NULL, OPT_PSK},
@@ -268,6 +272,8 @@ int parse_args(int argc, char **argv, TC_CONF *conf)
                     return TWT_FAILURE;
                 }
                 break;
+            case OPT_PRINT_PEER_CERT:
+                conf->print_peer_cert = 1;
             case OPT_NBSOCK:
                 conf->nb_sock = 1;
                 break;

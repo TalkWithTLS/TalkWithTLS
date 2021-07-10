@@ -11,6 +11,8 @@ int ssl_ctx_auth_conf(TC_CONF *conf, SSL_CTX *ctx);
 
 int tc_conf_auth(TC_CONF *conf);
 
+int do_print_peer_cert(TC_CONF *conf, SSL *ssl);
+
 #ifdef __cplusplus
 }
 #endif
