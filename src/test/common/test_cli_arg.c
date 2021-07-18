@@ -13,7 +13,7 @@ void usage()
     printf("      test port and an instance id.\n");
     printf("    - If -tc-automation is used, then all other option gets ignored and "\
                   "directly listens on TC automation TCP socket\n");
-    printf("-serv\n");
+    printf("-serv[=ip:port]\n");
     printf("    - Run as [D]TLS server\n");
     printf("-clnt[=serv_ip:serv_port]\n");
     printf("    - Run as [D]TLS clnt\n");
@@ -118,7 +118,7 @@ enum cmd_opt_id {
 struct option lopts[] = {
     {"help", no_argument, NULL, OPT_HELP},
     {"tc-automation", required_argument, NULL, OPT_TC_AUTOMATION},
-    {"serv", no_argument, NULL, OPT_SERV},
+    {"serv", optional_argument, NULL, OPT_SERV},
     {"clnt", optional_argument, NULL, OPT_CLNT},
     /*TODO Need to take cauth arg to use type of certs */
     {"cauth", optional_argument, NULL, OPT_CAUTH},
@@ -212,6 +212,12 @@ int parse_args(int argc, char **argv, TC_CONF *conf)
                 return TWT_START_AUTOMATION;
             case OPT_SERV:
                 conf->server = 1;
+                if (optarg != NULL) {
+                    if (test_sock_addr(conf->taddr, optarg) != TWT_SUCCESS) {
+                        ERR("Invalid value to option -serv");
+                        return TWT_FAILURE;
+                    }
+                }
                 break;
             case OPT_CLNT:
                 conf->server = 0;

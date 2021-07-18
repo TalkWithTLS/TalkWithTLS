@@ -182,7 +182,7 @@ typedef struct test_con_fd_st {
 }TEST_CON_FD;
 
 struct test_case_conf_st {
-    TEST_SOCK_ADDR *taddr;
+    TEST_SOCK_ADDR *taddr; /* taddr is initialized by main function's variable */
     TEST_CON_FD test_con_fd;
     TEST_SERV_FD *test_serv_fd;
     /* Test automation keep listens on test_fd for Test cases */
