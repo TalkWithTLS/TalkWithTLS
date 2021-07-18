@@ -37,10 +37,11 @@ int test_sock_addr_port_off(TEST_SOCK_ADDR *taddr, uint16_t port_off)
     return TWT_SUCCESS;
 }
 
-int test_sock_addr_port_to_connect(TEST_SOCK_ADDR *taddr, const char *ip_port)
+int update_ip_port(SOCK_ADDR *addr, const char *ip_port, uint16_t port_off)
 {
     char *ip_port_str, *token, *rest;
     int ret_val = TWT_FAILURE, count = 1;
+
     if ((ip_port_str = strdup(ip_port)) == NULL) {
         ERR("IP Port string dup failed\n");
         return TWT_FAILURE;
@@ -49,27 +50,50 @@ int test_sock_addr_port_to_connect(TEST_SOCK_ADDR *taddr, const char *ip_port)
     while (((token = strtok_r(rest, ":", &rest)) != NULL) && (count <= 2)) {
         switch (count) {
             case 1:
-                if (strlen(token) >= sizeof(taddr->peer_addr_to_con.ip)) {
+                if (strlen(token) >= sizeof(addr->ip)) {
                     ERR("Unsupported length IP address %s\n", token);
                     goto err;
                 }
-                strcpy(taddr->peer_addr_to_con.ip, token);
+                strcpy(addr->ip, token);
                 break;
             case 2:
                 if (atoi(token) <= 0) {
                     ERR("Invalid port %s\n", token);
                     goto err;
                 }
-                taddr->peer_addr_to_con.port = atoi(token) + taddr->port_off;
+                addr->port = atoi(token) + port_off;
                 break;
         }
         count++;
     }
-    DBG("Updated socket address to connect as [%s]\n", ip_port);
     ret_val = TWT_SUCCESS;
 err:
     free(ip_port_str);
     return ret_val;
+}
+
+/* Address for [D]TLS server to bind */
+int test_sock_addr(TEST_SOCK_ADDR *taddr, const char *ip_port)
+{
+    if (update_ip_port(&taddr->test_addr, ip_port, taddr->port_off)
+                                                    != TWT_SUCCESS) {
+        ERR("Update socket address to bind failed [%s]\n", ip_port);
+        return TWT_FAILURE;
+    }
+    DBG("Updated socket address to bind as [%s]\n", ip_port);
+    return TWT_SUCCESS;
+}
+
+/* Address for [D]TLS client to connect */
+int test_sock_addr_port_to_connect(TEST_SOCK_ADDR *taddr, const char *ip_port)
+{
+    if (update_ip_port(&taddr->peer_addr_to_con, ip_port, taddr->port_off)
+                                                          != TWT_SUCCESS) {
+        ERR("Update peer address to connect failed [%s]\n", ip_port);
+        return TWT_FAILURE;
+    }
+    DBG("Updated peer address to connect as [%s]\n", ip_port);
+    return TWT_SUCCESS;
 }
 
 int test_sock_addr_tc_automation(TEST_SOCK_ADDR *taddr, const char *str)
