@@ -86,7 +86,7 @@ int do_tcp_connection(const char *server_ip, uint16_t port)
         count++;
         usleep(TCP_CON_RETRY_WAIT_TIME_MS);
     } while (count < TCP_CON_RETRY_COUNT);
-    
+
     PRINT("TLS connection succeeded, fd=%d\n", fd);
     return fd;
 err_handler:
@@ -140,6 +140,7 @@ int do_tcp_accept(int lfd)
 {
     struct sockaddr_in peeraddr;
     socklen_t peerlen = sizeof(peeraddr);
+    char peeraddr_str[INET_ADDRSTRLEN] = {0};
     int cfd;
 
     PRINT("Waiting for TCP connection from client on listen fd=%d...\n", lfd);
@@ -149,7 +150,12 @@ int do_tcp_accept(int lfd)
         return -1;
     }
 
-    PRINT("TCP connection accepted fd=%d\n", cfd);
+    if (inet_ntop(AF_INET, &peeraddr.sin_addr, peeraddr_str,
+                             sizeof(peeraddr_str)) == NULL) {
+        PRINT("Convertion of Peer IP addr to str failed\n");
+    }
+    PRINT("TCP connection accepted fd=%d from peer[%s:%d]\n", cfd,
+             peeraddr_str, ntohs(peeraddr.sin_port));
     return cfd;
 }
 
