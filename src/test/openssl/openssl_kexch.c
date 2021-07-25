@@ -63,6 +63,9 @@ const char *convert_ossl_group_id_to_str(int group) {
 }
 int do_negotiated_kexch_validation(TC_CONF *conf, SSL *ssl)
 {
+//TODO Need to change this call to SSL_get_negotiated_group() in 3.0.0
+//As SSL_get_shared_group is not appropriate API
+#if 0
     int kexch_group;
     /* OpenSSL client does not have API to provide negotiated group */
     if (conf->server) {
@@ -70,6 +73,7 @@ int do_negotiated_kexch_validation(TC_CONF *conf, SSL *ssl)
             DBG("Negotiated keyexchange alg not required to check\n");
             return TWT_SUCCESS;
         }
+
         kexch_group = SSL_get_shared_group(ssl, 0);
         DBG("Negotiated Kexch group [%s]\n", convert_ossl_group_id_to_str(kexch_group));
         if (kexch_group != conf->kexch.kexch_should_neg) {
@@ -78,6 +82,7 @@ int do_negotiated_kexch_validation(TC_CONF *conf, SSL *ssl)
             return TWT_FAILURE;
         }
     }
+#endif
     return TWT_SUCCESS;
 }
 
