@@ -25,6 +25,7 @@ endif
 COMMON_DIR=common
 SAMPLE_DIR=sample
 PERF_DIR=perf
+UTILS_DIR=utils
 
 OPENSSL = openssl
 BORINGSSL = boringssl
@@ -140,6 +141,13 @@ SAMPLE_SRC=$(SRC_DIR)/$(SAMPLE_DIR)
 PERF_SRC=$(SRC_DIR)/$(PERF_DIR)
 TEST_COMMON_DIR=$(SRC_DIR)/test/common
 TEST_OPENSSL_DIR=$(SRC_DIR)/test/openssl
+UTILS_SRC=$(SRC_DIR)/$(UTILS_DIR)
+
+# Utils binaries
+DTLS_PROXY=dtls_proxy
+
+UTILS_BIN_DIR = $(BIN_DIR)/$(UTILS_DIR)
+UTILS_BIN = $(UTILS_BIN_DIR)/$(DTLS_PROXY)
 
 # Common Code Srcs
 COMM_SRC_FILES=$(wildcard $(COMMON_SRC)/*.c)
@@ -187,6 +195,9 @@ S_TIME_SRC=$(PERF_SRC)/$(S_TIME).c
 # Test code Srcs
 TEST_COMMON_SRC=$(wildcard $(TEST_COMMON_DIR)/*.c) $(COMM_SRC_FILES)
 TEST_OPENSSL_SRC=$(wildcard $(TEST_OPENSSL_DIR)/*.c)
+
+# Utils Code Srcs
+DTLS_PROXY_SRC=$(UTILS_SRC)/$(DTLS_PROXY).c $(COMM_SRC_FILES)
 
 # Common Code Objs
 COMM_OBJ=$(addprefix $(OBJ_DIR)/,$(COMM_SRC_FILES:.c=.o))
@@ -247,6 +258,9 @@ TEST_OSSL_111_OBJ=$(addprefix $(OBJ_DIR)/,\
 					$(TEST_OPENSSL_SRC:.c=$(OSSL_111_SUFFIX).o))
 TEST_OSSL_300_OBJ=$(addprefix $(OBJ_DIR)/,\
 					$(TEST_OPENSSL_SRC:.c=$(OSSL_300_SUFFIX).o))
+
+# Utils Code Objs
+DTLS_PROXY_OBJ=$(addprefix $(OBJ_DIR)/,$(DTLS_PROXY_SRC:.c=.o))
 
 DEPENDENCY_DIR=dependency
 OSSL_1_1_1=openssl-1.1.1
@@ -362,7 +376,7 @@ OSSL_300_CC_REL="$(CC) -Wall -Werror"
 
 TARGET=$(SAMPLE_BIN) $(PERF_BIN) $(TEST_BIN)
 
-#.PHONY all init_task clean clobber test_bin sample_bin perf_bin
+#.PHONY all init_task clean clobber test_bin sample_bin perf_bin utils_bin
 
 all : init_task $(TARGET)
 
@@ -375,6 +389,8 @@ perf_bin : init_task $(PERF_BIN)
 perf_bin_dbg : init_task $(PERF_BIN_DBG)
 
 perf_bin_rel : init_task $(PERF_BIN_REL)
+
+utils_bin : init_task $(UTILS_BIN)
 
 #TODO Better to avoid using DEPENDENCY_DIR instead use generic way while untaring
 
@@ -428,15 +444,18 @@ $(BSSL_MASTER_LIBS_DBG):
 		&& $(MAKE) > /dev/null
 
 init_task:
+	echo "$(DTLS_PROXY_OBJ)"
 	@mkdir -p $(BIN_DIR)
 	@mkdir -p $(BIN_DIR)/$(SAMPLE_DIR)
 	@mkdir -p $(BIN_DIR)/$(PERF_DIR)
+	@mkdir -p $(BIN_DIR)/$(UTILS_DIR)
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(OBJ_DIR)/$(COMMON_SRC)
 	@mkdir -p $(OBJ_DIR)/$(SAMPLE_SRC)
 	@mkdir -p $(OBJ_DIR)/$(PERF_SRC)
 	@mkdir -p $(OBJ_DIR)/$(TEST_COMMON_DIR)
 	@mkdir -p $(OBJ_DIR)/$(TEST_OPENSSL_DIR)
+	@mkdir -p $(OBJ_DIR)/$(UTILS_SRC)
 
 $(OBJ_DIR)/$(COMMON_SRC)%.o:$(COMMON_SRC)%.c
 	$(CC) $(COMMON_CFLAGS) -c $< -o $@
@@ -475,6 +494,9 @@ $(OBJ_DIR)/$(TEST_OPENSSL_DIR)/%$(OSSL_111_SUFFIX).o:$(TEST_OPENSSL_DIR)/%.c \
 $(OBJ_DIR)/$(TEST_OPENSSL_DIR)/%$(OSSL_300_SUFFIX).o:$(TEST_OPENSSL_DIR)/%.c \
 								   $(OSSL_300_LIBS_DBG)
 	$(CC) $(OSSL_300_CFLAGS_DBG) $(TEST_OSSL_300_CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/$(UTILS_SRC)/%.o:$(UTILS_SRC)/%.c $(OSSL_111_LIBS_DBG)
+	$(CC) $(OSSL_111_CFLAGS_DBG) -c $< -o $@
 
 # Sample Binaries
 $(SAMPLE_BIN_DIR)/$(OPENSSL_SAMPLE_NB_CLNT):$(OPENSSL_SAMPLE_NB_CLNT_OBJ)
@@ -647,6 +669,10 @@ $(TEST_OSSL_111_BIN):$(TEST_OSSL_111_OBJ)
 
 $(TEST_OSSL_300_BIN):$(TEST_OSSL_300_OBJ)
 	$(CC) $^ $(OSSL_300_LDFLAGS_DBG) $(TEST_OSSL_300_LDFLAGS) -o $@
+
+# Utils Binaries
+$(UTILS_BIN_DIR)/$(DTLS_PROXY):$(DTLS_PROXY_OBJ)
+	$(CC) $^ $(OSSL_111_LDFLAGS_DBG) -o $@
 
 clean:
 	@$(RM) -rf *.o *.a

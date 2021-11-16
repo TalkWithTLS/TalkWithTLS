@@ -9,6 +9,9 @@ extern "C" {
 #include <stdint.h>
 #include <string.h>
 
+#define TWT_SUCCESS     0
+#define TWT_FAILURE    -1
+
 #define RED_COLOUR    "\x1B[31m"
 #define RESET_COLOUR  "\x1B[0m"
 
