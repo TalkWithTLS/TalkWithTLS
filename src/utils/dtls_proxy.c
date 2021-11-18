@@ -80,7 +80,6 @@ void free_dtls_conn(struct dtls_conn *conn)
     check_and_close(&conn->tcp.fd);
     check_and_close(&conn->udp.fd);
     check_and_close(&conn->efd);
-    //TODO Free msg buffers
     free(conn);
 }
 
@@ -94,14 +93,15 @@ int create_connections_for_udp_serv_tcp_clnt(struct dtls_conn *conn,
                                                         ds_addr->port);
         goto err;
     }
-    DBG("Created UDP server socket for downstream\n");
+    DBG("Created UDP server socket fd=%d for downstream on %s:%d\n",
+                    conn->udp.fd, ds_addr->ip, ds_addr->port);
 
     conn->tcp.fd = do_tcp_connection(us_addr->ip, us_addr->port);
     if (conn->tcp.fd == -1) {
         ERR("TCP Connection to upstream failed\n");
         goto err;
     }
-    DBG("Established upstream TCP Connection\n");
+    DBG("Established upstream TCP Connection on fd=%d\n", conn->tcp.fd);
 
     conn->udp.type = UDP_CONN;
     conn->tcp.type = TCP_CONN;
@@ -129,6 +129,8 @@ int create_epoll_fd(struct dtls_conn *conn)
         goto err;
     }
 
+    DBG("Created epoll fd=%d\n", conn->efd);
+
     event.data.ptr = &conn->tcp;
     event.events = EPOLLIN;
     ret = epoll_ctl(conn->efd, EPOLL_CTL_ADD, conn->tcp.fd, &event);
@@ -137,6 +139,7 @@ int create_epoll_fd(struct dtls_conn *conn)
         goto err;
     }
 
+    memset(&event, 0, sizeof(event));
     event.data.ptr = &conn->udp;
     event.events = EPOLLIN;
     ret = epoll_ctl(conn->efd, EPOLL_CTL_ADD, conn->udp.fd, &event);
@@ -176,6 +179,10 @@ struct dtls_conn *create_dtls_conn(struct saddr *ds_addr, struct saddr *us_addr,
         goto err;
     }
 
+    if (create_epoll_fd(conn) != TWT_SUCCESS) {
+        ERR("Creating epoll fd failed\n");
+        goto err;
+    }
     conn->mode = mode;
     DBG("Created DTLS connection of mode [%s]\n", g_mode_str[mode]);
     return conn;
@@ -294,23 +301,24 @@ int run_dtls_proxy(struct dtls_conn *conn)
     struct epoll_event events[MAX_EPOLL_EVENTS];
     int i, num;
 
+    DBG("Going to listen on epoll..\n");
     do {
         memset(events, 0, sizeof(events));
         num = epoll_wait(conn->efd, (struct epoll_event *)&events,
                                         MAX_EPOLL_EVENTS, -1);
-        if (num > 0) {
-            ERR("Epoll wait returned =%d\n", num);
-            goto err;
+        if (num < 0) {
+            ERR("Epoll wait err, errno=%d\n", errno);
+            return TWT_FAILURE;
         }
-
-        for (i = 0; i < num; i++) {
-            handle_ingress_msg(conn, events[i].data.ptr);
+        if (num > 0) {
+            DBG("Events %d\n", num);
+            for (i = 0; i < num; i++) {
+                handle_ingress_msg(conn, events[i].data.ptr);
+            }
         }
     } while (1);
 
     return TWT_SUCCESS;
-err:
-    return TWT_FAILURE;
 }
 
 int main(int argc, char *argv[])
