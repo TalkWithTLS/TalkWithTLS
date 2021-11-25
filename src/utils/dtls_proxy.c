@@ -22,7 +22,7 @@
 
 #define MAX_MSG     10
 
-#define RECORD_SIZE 5
+#define DTLS_RECORD_HDR_SIZE 13
 
 #define MAX_EPOLL_EVENTS 2
 
@@ -107,7 +107,6 @@ int create_connections_for_udp_serv_tcp_clnt(struct dtls_conn *conn,
     conn->tcp.type = TCP_CONN;
     return TWT_SUCCESS;
 err:
-    free_dtls_conn(conn);
     return TWT_FAILURE;
 }
 
@@ -231,30 +230,29 @@ void handle_ingress_tcp_msg(struct dtls_conn *conn, struct sock_conn *sock)
             len = sock->msg.expected_tot_len - sock->msg.buf_data_len;
         } else {
             buf = sock->msg.buf;
-            len = RECORD_SIZE;
+            len = DTLS_RECORD_HDR_SIZE;
         }
         ret = recv(sock->fd, buf, len, MSG_DONTWAIT);
         if (ret < 0) {
             if (errno == EWOULDBLOCK || errno == EAGAIN) {
-                DBG("Received stopped\n");
+                DBG("Receive stopped\n");
             } else {
                 ERR("Receive msg on TCP sock %d failed, errno=%d\n",
                                                     sock->fd, errno);
             }
             return;
         }
-        DBG("[TCP MSG] Received %d size msg\n", ret);
-        /* If fresh record, then get length from record header */
+        DBG("[TCP MSG] Received %d byte msg\n", ret);
         if (sock->msg.buf_data_len == 0) {
-            sock->msg.buf_data_len = RECORD_SIZE;
-            sock->msg.expected_tot_len = RECORD_SIZE + ((buf[3] << 8) | buf[4]);
+            /* Fresh record */
+            /* get length from record header */
+            sock->msg.expected_tot_len = DTLS_RECORD_HDR_SIZE + ((buf[11] << 8) | buf[12]);
             DBG("Record header received and payload length is %d\n",
                                     sock->msg.expected_tot_len);
-            continue;
         }
         sock->msg.buf_data_len += ret;
-        /* Complete record is received */
         if (sock->msg.buf_data_len == sock->msg.expected_tot_len) {
+            /* Complete record is received */
             send_msg_on_udp_conn(conn, sock->msg.buf, sock->msg.buf_data_len);
             sock->msg.buf_data_len = 0;
             sock->msg.expected_tot_len = 0;
@@ -280,7 +278,7 @@ void handle_ingress_udp_msg(struct dtls_conn *conn, struct sock_conn *sock)
                                                             == NULL) {
         ERR("Getting peer IP string failed\n");
     }
-    DBG("[UDP_MSG] Received %d size msg from %s:%d\n", ret, peer_ip,
+    DBG("[UDP_MSG] Received %d byte msg from %s:%d\n", ret, peer_ip,
                                             ntohs(peeraddr->sin_port));
     send_msg_on_tcp_conn(conn, sock->msg.buf, ret);
 }
