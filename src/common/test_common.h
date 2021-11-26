@@ -88,7 +88,7 @@ extern "C" {
 
 #define TLS_SOCK_TIMEOUT_MS 8000
 
-#define DTLS_MTU 1400
+#define DTLS_MTU 1500
 
 int create_udp_sock();
 
