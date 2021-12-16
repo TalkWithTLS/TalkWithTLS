@@ -53,6 +53,7 @@ int ssl_config_dtls_bio(TC_CONF *conf, SSL *ssl)
         goto err;
     }
 
+    DBG("Setting BIO MTU as %d\n", DTLS_MTU);
     if (BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_MTU, DTLS_MTU, NULL) != DTLS_MTU) {
         ERR("BIO set mtu failed\n");
         goto err;

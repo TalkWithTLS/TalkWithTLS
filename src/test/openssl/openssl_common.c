@@ -133,7 +133,7 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
     ssl = SSL_new(ctx);
     if (!ssl) {
         ERR("SSL object creation failed\n");
-        return NULL; 
+        return NULL;
     }
     SSL_set_ex_data(ssl, SSL_EX_DATA_TC_CONF, conf);
 
@@ -145,6 +145,9 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
         if (ssl_config_dtls_bio(conf, ssl) != 0) {
             goto err;
         }
+        DBG("Disabling Query MTU and setting DTLS MTU as %d\n", DTLS_MTU);
+        SSL_set_options(ssl, SSL_OP_NO_QUERY_MTU);
+        SSL_set_mtu(ssl, DTLS_MTU);
     }
 
     if (ssl_ciph_config(conf, ssl) != TWT_SUCCESS) {
@@ -170,6 +173,7 @@ SSL *create_ssl_object_openssl(TC_CONF *conf, SSL_CTX *ctx)
     if (ssl_mode_config(conf, ssl) != 0) {
         goto err;
     }
+
     DBG("SSL object creation finished\n");
 
     return ssl;
