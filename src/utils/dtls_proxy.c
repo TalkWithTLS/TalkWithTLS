@@ -242,12 +242,12 @@ void handle_ingress_tcp_msg(struct dtls_conn *conn, struct sock_conn *sock)
             }
             return;
         }
-        DBG("[TCP MSG] Received %d byte msg\n", ret);
+        DBG("[TCP MSG] Received %d byte DTLS record header\n", ret);
         if (sock->msg.buf_data_len == 0) {
             /* Fresh record */
             /* get length from record header */
             sock->msg.expected_tot_len = DTLS_RECORD_HDR_SIZE + ((buf[11] << 8) | buf[12]);
-            DBG("Record header received and payload length is %d\n",
+            DBG("Record tot length is %d\n",
                                     sock->msg.expected_tot_len);
         }
         sock->msg.buf_data_len += ret;
