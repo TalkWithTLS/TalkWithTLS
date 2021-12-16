@@ -81,13 +81,13 @@ void print_content_type(int write_p, int version, int content_type, const void *
             cont_type = "Inner Content";
             break;
     }
-    DBG("%s[ver=%04X]%s %s msg[len=%zu]", prefix_str, version, op, cont_type, len);
+    PRINT("%s[ver=%04X]%s %s msg[len=%zu]", prefix_str, version, op, cont_type, len);
     if (content_type == SSL3_RT_HEADER) {
-        DBG(" rec_type=%d", first_byte_val);
+        PRINT(" rec_type=%d", first_byte_val);
     } else if (content_type == SSL3_RT_INNER_CONTENT_TYPE) {
-        DBG(" val=%d", first_byte_val);
+        PRINT(" val=%d", first_byte_val);
     } else if (handshake_type == NULL) {
-        DBG(" type_val=%d", first_byte_val);
+        PRINT(" type_val=%d", first_byte_val);
     }
 }
 
@@ -99,11 +99,11 @@ void ssl_msg_cb(int write_p, int version, int content_type, const void *buf, siz
     int i;
     print_content_type(write_p, version, content_type, buf, len, MSG_CB_PREFIX);
     if (conf->cb.msg_cb_detailed) {
-        DBG(":");
+        PRINT(":");
         for (i = 0; i < len; i++) {
-            DBG(" %02X", *(((uint8_t *)buf) + i));
+            PRINT(" %02X", *(((uint8_t *)buf) + i));
         }
     }
-    DBG("\n");
+    PRINT("\n");
 }
 
