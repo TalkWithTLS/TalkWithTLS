@@ -17,6 +17,7 @@
 
 #include "test_common.h"
 
+#define US_PORT 1002
 
 #define MAX_MSG_SIZE   16389 // 5 + 16384
 
@@ -328,7 +329,7 @@ int main(int argc, char *argv[])
     strcpy(ds_addr.ip, "127.0.0.1");
     ds_addr.port = 17721;
     strcpy(us_addr.ip, "29.1.1.2");
-    us_addr.port = 55000;
+    us_addr.port = US_PORT;
 
     conn = create_dtls_conn(&ds_addr, &us_addr, UDP_SERV_TCP_CLNT);
     if (conn == NULL) {
