@@ -2,6 +2,18 @@
 
 #include <errno.h>
 
+int create_test_serv_fd(TC_CONF *conf, SUT *sut)
+{
+    if (conf->server == 1) {
+        if (conf->dtls == 0) {
+            return sut->create_tls_test_serv_fd(conf->test_serv_fd, conf->taddr);
+        } else {
+            return sut->create_dtls_test_serv_fd(conf->test_serv_fd, conf->taddr);
+        }
+    }
+    return TWT_SUCCESS;
+}
+
 int start_test_case(int argc, char **argv, SUT *sut, TEST_SOCK_ADDR *taddr,
                                                         TEST_SERV_FD *tsfd)
 {
@@ -15,9 +27,9 @@ int start_test_case(int argc, char **argv, SUT *sut, TEST_SOCK_ADDR *taddr,
         goto end;
     }
     conf.taddr = taddr;
-    /* Note: tsfd will be NULL incase of TC automation */
+    /* Note: tsfd will be Not NULL incase of TC automation */
     if ((conf.test_serv_fd = tsfd) == NULL) {
-        if (init_test_serv_fd(&test_serv_fd) != TWT_SUCCESS) {
+        if (sut->init_test_serv_fd(&test_serv_fd) != TWT_SUCCESS) {
             ERR("Init test serv fd failed before starting test case\n");
             goto end;
         }
@@ -46,19 +58,18 @@ int start_test_case(int argc, char **argv, SUT *sut, TEST_SOCK_ADDR *taddr,
 
     if (tsfd == NULL) {
         DBG("Creating Test serv socket fd\n");
-        /* This case is only for independent test execution not for TC automation*/
-        /* Here serv fd gets created only for [D]TLS server */
-        if (create_test_serv_sock(&conf) != TWT_SUCCESS) {
+        /* This case is only for independent test execution not for TC
+         * automation. Here serv fd gets created only for [D]TLS server */
+        if (create_test_serv_fd(&conf, sut) != TWT_SUCCESS) {
             ERR("Create test serv listen fd failed before starting test case\n");
             goto end;
         }
     }
-    //ret_val = do_test_openssl(&conf);
     ret_val = sut->do_test_sut_func(&conf);
 end:
     fini_tc_conf(&conf);
     if (tsfd == NULL) {
-        fini_test_serv_fd(&test_serv_fd);
+        sut->fini_test_serv_fd(&test_serv_fd);
     }
     return ret_val;
 }
@@ -183,13 +194,13 @@ int start_test_automation(SUT *sut, TC_AUTOMATION *ta, TEST_SOCK_ADDR *taddr)
     TEST_SERV_FD tsfd;
     int ret_val = TWT_FAILURE;
 
-    if (init_test_serv_fd(&tsfd) != TWT_SUCCESS) {
+    if (sut->init_test_serv_fd(&tsfd) != TWT_SUCCESS) {
         ERR("TEST_SERV_FD initialization for test automation failed\n");
         goto err;
     }
     DBG("Creating Test serv socket fds\n");
-    if ((create_tls_test_serv_sock(&tsfd, taddr) != TWT_SUCCESS)
-            || (create_dtls_test_serv_sock(&tsfd, taddr) != TWT_SUCCESS)) {
+    if ((sut->create_tls_test_serv_fd(&tsfd, taddr) != TWT_SUCCESS)
+            || (sut->create_dtls_test_serv_fd(&tsfd, taddr) != TWT_SUCCESS)) {
         ERR("Create test serv listen fd failed for TC Automation\n");
     }
     DBG("Creating TC Automation socket fd\n");
@@ -204,7 +215,7 @@ int start_test_automation(SUT *sut, TC_AUTOMATION *ta, TEST_SOCK_ADDR *taddr)
     } while (1);
     ret_val = TWT_SUCCESS;
 err:
-    fini_test_serv_fd(&tsfd);
+    sut->fini_test_serv_fd(&tsfd);
     return ret_val;
 }
 

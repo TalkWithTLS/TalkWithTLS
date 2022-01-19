@@ -29,8 +29,6 @@ int create_tls_test_serv_sock(TEST_SERV_FD *tsfd, TEST_SOCK_ADDR *taddr);
 
 int create_dtls_test_serv_sock(TEST_SERV_FD *tsfd, TEST_SOCK_ADDR *taddr);
 
-int create_test_serv_sock(TC_CONF *conf);
-
 int create_sock_connection(TC_CONF *conf);
 
 void close_sock_connection(TEST_CON_FD *test_con_fd);

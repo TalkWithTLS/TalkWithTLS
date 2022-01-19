@@ -49,6 +49,12 @@ end:
 int main(int argc, char **argv)
 {
     SUT sut = {0};
+
     sut.do_test_sut_func = test_openssl;
+    sut.init_test_serv_fd = init_test_serv_fd;
+    sut.create_tls_test_serv_fd = create_tls_test_serv_sock;
+    sut.create_dtls_test_serv_fd = create_dtls_test_serv_sock;
+    sut.fini_test_serv_fd = fini_test_serv_fd;
+
     return test_main(argc, argv, &sut);
 }
