@@ -26,7 +26,7 @@ extern "C" {
 
 #define DEFAULT_PSK_ID "clientid1"
 /* Hex string representation of 16 byte key */
-#define DEFAULT_PSK_KEY "A1A2A3A4A5A6A7A8A9A0AAABACADAEAF"
+#define DEFAULT_PSK_KEY "A0A1A2A3A4A5A6A7A8A9AAABACADAEAF"
 
 #define SSL_EX_DATA_TC_CONF         1
 
