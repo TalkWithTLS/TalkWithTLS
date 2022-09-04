@@ -186,18 +186,6 @@ int create_dtls_test_serv_sock(TEST_SERV_FD *tsfd, TEST_SOCK_ADDR *taddr)
     return TWT_SUCCESS;
 }
 
-int create_test_serv_sock(TC_CONF *conf)
-{
-    if (conf->server == 1) {
-        if (conf->dtls == 0) {
-            return create_tls_test_serv_sock(conf->test_serv_fd, conf->taddr);
-        } else {
-            return create_dtls_test_serv_sock(conf->test_serv_fd, conf->taddr);
-        }
-    }
-    return TWT_SUCCESS;
-}
-
 int create_sock_connection(TC_CONF *conf)
 {
     TEST_CON_FD *test_con_fd = &conf->test_con_fd;

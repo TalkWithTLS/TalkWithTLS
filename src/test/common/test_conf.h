@@ -26,7 +26,7 @@ extern "C" {
 
 #define DEFAULT_PSK_ID "clientid1"
 /* Hex string representation of 16 byte key */
-#define DEFAULT_PSK_KEY "A1A2A3A4A5A6A7A8A9A0AAABACADAEAF"
+#define DEFAULT_PSK_KEY "A0A1A2A3A4A5A6A7A8A9AAABACADAEAF"
 
 #define SSL_EX_DATA_TC_CONF         1
 
@@ -178,17 +178,17 @@ typedef struct test_con_fd_st {
 }TEST_CON_FD;
 
 struct test_case_conf_st {
-    TEST_SOCK_ADDR *taddr; /* taddr is initialized by main function's variable */
-    TEST_CON_FD test_con_fd;
+    /* taddr and test_serv_fd is initialized by main function's variable */
+    TEST_SOCK_ADDR *taddr;
     TEST_SERV_FD *test_serv_fd;
+    /* TEST_CON_FD and TEST_SERV_FD are created for TEST TLS and DTLS
+     * connections */
+    TEST_CON_FD test_con_fd;
     /* Test automation keep listens on test_fd for Test cases */
     uint32_t test_automation:1;
     uint8_t server;
     uint32_t dtls:1;
     fini_fp fini; /* Specific fini function */
-    /* TEST_CON_FD and TEST_SERV_FD are created for TEST TLS and DTLS
-     * connections */
-    int tcp_listen_fd;
     int fd;
     uint8_t nb_sock;
     uint8_t auth;

@@ -444,7 +444,6 @@ $(BSSL_MASTER_LIBS_DBG):
 		&& $(MAKE) > /dev/null
 
 init_task:
-	echo "$(DTLS_PROXY_OBJ)"
 	@mkdir -p $(BIN_DIR)
 	@mkdir -p $(BIN_DIR)/$(SAMPLE_DIR)
 	@mkdir -p $(BIN_DIR)/$(PERF_DIR)
