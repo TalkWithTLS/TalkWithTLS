@@ -9,8 +9,16 @@ Sample Code for [D]TLS usage and a lot more than that.
 ## 1. Installing Dependencies
 ### 1.1 On ubuntu
 ```
-sudo apt install make gcc g++ python3 python3-pip
+sudo apt install make cmake gcc g++ python3 python3-pip
+sudo apt install libunwind-dev
 pip3 install --user pytest pytest-html
+```
+Install latest golang by downloading it from `https://golang.org/doc/install`
+and extract and copy to `/usr/local/go`. And then update env as below.
+```
+echo 'export GOROOT=/usr/local/go' >> ~/.bashrc
+echo 'export PATH=$GOROOT/bin:$PATH' >> ~/.bashrc
+. ~/.bashrc
 ```
 
 ## 2. Binaries & Building Procedure
